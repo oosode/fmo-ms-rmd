@@ -218,9 +218,9 @@ void Run::do_fmo_calculations(int FORCE)
                     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
                     //
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum]   = gx;
-		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum+1] = gy;
-		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum+2] = gz;
+                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum]   = gx;
+		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+1] = gy;
+		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+2] = gz;
 		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	          }
                   // Increment atnum for the next round
@@ -245,14 +245,20 @@ void Run::do_fmo_calculations(int FORCE)
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                     // gx,gy,gz = the electric field
                     // multiply by charge to get force (i.e. negative gradient) on atom
-                    double mmq = fmr->atom->getCharge(atnum, istate);
+                    double mmq = fmr->atom->getCharge(atnum%natoms, istate);
                     gx *= -mmq;
                     gy *= -mmq;
                     gz *= -mmq;
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum]   = gx; 
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+1] = gy; 
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
-	          }
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum]   = gx; 
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+1] = gy; 
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
+
+		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum]   = gx;
+                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+1] = gy;
+                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+2] = gz;
+                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+		  }
                   // Increment atnum for the next round
                   atnum++;
                 }
