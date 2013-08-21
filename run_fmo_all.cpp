@@ -29,7 +29,11 @@ void Run::do_fmo_calculations(int FORCE)
   int my_rank    = fmr->my_rank;
   int nf2        = nfragments*nfragments;
 
-  n_monomers = nstates * nfragments * 27;
+  int na	 = 3;
+  int nb 	 = 3;
+  int nc 	 = 3;
+
+  n_monomers = nstates * nfragments * na*nb*nc;
   // Assuming all states have equal number of dimers, for now
   n_dimers = nstates * ((nfragments * (nfragments-1)) / 2);
   n_dimers_sq = nstates * nfragments * nfragments; // inclues self
@@ -132,7 +136,7 @@ void Run::do_fmo_calculations(int FORCE)
               char filename[256];
               char inum[16];
 
-	      spritf(inum,"%04d",ifrag);
+	      sprintf(inum,"%03d",ifrag);
 /*
         if (ifrag >= 100) {
           sprintf(inum, "%d", ifrag);
@@ -143,7 +147,7 @@ void Run::do_fmo_calculations(int FORCE)
         }
 */
 	      char cname[16];
-	      sprint(cname,"cell.%d.%d.%d", x+1, y+1, z+1);
+	      sprintf(cname,"cell.%d.%d.%d", x+1, y+1, z+1);
 
               sprintf(filename, "fmo_st%s_m%s_%s", snum, inum, cname);
               sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
@@ -177,9 +181,15 @@ void Run::do_fmo_calculations(int FORCE)
               }
               char line[MAX_LENGTH];
               double en;
+
+	      
               while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
       	        if ( sscanf(line, "%lf", &en) == 1 ) {
-                  monomer_energies[nfragments*istate + ifrag] = en; 
+                  //monomer_energies[nfragments*istate + ifrag] = en;
+
+		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+		  monomer_energies[nfragments*27*istate + (nb*nc*nfragments*(x+1)) + (nc*nfragments*(y+1)) + (nfragments*(z+1)) + ifrag] = en;
+		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	        }
               }
               fclose(fs);
@@ -203,9 +213,15 @@ void Run::do_fmo_calculations(int FORCE)
                     atnum++; 
                   }
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum]   = gx; 
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+1] = gy; 
-                    monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum]   = gx; 
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+1] = gy; 
+                    //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
+                    //
+                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum]   = gx;
+		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum+1] = gy;
+		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atum+2] = gz;
+		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	          }
                   // Increment atnum for the next round
                   atnum++;

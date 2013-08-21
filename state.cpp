@@ -269,6 +269,10 @@ void State::write_qchem_inputs(int jobtype)
       char state_directory[256];
       char snum[16];
       char make_directory[256];
+
+      sprintf(snum, "%02d", istate);
+      sprintf(state_directory, "state_%02d", istate);
+/*
       if (istate >= 10) {
         sprintf(snum, "%d", istate);
         sprintf(state_directory, "state_%d", istate);
@@ -276,6 +280,7 @@ void State::write_qchem_inputs(int jobtype)
         sprintf(snum, "0%d", istate);
         sprintf(state_directory, "state_0%d", istate);
       }
+*/
       // Make the directory...
       sprintf(make_directory, "mkdir -p %s", state_directory);
       int ierr = system(make_directory);
@@ -289,7 +294,7 @@ void State::write_qchem_inputs(int jobtype)
               // Get name of file to open
               char filename[256];
               //if (ifrag >= 100) {
-              sprintf(filename, "%s/fmo_st%sm%04dc%d.%d.%d.in", state_directory, snum, ifrag, x+1, y+1, z+1);
+              sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, x+1, y+1, z+1);
               //} else if (ifrag >= 10) {
               //  sprintf(filename, "%s/fmo_st%sm0%d.in", state_directory, snum, ifrag);
               //} else {
