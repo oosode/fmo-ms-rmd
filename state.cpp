@@ -100,6 +100,7 @@ void State::state_search()
       for (int x=-1; x<=1; ++x) {
         for (int y=-1; y<=1; ++y) {
           for (int z=-1; z<=1; ++z) {
+
             for (int i=0; i<natoms; ++i) {
   	      if (atom->symbol[i] == 'H' && atom->available[i] && atom->reactive[state*natoms + i]) {
 	        for (int j=0; j<natoms; ++j) {
@@ -137,6 +138,7 @@ void State::state_search()
 	        atom->available[i] = 0;
 	      }
             }
+
 	  }
 	}
       }
@@ -391,29 +393,33 @@ void State::write_qchem_inputs(int jobtype)
       }
 
       // *** Dimers *** //
-      for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
-        for (int jfrag=ifrag+1; jfrag<nfragments; ++jfrag){ 
-	  // Get name of file to open
-	  char filename[256];
-          char inum[16];
-          char jnum[16];
-	  if (ifrag >= 100) {
-            sprintf(inum, "%d", ifrag);
-	  } else if (ifrag >= 10) {
-            sprintf(inum, "0%d", ifrag);
-	  } else {
-            sprintf(inum, "00%d", ifrag);
-	  } 
-	  if (jfrag >= 100) {
-            sprintf(jnum, "%d", jfrag);
-	  } else if (jfrag >= 10) {
-            sprintf(jnum, "0%d", jfrag);
-	  } else {
-            sprintf(jnum, "00%d", jfrag);
-	  } 
-	  sprintf(filename, "%s/fmo_st%sd%s-%s.in", state_directory, snum, inum, jnum);
-	  FILE *fs = fopen(filename, "w");
-	  if (fs == NULL) {
+      for (int x=-1; x<=1; ++x) {
+        for (int y=-1; y<=1; ++y) {
+          for (int z=-1; z<=1; ++z) {
+      
+            for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
+              for (int jfrag=ifrag+1; jfrag<nfragments; ++jfrag){ 
+	        // Get name of file to open
+	        char filename[256];
+                char inum[16];
+                char jnum[16];
+	        if (ifrag >= 100) {
+                  sprintf(inum, "%d", ifrag);
+	        } else if (ifrag >= 10) {
+                  sprintf(inum, "0%d", ifrag);
+	        } else {
+                  sprintf(inum, "00%d", ifrag);
+	        } 
+	        if (jfrag >= 100) {
+                  sprintf(jnum, "%d", jfrag);
+	        } else if (jfrag >= 10) {
+                  sprintf(jnum, "0%d", jfrag);
+	        } else {
+                  sprintf(jnum, "00%d", jfrag);
+	        } 
+  	        sprintf(filename, "%s/fmo_st%sd%s-%s.in", state_directory, snum, inum, jnum);
+	        FILE *fs = fopen(filename, "w");
+	        if (fs == NULL) {
 	    char tmpstr[256];
 	    sprintf(tmpstr, "Failure to write Q-Chem input for file %s", filename);
 	    fmr->error(FLERR, tmpstr);
