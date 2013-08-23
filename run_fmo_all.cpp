@@ -120,15 +120,7 @@ void Run::do_fmo_calculations(int FORCE)
     char snum[16];
     sprintf(snum, "%02d", istate);
     sprintf(state_directory, "state_%02d", istate);
-/*
-    if (istate >= 10) {
-      sprintf(snum, "%d", istate);
-      sprintf(state_directory, "state_%d", istate);
-    } else {
-      sprintf(snum, "0%d", istate);
-      sprintf(state_directory, "state_0%d", istate);
-    }
-*/
+
     // ********** Handle FMO monomers here ************ //
     for (int x=-1; x<=1; x++) {
       for (int y=-1; y<=1; y++) {
@@ -136,19 +128,12 @@ void Run::do_fmo_calculations(int FORCE)
 
 	  for (int ifrag=0; ifrag<nfragments; ++ifrag) {
             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
+
               char filename[256];
               char inum[16];
 
 	      sprintf(inum,"%03d",ifrag);
-/*
-        if (ifrag >= 100) {
-          sprintf(inum, "%d", ifrag);
-        } else if (ifrag >= 10) {
-          sprintf(inum, "0%d", ifrag);
-        } else {
-          sprintf(inum, "00%d", ifrag);
-        }
-*/
+
 	      char cname[16];
 	      sprintf(cname,"cell.%d.%d.%d", x+1, y+1, z+1);
 
@@ -162,7 +147,7 @@ void Run::do_fmo_calculations(int FORCE)
                       state_directory,
                       filename
                      );
-              //printf("Rank %d: %s\n", my_rank, command);
+              printf("Rank %d: %s\n", my_rank, command);
 
               // ** The system call ** //
               ierr = system(command);
@@ -191,11 +176,13 @@ void Run::do_fmo_calculations(int FORCE)
                   //monomer_energies[nfragments*istate + ifrag] = en;
 
 		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-		  monomer_energies[nfragments*27*istate + (nb*nc*nfragments*(x+1)) + (nc*nfragments*(y+1)) + (nfragments*(z+1)) + ifrag] = en;
+		  printf("%d energy\n",nfragments*na*nb*nc*istate + (nb*nc*nfragments*(x+1)) + (nc*nfragments*(y+1)) + (nfragments*(z+1)) + ifrag);
+		  monomer_energies[nfragments*na*nb*nc*istate + (nb*nc*nfragments*(x+1)) + (nc*nfragments*(y+1)) + (nfragments*(z+1)) + ifrag] = en;
 		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	        }
               }
               fclose(fs);
+	      printf("Rank %d: energy\n", my_rank);
 
               if (FORCE) {
                 // ** Get gradient from file ** // 
@@ -212,7 +199,7 @@ void Run::do_fmo_calculations(int FORCE)
                 double gx, gy, gz;
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a QM atom index for this monomer fragment
-                  while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate) ) {
+                  while ( !fmr->atom->AtomInFragment(atnum%natoms, ifrag, istate) ) {
                     atnum++; 
                   }
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
@@ -221,18 +208,16 @@ void Run::do_fmo_calculations(int FORCE)
                     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
                     //
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-				      (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum]   = gx;
-		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-				      (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+1] = gy;
-		    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-				      (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+2] = gz;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
 		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	          }
                   // Increment atnum for the next round
                   atnum++;
                 }
                 fclose(fs);
+		printf("Rank %d: grad\n", my_rank);
 
                 // ** Get field from file ** // 
                 sprintf(output_file, "%s/%s.in.field", state_directory, filename);
@@ -245,7 +230,7 @@ void Run::do_fmo_calculations(int FORCE)
                 atnum = 0; // index of non-QM atom for storing gradient
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                  while ( fmr->atom->AtomInFragment(atnum, ifrag, istate) ) {
+                  while ( fmr->atom->AtomInFragment(atnum%natoms, ifrag, istate) ) {
                     atnum++; 
                   }
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
@@ -259,19 +244,20 @@ void Run::do_fmo_calculations(int FORCE)
                     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+1] = gy; 
                     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*atnum+2] = gz; 
 
+	
+		    printf("%d %d %d %d\n",(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms),(atnum%natoms),atnum,natoms);
 		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-				      (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum]   = gx;
-                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-				      (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+1] = gy;
-                    monomer_gradients[(nfragments*27*istate)*3*natoms + (nb*nc*nfragments*(x+1))*3*natoms + 
-			              (nc*nfragments*(y+1))*3*natoms + (nfragments*(z+1))*3*natoms + ifrag*3*natoms + 3*atnum+2] = gz;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+1) + nc*nfragments*(y+1) + nfragments*(z+1) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 		  }
                   // Increment atnum for the next round
                   atnum++;
                 }
                 fclose(fs);
+		printf("Rank %d: efield\n", my_rank);
+		
               }
 
             }
@@ -280,7 +266,10 @@ void Run::do_fmo_calculations(int FORCE)
 
 	}
       }
-k    }
+    }
+    if (fmr->master_rank) {
+      printf("Finished with FMO monomers.\n");
+    }
 
     // ********** Handle FMO dimers in this loop ************ //
     for (int x=-1; x<=1; x++) {

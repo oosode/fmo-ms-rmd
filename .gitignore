@@ -6,7 +6,3 @@
 
 #ignore all executable files
 *.exe
-
-#ignore all in cproject and project directories
-.cproject
-.project
