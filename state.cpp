@@ -253,6 +253,10 @@ void State::write_qchem_inputs(int jobtype)
     int cellB      = fmr->atom->cellB;
     int cellC      = fmr->atom->cellC;
 
+    int xa	   = fmr->atom->na;
+    int xb         = fmr->atom->nb;
+    int xc 	   = fmr->atom->nc;
+
     // ***** Loop over states ***** //
     for (int istate=0; istate<nstates; ++istate) {
 
@@ -286,9 +290,9 @@ void State::write_qchem_inputs(int jobtype)
       int ierr = system(make_directory);
 
       // *** Monomers *** //
-      for (int x=-1; x<=1; ++x) {
-        for (int y=-1; y<=1; ++y) {
-          for (int z=-1; z<=1; ++z) {
+      for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xc; y<=xb; ++y) {
+          for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
               // Get name of file to open
@@ -360,9 +364,9 @@ void State::write_qchem_inputs(int jobtype)
 
               // $external_charges section
               fprintf(fs, "$external_charges\n");
-              for (int x0=-1; x0<=1; ++x0) {
-                for (int y0=-1; y0<=1; ++y0) {
-                  for (int z0=-1; z0<=1; ++z0) {
+              for (int x0=-xa; x0<=xa; ++x0) {
+                for (int y0=-xc; y0<=xb; ++y0) {
+                  for (int z0=-xc; z0<=xc; ++z0) {
 
                     for (int iatom=0; iatom<natoms; ++iatom) {
                       if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {

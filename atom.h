@@ -37,6 +37,9 @@ class Atom : protected Pointers {
    double cellA;
    double cellB;
    double cellC; 
+   int na;
+   int nb;
+   int nc;
 
    // MM charge parameters
    double qO_SPCE;        // SPC/E charge oxygen 
