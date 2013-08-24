@@ -405,10 +405,10 @@ void Run::do_fmo_calculations(int FORCE)
 
   // *** Reduce the energies from the parallel Q-Chem calls *** //
   double *rbuffer;
-  if (FORCE) rbuffer = new double [MAX_SIZE];
-  else       rbuffer = new double [MAX_SIZE];
-  //if (FORCE) rbuffer = new double [n_dimers_sq*3*natoms]; 
-  //else       rbuffer = new double [n_dimers_sq];
+  //if (FORCE) rbuffer = new double [MAX_SIZE];
+  //else       rbuffer = new double [MAX_SIZE];
+  if (FORCE) rbuffer = new double [n_dimers_sq*3*natoms]; 
+  else       rbuffer = new double [n_dimers_sq];
 
   // Monomers
   for (int i=0; i<n_monomers; ++i) rbuffer[i] = 0.0;

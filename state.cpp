@@ -100,6 +100,7 @@ void State::state_search()
       for (int x=-1; x<=1; ++x) {
         for (int y=-1; y<=1; ++y) {
           for (int z=-1; z<=1; ++z) {
+
             for (int i=0; i<natoms; ++i) {
   	      if (atom->symbol[i] == 'H' && atom->available[i] && atom->reactive[state*natoms + i]) {
 	        for (int j=0; j<natoms; ++j) {
@@ -137,6 +138,7 @@ void State::state_search()
 	        atom->available[i] = 0;
 	      }
             }
+
 	  }
 	}
       }
