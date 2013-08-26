@@ -52,6 +52,22 @@ class Atom : protected Pointers {
    bool AtomInFragment(int iatom, int ifrag, int istate){ 
      return fragment[istate*natoms + iatom] == ifrag;
    }
+   bool AtomInFragment(int iatom, int ifrag, int istate, int icella, int icellb, int icellc) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     int ar =   iatom / (rb*rc*natoms); ar = ar - na; 
+     int br =  (iatom % (rb*rc*natoms)) / (rc*natoms); br = br - nb;
+     int cr = ((iatom % (rb*rc*natoms)) % (rc*natoms)) / natoms; cr = cr - nc;
+     //printf("%d %d %d %d %d %d %d %d\n",ar,br,cr,icella,icellb,icellc,iatom,natoms);
+     //if (ar> na) exit(0);
+
+     if (fragment[istate*natoms + iatom%natoms]==ifrag && ar==icella && br==icellb && cr==icellc) return true;
+
+     return false;
+   }
 
    double getCharge(int iatom, int istate) {
      double mmq = 0.0;

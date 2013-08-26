@@ -197,14 +197,14 @@ void Run::do_fmo_calculations(int FORCE)
                 double gx, gy, gz;
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a QM atom index for this monomer fragment
-                  while ( !fmr->atom->AtomInFragment(atnums, ifrag, istate) ) {
-                    atnum++; 
+                  while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                    atnum++;
                   }
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum]   = gx;                    
-                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum+1] = gy;
-                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum+2] = gz;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;                    
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
 		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 	          }
                   // Increment atnum for the next round
@@ -223,20 +223,20 @@ void Run::do_fmo_calculations(int FORCE)
                 atnum = 0; // index of non-QM atom for storing gradient
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                  while ( fmr->atom->AtomInFragment(atnum, ifrag, istate) ) {
+                  while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
                     atnum++; 
                   }
 	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                     // gx,gy,gz = the electric field
                     // multiply by charge to get force (i.e. negative gradient) on atom
-                    double mmq = fmr->atom->getCharge(atnum, istate);
+                    double mmq = fmr->atom->getCharge(atnum%natoms, istate);
                     gx *= -mmq;
                     gy *= -mmq;
                     gz *= -mmq;
 		    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum]   = gx;
-		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum+1] = gy;
-		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*atnum+2] = gz;
+                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+		    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 		  }
                   // Increment atnum for the next round
@@ -269,7 +269,7 @@ void Run::do_fmo_calculations(int FORCE)
                 //char inum[16];
                 //char jnum[16];
 
-                sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+yb, z+xc);
+                sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
    	        sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
 		        qchem_exec,
                         state_directory,
@@ -305,8 +305,6 @@ void Run::do_fmo_calculations(int FORCE)
 	        while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
 	          if ( sscanf(line, "%lf", &en) == 1 ) {
                     // save symmetrized
-	            //dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag] = en; 
-	            //dimer_energies[nfragments*nfragments*istate + nfragments*jfrag + ifrag] = en; 
 
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                     dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
@@ -332,18 +330,21 @@ void Run::do_fmo_calculations(int FORCE)
                   double gx, gy, gz;
                   while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                     // Advance atnum until it matches as a QM atom index for this dimer fragment
-                    while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate) || 
-                              fmr->atom->AtomInFragment(atnum, jfrag, istate)) ) {
+                    //printf("atnum ifrag istate xa xb xc\n");
+                    //printf("%d %d %d %d %d %d ifrag\n",atnum, ifrag, istate, 0, 0, 0);
+                    //printf("%d %d %d %d %d %d jfrag\n",atnum, jfrag, istate, x, y, z);
+                    while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) || 
+                              fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
                       atnum++; 
                     }
   	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                       // store symmetrically
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum+2] = gz; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum+2] = gz; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
 	            }
                     // Increment atnum for the next round
                     atnum++;
@@ -361,24 +362,24 @@ void Run::do_fmo_calculations(int FORCE)
                   atnum = 0; // index of non-QM atom for storing gradient
                   while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                     // Advance atnum until it matches as a non-QM atom index for this dimer fragment
-                    while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate) || 
-                             fmr->atom->AtomInFragment(atnum, jfrag, istate)) ) {
+                    while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) || 
+                             fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
                       atnum++; 
                     }
  	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                       // gx,gy,gz = the electric field
                       // multiply by charge to get force (i.e. negative gradient) on atom
-                      double mmq = fmr->atom->getCharge(atnum, istate);
+                      double mmq = fmr->atom->getCharge(atnum%natoms, istate);
                       gx *= -mmq;
                       gy *= -mmq;
                       gz *= -mmq;
                       // store symmetrically 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*atnum+2] = gz; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*atnum+2] = gz; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
                     }
                     // Increment atnum for the next round
                     atnum++;
@@ -461,21 +462,37 @@ void Run::do_fmo_calculations(int FORCE)
         printf("Dimer : EIJ EI EJ (EIJ - EI - EJ)\n");
       }
       double en_fmo2 = 0.0;
-      for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-        for (int jfrag=ifrag+1; jfrag<nfragments; ++jfrag) {
-          double etmp = dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag] - 
-                        monomer_energies[nfragments*istate + ifrag] -
-                        monomer_energies[nfragments*istate + jfrag];
-          if (fmr->print_level > 0) {
-            printf("%d--%d : %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag, 
-                    dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag],
-                    monomer_energies[nfragments*istate + ifrag],
-                    monomer_energies[nfragments*istate + jfrag], etmp
-                  );
-          }
-          en_fmo2 += etmp;
+
+      for (int x=-xa; x<=xa; x++) {
+        for (int y=-xc; y<=xb; y++) {
+          for (int z=-xc; z<=xc; z++) {
+
+            for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+              for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+
+		if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+
+                double etmp = dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] - 
+                              monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
+                              monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
+                if (fmr->print_level > 0) {
+                  printf("%d--%d : %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag, 
+			  dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],                            
+                          monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
+                          monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
+                          //dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag],
+                          //monomer_energies[nfragments*istate + ifrag],
+                          //monomer_energies[nfragments*istate + jfrag], etmp
+                        );
+                }
+                en_fmo2 += etmp;
+              }
+            }
+
+	  }
         }
       }
+
       printf("Total dimer energy:   %16.10f\n", en_fmo2);
       fmo_energies[istate] = en_fmo1 + en_fmo2;
       printf("Total FMO energy:     %16.10f\n", en_fmo1 + en_fmo2);
