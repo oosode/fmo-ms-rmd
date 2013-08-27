@@ -30,9 +30,13 @@ Atom::Atom(FMR *fmr) : Pointers(fmr)
   totalMass    		= 1.0;
 
   // periodic boundary conditions	
-  cellA 		= 0;  
-  cellB			= 0;
-  cellC			= 0;
+  cellA 		= 0.0;  
+  cellB			= 0.0;
+  cellC			= 0.0;
+  na			= 0;
+  nb			= 0;
+  nc 			= 0;
+  
 
   // MM charges
   qO_SPCE = -0.8476;

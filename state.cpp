@@ -255,6 +255,10 @@ void State::write_qchem_inputs(int jobtype)
     int cellB      = fmr->atom->cellB;
     int cellC      = fmr->atom->cellC;
 
+    int xa	   = fmr->atom->na;
+    int xb         = fmr->atom->nb;
+    int xc 	   = fmr->atom->nc;
+
     // ***** Loop over states ***** //
     for (int istate=0; istate<nstates; ++istate) {
 
@@ -288,15 +292,15 @@ void State::write_qchem_inputs(int jobtype)
       int ierr = system(make_directory);
 
       // *** Monomers *** //
-      for (int x=-1; x<=1; ++x) {
-        for (int y=-1; y<=1; ++y) {
-          for (int z=-1; z<=1; ++z) {
+      for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xc; y<=xb; ++y) {
+          for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
               // Get name of file to open
               char filename[256];
               //if (ifrag >= 100) {
-              sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, x+1, y+1, z+1);
+              sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
               //} else if (ifrag >= 10) {
               //  sprintf(filename, "%s/fmo_st%sm0%d.in", state_directory, snum, ifrag);
               //} else {
@@ -311,7 +315,7 @@ void State::write_qchem_inputs(int jobtype)
 
               // Comment for labeling
               fprintf(fs, "$comment\n");
-              fprintf(fs, "State %d Monomer %d Cell %d %d %d\n", istate, ifrag, x+1, y+1, z+1);
+              fprintf(fs, "State %d Monomer %d Cell %d %d %d\n", istate, ifrag, x+xa, y+xb, z+xc);
               fprintf(fs, "$end\n\n");
 
               // $rem section
@@ -322,7 +326,7 @@ void State::write_qchem_inputs(int jobtype)
                 fprintf(fs, "jobtype force\n");
               //fprintf(fs, "exchange pbe0\n");
               //fprintf(fs, "basis 6-31+G*\n");
-              fprintf(fs, "basis cc-pvdz\n");
+              //fprintf(fs, "basis cc-pvdz\n");
               fprintf(fs, "basis %s\n", run->basis);
       	      //fprintf(fs, "aux_basis rimp2-cc-pvdz\n");
               //fprintf(fs, "exchange hf\n");
@@ -362,9 +366,9 @@ void State::write_qchem_inputs(int jobtype)
 
               // $external_charges section
               fprintf(fs, "$external_charges\n");
-              for (int x0=-1; x0<=1; ++x0) {
-                for (int y0=-1; y0<=1; ++y0) {
-                  for (int z0=-1; z0<=1; ++z0) {
+              for (int x0=-xa; x0<=xa; ++x0) {
+                for (int y0=-xc; y0<=xb; ++y0) {
+                  for (int z0=-xc; z0<=xc; ++z0) {
 
                     for (int iatom=0; iatom<natoms; ++iatom) {
                       if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
@@ -393,47 +397,33 @@ void State::write_qchem_inputs(int jobtype)
       }
 
       // *** Dimers *** //
-      for (int x=-1; x<=1; ++x) {
-        for (int y=-1; y<=1; ++y) {
-          for (int z=-1; z<=1; ++z) {
-      
+      for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xc; y<=xb; ++y) {
+          for (int z=-xc; z<=xc; ++z) {
+
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
               for (int jfrag=0; jfrag<nfragments; ++jfrag){ 
 
-		// avoid overcounting fragments in the central unit cell
-		if (x==0 && y==0 && z==0 && ifrag >= jfrag) continue;
+		if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
 
-	        // Get name of file to open
+    	        // Get name of file to open
 	        char filename[256];
                 char inum[16];
                 char jnum[16];
-/*
-	        if (ifrag >= 100) {
-                  sprintf(inum, "%d", ifrag);
-	        } else if (ifrag >= 10) {
-                  sprintf(inum, "0%d", ifrag);
-	        } else {
-                  sprintf(inum, "00%d", ifrag);
-	        } 
-	        if (jfrag >= 100) {
-                  sprintf(jnum, "%d", jfrag);
-	        } else if (jfrag >= 10) {
-                  sprintf(jnum, "0%d", jfrag);
-	        } else {
-                  sprintf(jnum, "00%d", jfrag);
-	        } 
-*/
-  	        sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, jfrag, x+1, y+1, z+1);
+
+		sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+
+	        //sprintf(filename, "%s/fmo_st%sd%s-%s.in", state_directory, snum, inum, jnum);
 	        FILE *fs = fopen(filename, "w");
 	        if (fs == NULL) {
-  	          char tmpstr[256];
+	          char tmpstr[256];
 	          sprintf(tmpstr, "Failure to write Q-Chem input for file %s", filename);
 	          fmr->error(FLERR, tmpstr);
 	        }
 
-	        // Comment for labeling
+ 	        // Comment for labeling
 	        fprintf(fs, "$comment\n");
-	        fprintf(fs, "State %d Dimer %d %d Cell %d %d %d\n", istate, ifrag, jfrag, x+1, y+1, z+1);
+	        fprintf(fs, "State %d Dimer %d %d Cell %d %d %d\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
 	        fprintf(fs, "$end\n\n");
 
 	        // $rem section
@@ -449,75 +439,79 @@ void State::write_qchem_inputs(int jobtype)
 	        //fprintf(fs, "aux_basis rimp2-cc-pvdz\n");
 	        fprintf(fs, "exchange %s\n", run->exchange);
 	        //fprintf(fs, "exchange hf\n");
-	  	fprintf(fs, "correlation %s\n", run->correlation);
-	  	//fprintf(fs, "correlation mp2\n");
+	        fprintf(fs, "correlation %s\n", run->correlation);
+	        //fprintf(fs, "correlation mp2\n");
 	
-	  	//fprintf(fs, "correlation rimp2\n");
-	  	fprintf(fs, "scf_convergence 6\n");
-	  	fprintf(fs, "qm_mm true\n");
-	  	fprintf(fs, "print_input true\n");
-	  	fprintf(fs, "sym_ignore true\n");
-	  	fprintf(fs, "no_reorient true\n");
-         	fprintf(fs, "skip_charge_self_interact 1\n");
-          	//fprintf(fs, "gaussian_blur true\n");
-          	// Read previous step MO coeffs?
-          	if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
-	  	fprintf(fs, "$end\n\n");
+	        //fprintf(fs, "correlation rimp2\n");
+	        fprintf(fs, "scf_convergence 6\n");
+	        fprintf(fs, "qm_mm true\n");
+	        fprintf(fs, "print_input true\n");
+	        fprintf(fs, "sym_ignore true\n");
+	        fprintf(fs, "no_reorient true\n");
+                fprintf(fs, "skip_charge_self_interact 1\n");
+                //fprintf(fs, "gaussian_blur true\n");
+                // Read previous step MO coeffs?
+                if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
+	        fprintf(fs, "$end\n\n");
 
-	  	// $molecule section
-	  	fprintf(fs, "$molecule\n");
-	  	if (ifrag == chgfrag || jfrag == chgfrag) {
-	    	  fprintf(fs, "1 1\n");
-	  	} else {
+	        // $molecule section
+	        fprintf(fs, "$molecule\n");
+		if (ifrag == chgfrag && jfrag == chgfrag) {
+		  fprintf(fs, "2 1\n");
+	        } else if (ifrag == chgfrag || jfrag == chgfrag) {
+	          fprintf(fs, "1 1\n");
+	        } else {
 	          fprintf(fs, "0 1\n");
-	  	}
-	  	for (int iatom=0; iatom<natoms; ++iatom) {
-	    	  if (atom->fragment[istate*natoms + iatom] == ifrag) { 
+	        }
+
+		//zeroth unit cell monomer 
+	        for (int iatom=0; iatom<natoms; ++iatom) {
+	          if (atom->fragment[istate*natoms + iatom] == ifrag) {
+                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom],
+                            atom->coord[3*iatom],
+                            atom->coord[3*iatom+1],
+                            atom->coord[3*iatom+2]
+                           );
+		  }
+                }
+
+		//other unit cell monomer
+		for (int iatom=0; iatom<natoms; ++iatom) {
+		  if (atom->fragment[istate*natoms + iatom] == jfrag) {
 	            fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
 		            atom->symbol[iatom],
-		            atom->coord[3*iatom],
-		      	    atom->coord[3*iatom+1],
-		            atom->coord[3*iatom+2]
+		            atom->coord[3*iatom]   + x*cellA,
+		            atom->coord[3*iatom+1] + y*cellB,
+		            atom->coord[3*iatom+2] + z*cellC
 		           );
 	          }
 	        }
-		for (int iatom=0; iatom<natoms; ++iatom) {
-                  if (atom->fragment[istate*natoms + iatom] == jfrag) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom],
-                            atom->coord[3*iatom] + x*cellA,
-                            atom->coord[3*iatom+1] + y*cellB,
-                            atom->coord[3*iatom+2] + z*cellC
-                           );
-                  }
-                }
-
 	        fprintf(fs, "$end\n\n");
 
 	        // $external_charges section
-	  	fprintf(fs, "$external_charges\n");
-		for (int x0=-1; x0<=1; ++x0) {
-		  for (int y0=-1; y0<=1; ++y0) {
-		    for (int z0=-1; z0<=1; ++z0) {
+	        fprintf(fs, "$external_charges\n");
+                for (int x0=-xa; x0<=xa; ++x0) {
+                  for (int y0=-xc; y0<=xb; ++y0) {
+                    for (int z0=-xc; z0<=xc; ++z0) {
 
-	    	      for (int iatom=0; iatom<natoms; ++iatom) {
-	                if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != 0 || y0 != 0 || z0 != 0) {
-			  if (atom->fragment[istate*natoms + iatom] != jfrag || x0 != x || y0 != y || z0 != z) {
+	              for (int iatom=0; iatom<natoms; ++iatom) {
+	                if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
+			  if (atom->fragment[istate*natoms + iatom] != jfrag || x0!=x || y0!=y || z0!=z) {
                             double mmq = atom->getCharge(iatom, istate);
-                    	    //fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf 0.12446\n",
-	            	    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-		                    atom->coord[3*iatom] + x0*cellA,
+	                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+		                    atom->coord[3*iatom]   + x0*cellA,
 		                    atom->coord[3*iatom+1] + y0*cellB,
 		                    atom->coord[3*iatom+2] + z0*cellC,
 		                    mmq
-		                   );
-	                  }
+ 		                   );
+			  }
 	                }
-		      }
+	              }
 
 		    }
 		  }
-		}
+                }
 	        fprintf(fs, "$end\n\n");
    
 	        fclose(fs);

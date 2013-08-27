@@ -57,8 +57,20 @@ void Input::read_input_file()
 
       char arg0[SMALL_LENGTH];
       char arg1[SMALL_LENGTH];
+      char arg2[SMALL_LENGTH];
+      char arg3[SMALL_LENGTH];
 
-      if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
+      if ( sscanf(line, "%s %s %s %s", arg0,arg1,arg2,arg3) == 4) {
+        // Four argument line
+        
+        if ( strcmp(arg0, "Periodic") == 0 ) {
+          printf("Periodic bondary conditions: %d %d %d\n", atoi(arg1),atoi(arg2),atoi(arg3));
+          fmr->atom->na = atoi(arg1);
+          fmr->atom->nb = atoi(arg2);
+          fmr->atom->nc = atoi(arg3);
+        }
+      }
+      else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
         // Two argument line
      
 	if ( strcmp(arg0, "QChem") == 0 ) {
@@ -145,10 +157,6 @@ void Input::read_input_file()
 	  printf("Basis set: %s\n", arg1);
 	  sprintf(fmr->run->basis,"%s",arg1);
 	}
-	else if ( strcmp(arg0, "Periodic") == 0 ) {
-	  printf("Periodic boundary conditions: %s\n", arg1);
-	  //sprintf(fmr->	
-	}
 	else if ( strcmp(arg0, "cellA") == 0 ) {
 	  printf("Cell distance A: %f\n", atof(arg1));
 	  fmr->atom->cellA = atof(arg1);
@@ -213,6 +221,11 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->atom->cellA, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->cellB, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->cellC, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->atom->na, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->atom->nb, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->atom->nc, 1, MPI_INT, MASTER_RANK, fmr->world);
+
+
 }
 
 
