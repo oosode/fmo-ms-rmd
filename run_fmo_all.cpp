@@ -149,7 +149,7 @@ void Run::do_fmo_calculations(int FORCE)
                       state_directory,
                       filename
                      );
-              printf("Rank %d: %s\n", my_rank, command);
+              //printf("Rank %d: %s\n", my_rank, command);
 
               // ** The system call ** //
               ierr = system(command);
@@ -182,7 +182,7 @@ void Run::do_fmo_calculations(int FORCE)
 	        }
               }
               fclose(fs);
-	      printf("Rank %d: energy\n", my_rank);
+	      //printf("Rank %d: energy\n", my_rank);
 
               if (FORCE) {
                 // ** Get gradient from file ** // 
@@ -213,7 +213,7 @@ void Run::do_fmo_calculations(int FORCE)
                   atnum++;
                 }
                 fclose(fs);
-		printf("Rank %d: grad\n", my_rank);
+		//printf("Rank %d: grad\n", my_rank);
 
                 // ** Get field from file ** // 
                 sprintf(output_file, "%s/%s.in.field", state_directory, filename);
@@ -246,7 +246,7 @@ void Run::do_fmo_calculations(int FORCE)
                   atnum++;
                 }
                 fclose(fs);
-		printf("Rank %d: efield\n", my_rank);
+		//printf("Rank %d: efield\n", my_rank);
 		
               }
 
@@ -428,8 +428,6 @@ void Run::do_fmo_calculations(int FORCE)
     printf("Finished with FMO calculations.\n");
   }
 
-  for (int i=0; i<n_dimers_sq; ++i) {printf("%d %f\n",i,dimer_energies[i]);}
-
   // *** Reduce the energies from the parallel Q-Chem calls *** //
   double *rbuffer;
   //if (FORCE) rbuffer = new double [MAX_SIZE];
@@ -459,14 +457,12 @@ void Run::do_fmo_calculations(int FORCE)
 
   delete [] rbuffer;
 
-  for (int i=0; i<n_dimers_sq; ++i) {printf("%d %f\n",i,dimer_energies[i]);}
-
   // *** Compute the FMO energies/forces for each state *** //
   if (fmr->master_rank) {
     for (int istate=0; istate<nstates; ++istate) {
       printf("----- State %4d -----\n", istate);
       if (fmr->print_level > 0) {
-        printf("Monomer : EI\n");
+        printf("Monomer | EI\n");
       }
       double en_fmo1 = 0.0;
       for (int x=-xa; x<=xa; x++) {
@@ -476,7 +472,7 @@ void Run::do_fmo_calculations(int FORCE)
 	    if (x==0 && y==0 && z==0) {
               for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                 if (fmr->print_level > 0) {
- 		  printf("%4d : %16.10f\n", ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
+ 		  printf("FRAG I:%4d | %16.10f\n", ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
                 }
                 en_fmo1 += monomer_energies[nfragments*istate + ifrag];
 	      }
@@ -485,9 +481,9 @@ void Run::do_fmo_calculations(int FORCE)
 	  }
 	}
       }
-      printf("Total monomer energy: %16.10f\n", en_fmo1);
+      printf("Total monomer energy: %16.10f\n\n", en_fmo1);
       if (fmr->print_level > 0) {
-        printf("Dimer : EIJ EI EJ (EIJ - EI - EJ)\n");
+        printf("Dimer | EIJ EI EJ (EIJ - EI - EJ)\n");
       }
       double en_fmo2 = 0.0;
 
@@ -499,12 +495,15 @@ void Run::do_fmo_calculations(int FORCE)
               for (int jfrag=0; jfrag<nfragments; ++jfrag) {
 
 		if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+		
+		//overcount for unit cell 
+		double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
 
                 double etmp = dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] - 
                               monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
                               monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
                 if (fmr->print_level > 0) {
-                  printf("%d--%d : %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag, 
+                  printf("FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag,x,y,z,
 			  dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],                            
                           monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
                           monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
@@ -513,7 +512,7 @@ void Run::do_fmo_calculations(int FORCE)
                           //monomer_energies[nfragments*istate + jfrag], etmp
                         );
                 }
-                en_fmo2 += etmp;
+                en_fmo2 += etmp*oc;
               }
             }
 
@@ -552,22 +551,38 @@ void Run::do_fmo_calculations(int FORCE)
 	  }
         }
         // Dimer force
-        for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-          for (int jfrag=ifrag+1; jfrag<nfragments; ++jfrag) {
-            for (int i=0; i<natoms; ++i) {
-               double tmpx, tmpy, tmpz;
-               gx = dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i];  
-               gy = dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
-               gz = dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
-               gx -= monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i] + 
-                     monomer_gradients[(nfragments*istate + jfrag)*3*natoms + 3*i];
-               gy -= monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+1] + 
-                     monomer_gradients[(nfragments*istate + jfrag)*3*natoms + 3*i+1];
-               gz -= monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+2] + 
-                     monomer_gradients[(nfragments*istate + jfrag)*3*natoms + 3*i+2];
-               fmo_gradients[3*natoms*istate + 3*i]   += gx;
-               fmo_gradients[3*natoms*istate + 3*i+1] += gy;
-               fmo_gradients[3*natoms*istate + 3*i+2] += gz;
+        for (int x=-xa; x<=xa; x++) { 
+          for (int y=-xc; y<=xb; y++) { 
+            for (int z=-xc; z<=xc; z++) {
+
+              for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+                for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+
+		  if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+
+  		  //overcount for unit cell 
+  		  double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
+
+                  for (int i=0; i<natoms; ++i) {
+                    double tmpx, tmpy, tmpz;
+                    gx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];  
+                    gy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
+                    gz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
+
+                    gx -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i] + 
+                          monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
+                    gy -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+1] + 
+                          monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
+                    gz -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+2] + 
+                          monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
+
+                    fmo_gradients[3*natoms*istate + 3*i]   += gx*oc;
+                    fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
+                    fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
+		  }
+		}
+	      }  
+
             }
           }
         }
@@ -625,7 +640,7 @@ void Run::do_fmo_calculations(int FORCE)
 #endif
 
   if (fmr->master_rank) {
-    printf(" Time for FMO: %.4f seconds\n", FMO_end - FMO_start);
+    printf(" Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
     //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
   }
 
