@@ -404,6 +404,8 @@ void Run::do_fmo_calculations(int FORCE)
     printf("Finished with FMO calculations.\n");
   }
 
+  for (int i=0; i<n_dimers_sq; ++i) {printf("%d %f\n",i,dimer_energies[i]);}
+
   // *** Reduce the energies from the parallel Q-Chem calls *** //
   double *rbuffer;
   //if (FORCE) rbuffer = new double [MAX_SIZE];
@@ -432,6 +434,8 @@ void Run::do_fmo_calculations(int FORCE)
   }
 
   delete [] rbuffer;
+
+  for (int i=0; i<n_dimers_sq; ++i) {printf("%d %f\n",i,dimer_energies[i]);}
 
   // *** Compute the FMO energies/forces for each state *** //
   if (fmr->master_rank) {
