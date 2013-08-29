@@ -62,6 +62,10 @@ void State::state_search()
     int cellB      = fmr->atom->cellB;
     int cellC      = fmr->atom->cellC;
 
+    int xa         = fmr->atom->na;
+    int xb         = fmr->atom->nb;
+    int xc         = fmr->atom->nc;
+
     // Initialize availability and reactive fragment
     // Here, we assume that state zero is the pivot state
     for (int i=0; i<natoms; ++i) {
@@ -97,9 +101,9 @@ void State::state_search()
 
       // Loop through atoms of state and attempt to donate
       // hydronium H's to all possible O's within cutoff that are available
-      for (int x=-1; x<=1; ++x) {
-        for (int y=-1; y<=1; ++y) {
-          for (int z=-1; z<=1; ++z) {
+      for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xb; y<=xb; ++y) {
+          for (int z=-xc; z<=xc; ++z) {
 
             for (int i=0; i<natoms; ++i) {
   	      if (atom->symbol[i] == 'H' && atom->available[i] && atom->reactive[state*natoms + i]) {
@@ -278,15 +282,6 @@ void State::write_qchem_inputs(int jobtype)
 
       sprintf(snum, "%02d", istate);
       sprintf(state_directory, "state_%02d", istate);
-/*
-      if (istate >= 10) {
-        sprintf(snum, "%d", istate);
-        sprintf(state_directory, "state_%d", istate);
-      } else {
-        sprintf(snum, "0%d", istate);
-        sprintf(state_directory, "state_0%d", istate);
-      }
-*/
       // Make the directory...
       sprintf(make_directory, "mkdir -p %s", state_directory);
       int ierr = system(make_directory);
@@ -464,18 +459,50 @@ void State::write_qchem_inputs(int jobtype)
 	          fprintf(fs, "0 1\n");
 	        }
 
-		//zeroth unit cell monomer 
-	        for (int iatom=0; iatom<natoms; ++iatom) {
-	          if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom],
-                            atom->coord[3*iatom],
-                            atom->coord[3*iatom+1],
-                            atom->coord[3*iatom+2]
-                           );
-		  }
-                }
+		//zeroth unit cell monomer
+		//
 
+		if (ifrag!=jfrag) { 
+	          for (int iatom=0; iatom<natoms; ++iatom) {
+	            if ((atom->fragment[istate*natoms + iatom] == ifrag) ||
+		        (atom->fragment[istate*natoms + iatom] == jfrag)) {
+
+	 	      int tmpx=0;
+                      int tmpy=0;
+                      int tmpz=0;
+		
+		      if (atom->fragment[istate*natoms + iatom] == jfrag) { tmpx=x; tmpy=y; tmpz=z; }
+                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                              atom->symbol[iatom],
+                              atom->coord[3*iatom]   + tmpx*cellA,
+                              atom->coord[3*iatom+1] + tmpy*cellB,
+                              atom->coord[3*iatom+2] + tmpz*cellC
+                             );
+		    }
+		  }
+		} else {
+		  for (int iatom=0; iatom<natoms; ++iatom) {
+                    if (atom->fragment[istate*natoms + iatom] == jfrag) { 
+		      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                              atom->symbol[iatom],
+                              atom->coord[3*iatom]   + x*cellA,
+                              atom->coord[3*iatom+1] + y*cellB,
+                              atom->coord[3*iatom+2] + z*cellC
+                             );
+		    }
+                  }
+		  for (int iatom=0; iatom<natoms; ++iatom) {
+                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
+                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                              atom->symbol[iatom],
+                              atom->coord[3*iatom],
+                              atom->coord[3*iatom+1],
+                              atom->coord[3*iatom+2]
+                             );
+                    }
+                  }
+		}
+/*
 		//other unit cell monomer
 		for (int iatom=0; iatom<natoms; ++iatom) {
 		  if (atom->fragment[istate*natoms + iatom] == jfrag) {
@@ -487,6 +514,7 @@ void State::write_qchem_inputs(int jobtype)
 		           );
 	          }
 	        }
+*/
 	        fprintf(fs, "$end\n\n");
 
 	        // $external_charges section

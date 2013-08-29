@@ -350,6 +350,7 @@ void Run::do_fmo_calculations(int FORCE)
                               fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
                       atnum++; 
                     }
+
   	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                       // store symmetrically for zeroth unit cell
 		      if (x==0 && y==0 && z==0) {
@@ -360,9 +361,10 @@ void Run::do_fmo_calculations(int FORCE)
                         dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
                         dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
 		      } else {
-                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   += gx;
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] += gy;
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] += gz;
+
 		      }
 	            }
                     // Increment atnum for the next round
@@ -394,12 +396,12 @@ void Run::do_fmo_calculations(int FORCE)
                       gz *= -mmq;
                       // store symmetrically for zeroth unit cell
                       if (x==0 && y==0 && z==0) { 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
-                      dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy; 
+                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz; 
 		      } else {
 			dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
                         dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
@@ -418,6 +420,9 @@ void Run::do_fmo_calculations(int FORCE)
 
 	}
       }
+    }
+    if (fmr->master_rank) {
+      printf("Finished with FMO dimers.\n");
     }
   }
 
@@ -466,7 +471,7 @@ void Run::do_fmo_calculations(int FORCE)
       }
       double en_fmo1 = 0.0;
       for (int x=-xa; x<=xa; x++) {
-        for (int y=-xc; y<=xb; y++) {
+        for (int y=-xb; y<=xb; y++) {
           for (int z=-xc; z<=xc; z++) {
 
 	    if (x==0 && y==0 && z==0) {
@@ -488,7 +493,7 @@ void Run::do_fmo_calculations(int FORCE)
       double en_fmo2 = 0.0;
 
       for (int x=-xa; x<=xa; x++) {
-        for (int y=-xc; y<=xb; y++) {
+        for (int y=-xb; y<=xb; y++) {
           for (int z=-xc; z<=xc; z++) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag) {
@@ -531,7 +536,7 @@ void Run::do_fmo_calculations(int FORCE)
         gx = gy = gz = 0.0;
         // Monomer force
         for (int x=-xa; x<=xa; x++) {
-          for (int y=-xc; y<=xb; y++) {
+          for (int y=-xb; y<=xb; y++) {
             for (int z=-xc; z<=xc; z++) {
 
 	      if (x==0 && y==0 && z==0) {
@@ -552,7 +557,7 @@ void Run::do_fmo_calculations(int FORCE)
         }
         // Dimer force
         for (int x=-xa; x<=xa; x++) { 
-          for (int y=-xc; y<=xb; y++) { 
+          for (int y=-xb; y<=xb; y++) { 
             for (int z=-xc; z<=xc; z++) {
 
               for (int ifrag=0; ifrag<nfragments; ++ifrag) {
@@ -595,33 +600,58 @@ void Run::do_fmo_calculations(int FORCE)
     MPI_Bcast(fmo_gradients, nstates*3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   }
 
-#ifdef FMR_DEBUG
+//#ifdef FMR_DEBUG
   if (fmr->master_rank && FORCE) {
-    printf("Monomer gradients:\n");
-    for (int istate=0; istate<nstates; ++istate) {
-      for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-        printf("State %d fragment %d:\n", istate, ifrag);
-        for (int i=0; i<natoms; ++i) {
-          printf("%3d %12.8f %12.8f %12.8f\n", i, 
-                 monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i],
-                 monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+1],
-                 monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+2]
-                );
+    for (int x=-xa; x<=xa; x++) {
+      for (int y=-xb; y<=xb; y++) {
+        for (int z=-xc; z<=xc; z++) {
+          printf("Monomer gradients:\n");
+          for (int istate=0; istate<nstates; ++istate) {
+            for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+              printf("State %d fragment %d cell %d %d %d:\n", istate, ifrag, x, y, z);
+              for (int i=0; i<natoms; ++i) {
+                printf("%3d %12.8f %12.8f %12.8f\n", i, 
+		       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i],
+		       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+1],
+		       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+2]
+
+                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i],
+                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+1],
+                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+2]
+                      );
+	      }
+	    }
+	  }
         }
       }
     }
     printf("Dimer gradients:\n");
-    for (int istate=0; istate<nstates; ++istate) {
-      for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-        for (int jfrag=ifrag+1; jfrag<nfragments; ++jfrag) {
-          printf("State %d fragments %d--%d:\n", istate, ifrag, jfrag);
-          for (int i=0; i<natoms; ++i) {
-            printf("%3d %12.8f %12.8f %12.8f\n", i, 
-                    dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i],  
-                    dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
-                    dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
-                  );
+    for (int x=-xa; x<=xa; x++) {
+      for (int y=-xb; y<=xb; y++) {
+        for (int z=-xc; z<=xc; z++) {
+
+          for (int istate=0; istate<nstates; ++istate) {
+            for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+              for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+
+		if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+
+                printf("State %d fragments %d--%d cell %d %d %d:\n", istate, ifrag, jfrag, x, y, z);
+                for (int i=0; i<natoms; ++i) {
+                  printf("%3d %12.8f %12.8f %12.8f\n", i, 
+			 dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i],
+			 dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
+			 dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
+
+                         //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i],  
+                         //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
+                         //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
+                        );
+	        }
+	      }
+	    }
           }
+
         }
       }
     }
@@ -637,12 +667,11 @@ void Run::do_fmo_calculations(int FORCE)
       }
     }
   }
-#endif
+//#endif
 
   if (fmr->master_rank) {
     printf(" Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
     //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
   }
-
 }
 
