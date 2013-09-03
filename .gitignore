@@ -10,3 +10,4 @@
 #ignore all in cproject and project directories
 .cproject
 .project
+.nfs*

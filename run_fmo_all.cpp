@@ -259,9 +259,6 @@ void Run::do_fmo_calculations(int FORCE)
 	}
       }
     }
-    if (fmr->master_rank) {
-      printf("Finished with FMO monomers.\n");
-    }
 
     // ********** Handle FMO dimers in this loop ************ //
     for (int x=-xa; x<=xa; x++) {
@@ -428,16 +425,13 @@ void Run::do_fmo_calculations(int FORCE)
 	}
       }
     }
-    if (fmr->master_rank) {
-      printf("Finished with FMO dimers.\n");
-    }
   }
 
   // Clock
   double FMO_end = MPI_Wtime();
   MPI_Barrier(fmr->world);
   if (fmr->master_rank) {
-    printf("Finished with FMO calculations.\n");
+    printf("Finished with FMO calculations.\n\n");
   }
 
   // *** Reduce the energies from the parallel Q-Chem calls *** //
@@ -470,11 +464,15 @@ void Run::do_fmo_calculations(int FORCE)
   delete [] rbuffer;
 
   // *** Compute the FMO energies/forces for each state *** //
+  
+  
+  FILE *fs = fopen("fmr_calc.log", "a");
+    
   if (fmr->master_rank) {
     for (int istate=0; istate<nstates; ++istate) {
       printf("----- State %4d -----\n", istate);
       if (fmr->print_level > 0) {
-        printf("Monomer | EI\n");
+        fprintf(fs,"Monomer | EI\n");
       }
       double en_fmo1 = 0.0;
       for (int x=-xa; x<=xa; x++) {
@@ -484,7 +482,7 @@ void Run::do_fmo_calculations(int FORCE)
 	    if (x==0 && y==0 && z==0) {
               for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                 if (fmr->print_level > 0) {
- 		  printf("FRAG I:%4d | %16.10f\n", ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
+ 		  fprintf(fs,"FRAG I:%4d | %16.10f\n", ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
                 }
                 en_fmo1 += monomer_energies[nfragments*istate + ifrag];
 	      }
@@ -495,7 +493,7 @@ void Run::do_fmo_calculations(int FORCE)
       }
       printf("Total monomer energy: %16.10f\n\n", en_fmo1);
       if (fmr->print_level > 0) {
-        printf("Dimer | EIJ EI EJ (EIJ - EI - EJ)\n");
+        fprintf(fs,"Dimer | EIJ EI EJ (EIJ - EI - EJ)\n");
       }
       double en_fmo2 = 0.0;
 
@@ -515,7 +513,7 @@ void Run::do_fmo_calculations(int FORCE)
                               monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
                               monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
                 if (fmr->print_level > 0) {
-                  printf("FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag,x,y,z,
+                  fprintf(fs,"FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag,x,y,z,
 			  dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],                            
                           monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
                           monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
@@ -537,7 +535,6 @@ void Run::do_fmo_calculations(int FORCE)
       printf("Total FMO energy:     %16.10f\n", en_fmo1 + en_fmo2);
       printf("----------------------\n");
 
-      //FILE *fs = fopen("menu.csv", "w");
       // ** Do forces for this state ** //
       if (FORCE) {
         double gx, gy, gz;
@@ -612,7 +609,6 @@ void Run::do_fmo_calculations(int FORCE)
 		    //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dz,m1z,m2z,gz);
 
 		  }
-//		  fprintf(fs,"\n");
 		}
 	      }  
 
@@ -622,7 +618,8 @@ void Run::do_fmo_calculations(int FORCE)
       }
     }
   }
-//  fclose(fs);
+  fprintf(fs,"\n");
+  fclose(fs);
   // Broadcast the FMO energy/force to worker ranks
   MPI_Bcast(fmo_energies, nstates, MPI_DOUBLE, MASTER_RANK, fmr->world);
   if (FORCE) {

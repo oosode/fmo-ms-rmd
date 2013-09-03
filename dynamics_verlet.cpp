@@ -132,6 +132,7 @@ void Dynamics::stepReport(int istep)
   writeTrajCoords(iCurrentStep);
   //writeTrajCoords(istep);
   /*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/
+  if (fmr->atom->na || fmr->atom->nb || fmr->atom->nc) { printf("/*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/"); }
 
   // ** Write restart file ** //
   fmr->input->write_restart_file();
