@@ -61,6 +61,7 @@ class Atom : protected Pointers {
      int rb = 2*nb+1;
      int rc = 2*nc+1;
 
+     // seems unnecessary
      int statesize = ra*rb*rc*natoms;
 
      int ar =   (iatom % statesize) / (rb*rc*natoms); 			       	ar = ar - na; 
@@ -79,6 +80,7 @@ class Atom : protected Pointers {
      int rb = 2*bfield + 1;
      int rc = 2*cfield + 1;
 
+     //seems unnecessary
      int statesize = ra*rb*rc*natoms;
 
      int ar =   (iatom % statesize) / (rb*rc*natoms); 				ar = ar - afield;
@@ -99,6 +101,20 @@ class Atom : protected Pointers {
      int br =  (iatom % (rb*rc*natoms)) / (rc*natoms); br = br - nb;
      int cr = ((iatom % (rb*rc*natoms)) % (rc*natoms)) / natoms; cr = cr - nc;
      
+     if (ar==icella && br==icellb && cr==icellc) return true;
+
+     return false;
+   }
+   bool AtomInCell(int iatom, int istate, int icella, int icellb, int icellc, int afield, int bfield, int cfield) {
+
+     int ra = 2*afield+1;
+     int rb = 2*bfield+1;
+     int rc = 2*cfield+1;
+
+     int ar =   iatom / (rb*rc*natoms); 				ar = ar - afield;
+     int br =  (iatom % (rb*rc*natoms)) / (rc*natoms); 			br = br - bfield;
+     int cr = ((iatom % (rb*rc*natoms)) % (rc*natoms)) / natoms; 	cr = cr - cfield;
+
      if (ar==icella && br==icellb && cr==icellc) return true;
 
      return false;

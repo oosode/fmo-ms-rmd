@@ -235,10 +235,15 @@ void Run::do_fmo_calculations(int FORCE)
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a non-QM atom index for this monomer fragment
                   while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
+		  //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
                     atnum++; 
                   }
-		  if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
-  	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+		  
+		  //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
+	
+  	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+
+		    if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {	
                       // gx,gy,gz = the electric field
                       // multiply by charge to get force (i.e. negative gradient) on atom
                       double mmq = fmr->atom->getCharge(atnum%natoms, istate);
@@ -391,6 +396,8 @@ void Run::do_fmo_calculations(int FORCE)
                   atnum = 0; // index of non-QM atom for storing gradient
                   while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                     // Advance atnum until it matches as a non-QM atom index for this dimer fragment
+                    //while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
+                    //         fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
                     while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0, afield, bfield, cfield) || 
                              fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z, afield, bfield, cfield)) ) {
                       atnum++; 
@@ -398,7 +405,7 @@ void Run::do_fmo_calculations(int FORCE)
 
  	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
 
-		      if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
+		      if (fmr->atom->AtomInCell(atnum,istate,0,0,0,afield,bfield,cfield)) {
                         // gx,gy,gz = the electric field
                         // multiply by charge to get force (i.e. negative gradient) on atom
                         double mmq = fmr->atom->getCharge(atnum%natoms, istate);
