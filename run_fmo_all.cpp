@@ -38,6 +38,10 @@ void Run::do_fmo_calculations(int FORCE)
   int xb	 = fmr->atom->nb;
   int xc 	 = fmr->atom->nc;
 
+  int afield	 = 2*fmr->atom->afield + 1;
+  int bfield	 = 2*fmr->atom->bfield + 1;
+  int cfield	 = 2*fmr->atom->cfield + 1; 
+
   n_monomers = nstates * nfragments * na*nb*nc;
   // Assuming all states have equal number of dimers, for now
   n_dimers = nstates * (nf2 * (na*nb*nc-1) + (nfragments * (nfragments-1)) / 2);
@@ -226,7 +230,7 @@ void Run::do_fmo_calculations(int FORCE)
                 atnum = 0; // index of non-QM atom for storing gradient
                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                   // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                  while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                  while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
                     atnum++; 
                   }
 		  if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
@@ -383,8 +387,8 @@ void Run::do_fmo_calculations(int FORCE)
                   atnum = 0; // index of non-QM atom for storing gradient
                   while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                     // Advance atnum until it matches as a non-QM atom index for this dimer fragment
-                    while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) || 
-                             fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
+                    while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0, afield, bfield, cfield) || 
+                             fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z, afield, bfield, cfield)) ) {
                       atnum++; 
                     }
 

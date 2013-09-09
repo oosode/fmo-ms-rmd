@@ -66,6 +66,10 @@ void State::state_search()
     int xb         = fmr->atom->nb;
     int xc         = fmr->atom->nc;
 
+    int afield	   = fmr->atom->afield;
+    int bfield	   = fmr->atom->bfield;
+    int cfield     = fmr->atom->cfield;
+
     // Initialize availability and reactive fragment
     // Here, we assume that state zero is the pivot state
     for (int i=0; i<natoms; ++i) {
@@ -263,6 +267,10 @@ void State::write_qchem_inputs(int jobtype)
     int xb         = fmr->atom->nb;
     int xc 	   = fmr->atom->nc;
 
+    int afield     = fmr->atom->afield;
+    int bfield     = fmr->atom->bfield;
+    int cfield     = fmr->atom->cfield;
+
     // ***** Loop over states ***** //
     for (int istate=0; istate<nstates; ++istate) {
 
@@ -288,7 +296,7 @@ void State::write_qchem_inputs(int jobtype)
 
       // *** Monomers *** //
       for (int x=-xa; x<=xa; ++x) {
-        for (int y=-xc; y<=xb; ++y) {
+        for (int y=-xb; y<=xb; ++y) {
           for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
@@ -361,9 +369,9 @@ void State::write_qchem_inputs(int jobtype)
 
               // $external_charges section
               fprintf(fs, "$external_charges\n");
-              for (int x0=-xa; x0<=xa; ++x0) {
-                for (int y0=-xc; y0<=xb; ++y0) {
-                  for (int z0=-xc; z0<=xc; ++z0) {
+              for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                  for (int z0=-cfield; z0<=cfield; ++z0) {
 
                     for (int iatom=0; iatom<natoms; ++iatom) {
                       if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
@@ -393,7 +401,7 @@ void State::write_qchem_inputs(int jobtype)
 
       // *** Dimers *** //
       for (int x=-xa; x<=xa; ++x) {
-        for (int y=-xc; y<=xb; ++y) {
+        for (int y=-xb; y<=xb; ++y) {
           for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
@@ -490,136 +498,14 @@ void State::write_qchem_inputs(int jobtype)
                            );
 		  }
 		}
-/*
-		for (int iatom=0; iatom<natoms; ++iatom) {
 
-		  if (atom->fragment[istate*natoms + iatom] == jfrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + x*cellA,
-                              atom->coord[3*iatom+1] + y*cellB,
-                              atom->coord[3*iatom+2] + z*cellC
-                             );
-
-		}
-
-
-		if (posi>posj) {
-
-                  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == jfrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + x*cellA,
-                              atom->coord[3*iatom+1] + y*cellB,
-                              atom->coord[3*iatom+2] + z*cellC
-                             );
-                    }
-                  }
-                  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom],
-                              atom->coord[3*iatom+1],
-                              atom->coord[3*iatom+2]
-                             );
-                    }
-                  }
-
-		} else if (posj>posi) {
-
-                  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + x*cellA,
-                              atom->coord[3*iatom+1] + y*cellB,
-                              atom->coord[3*iatom+2] + z*cellC
-                             );
-                    }
-                  }
-                  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == jfrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + x*cellA,
-                              atom->coord[3*iatom+1] + y*cellB,
-                              atom->coord[3*iatom+2] + z*cellC
-                             );
-                    }
-                  }
-
-		} else {
-		  char tmpstr[256];
-                  sprintf(tmpstr, "Failure to write Q-Chem input for file %s", filename);
-                  fmr->error(FLERR, tmpstr); 
-		}
-	
-		if (ifrag!=jfrag) { 
-	          for (int iatom=0; iatom<natoms; ++iatom) {
-	            if ((atom->fragment[istate*natoms + iatom] == ifrag) ||
-		        (atom->fragment[istate*natoms + iatom] == jfrag)) {
-
-		      if (getAtomPosition(istate,x,y,z,iatom) 
-
-	 	      int tmpx=0;
-                      int tmpy=0;
-                      int tmpz=0;
-			
-		      if (atom->fra	
-		      if (atom->fragment[istate*natoms + iatom] == jfrag) { tmpx=x; tmpy=y; tmpz=z; }
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + tmpx*cellA,
-                              atom->coord[3*iatom+1] + tmpy*cellB,
-                              atom->coord[3*iatom+2] + tmpz*cellC
-                             );
-		    }
-		  }
-		} else {
-		  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == jfrag) { 
-		      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom]   + x*cellA,
-                              atom->coord[3*iatom+1] + y*cellB,
-                              atom->coord[3*iatom+2] + z*cellC
-                             );
-		    }
-                  }
-		  for (int iatom=0; iatom<natoms; ++iatom) {
-                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                      fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                              atom->symbol[iatom],
-                              atom->coord[3*iatom],
-                              atom->coord[3*iatom+1],
-                              atom->coord[3*iatom+2]
-                             );
-                    }
-                  }
-		}
-*/
-/*
-		//other unit cell monomer
-		for (int iatom=0; iatom<natoms; ++iatom) {
-		  if (atom->fragment[istate*natoms + iatom] == jfrag) {
-	            fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-		            atom->symbol[iatom],
-		            atom->coord[3*iatom]   + x*cellA,
-		            atom->coord[3*iatom+1] + y*cellB,
-		            atom->coord[3*iatom+2] + z*cellC
-		           );
-	          }
-	        }
-*/
 	        fprintf(fs, "$end\n\n");
 
 	        // $external_charges section
 	        fprintf(fs, "$external_charges\n");
-                for (int x0=-xa; x0<=xa; ++x0) {
-                  for (int y0=-xc; y0<=xb; ++y0) {
-                    for (int z0=-xc; z0<=xc; ++z0) {
+                for (int x0=-afield; x0<=afield; ++x0) {
+                  for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
 
 	              for (int iatom=0; iatom<natoms; ++iatom) {
 	                if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {

@@ -40,6 +40,9 @@ class Atom : protected Pointers {
    int na;
    int nb;
    int nc;
+   int afield;
+   int bfield;
+   int cfield;
 
    // MM charge parameters
    double qO_SPCE;        // SPC/E charge oxygen 
@@ -58,14 +61,32 @@ class Atom : protected Pointers {
      int rb = 2*nb+1;
      int rc = 2*nc+1;
 
-     int ar =   iatom / (rb*rc*natoms); ar = ar - na; 
-     int br =  (iatom % (rb*rc*natoms)) / (rc*natoms); br = br - nb;
-     int cr = ((iatom % (rb*rc*natoms)) % (rc*natoms)) / natoms; cr = cr - nc;
+     int statesize = ra*rb*rc*natoms;
+
+     int ar =   (iatom % statesize) / (rb*rc*natoms); 			       	ar = ar - na; 
+     int br =  ((iatom % statesize) % (rb*rc*natoms)) / (rc*natoms); 		br = br - nb;
+     int cr = (((iatom % statesize) % (rb*rc*natoms)) % (rc*natoms)) / natoms; 	cr = cr - nc;
      //printf("%d %d %d %d %d %d %d %d\n",ar,br,cr,icella,icellb,icellc,iatom,natoms);
      //if (ar> na) exit(0);
 
      if (fragment[istate*natoms + iatom%natoms]==ifrag && ar==icella && br==icellb && cr==icellc) return true;
 
+     return false;
+   }
+   bool AtomInFragment(int iatom, int ifrag, int istate, int icella, int icellb, int icellc, int afield, int bfield, int cfield) {
+
+     int ra = 2*afield + 1;
+     int rb = 2*bfield + 1;
+     int rc = 2*cfield + 1;
+
+     int statesize = ra*rb*rc*natoms;
+
+     int ar =   (iatom % statesize) / (rb*rc*natoms); 				ar = ar - afield;
+     int br =  ((iatom % statesize) % (rb*rc*natoms)) / (rc*natoms); 		br = br - bfield;
+     int cr = (((iatom % statesize) % (rb*rc*natoms)) % (rc*natoms)) / natoms; 	cr = cr - cfield;
+     //
+     if (fragment[istate*natoms + iatom%natoms]==ifrag && ar==icella && br==icellb && cr==icellc) return true;
+     
      return false;
    }
    bool AtomInCell(int iatom, int istate, int icella, int icellb, int icellc) {

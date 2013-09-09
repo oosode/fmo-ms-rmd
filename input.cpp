@@ -69,6 +69,12 @@ void Input::read_input_file()
           fmr->atom->nb = atoi(arg2);
           fmr->atom->nc = atoi(arg3);
         }
+        else if ( strcmp(arg0, "Field") == 0 ) {
+	  printf("Embedding field: %d %d %d\n",atoi(arg1),atoi(arg2),atoi(arg3));
+	  fmr->atom->afield = atoi(arg1);
+	  fmr->atom->bfield = atoi(arg2);
+          fmr->atom->cfield = atoi(arg3);
+        }
       }
       else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
         // Two argument line
@@ -224,7 +230,9 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->atom->na, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->nb, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->nc, 1, MPI_INT, MASTER_RANK, fmr->world);
-
+  MPI_Bcast(&fmr->atom->afield, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->atom->bfield, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->atom->cfield, 1, MPI_INT, MASTER_RANK, fmr->world);
 
 }
 
