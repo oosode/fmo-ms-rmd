@@ -38,9 +38,13 @@ void Run::do_fmo_calculations(int FORCE)
   int xb	 = fmr->atom->nb;
   int xc 	 = fmr->atom->nc;
 
-  int afield	 = 2*fmr->atom->afield + 1;
-  int bfield	 = 2*fmr->atom->bfield + 1;
-  int cfield	 = 2*fmr->atom->cfield + 1; 
+  int nafield	 = 2*fmr->atom->afield + 1;
+  int nbfield	 = 2*fmr->atom->bfield + 1;
+  int ncfield	 = 2*fmr->atom->cfield + 1; 
+
+  int afield     = fmr->atom->afield;
+  int bfield     = fmr->atom->bfield;
+  int cfield     = fmr->atom->cfield;
 
   n_monomers = nstates * nfragments * na*nb*nc;
   // Assuming all states have equal number of dimers, for now
@@ -129,7 +133,7 @@ void Run::do_fmo_calculations(int FORCE)
 
     // ********** Handle FMO monomers here ************ //
     for (int x=-xa; x<=xa; x++) {
-      for (int y=-xc; y<=xb; y++) {
+      for (int y=-xb; y<=xb; y++) {
         for (int z=-xc; z<=xc; z++) {
 
 	  for (int ifrag=0; ifrag<nfragments; ++ifrag) {
@@ -266,7 +270,7 @@ void Run::do_fmo_calculations(int FORCE)
 
     // ********** Handle FMO dimers in this loop ************ //
     for (int x=-xa; x<=xa; x++) {
-      for (int y=-xc; y<=xb; y++) {
+      for (int y=-xb; y<=xb; y++) {
         for (int z=-xc; z<=xc; z++) {
 
           for (int ifrag=0; ifrag<nfragments; ++ifrag) {
