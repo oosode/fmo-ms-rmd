@@ -25,7 +25,8 @@ Dynamics::Dynamics(FMR *fmr) : Pointers(fmr)
   EKinetic           = 0.0;
   ETotal             = 0.0;
   vseed              = -1; // deafult to using timestamp, read in otherwise if desired
-  sprintf(trajFile, "%s", "fmr_traj.xyz"); // default file name 
+  sprintf(trajFile, "%s", "fmr_traj.xyz"); // default file name
+  sprintf(enerFile, "%s", "fmr_ener.log"); // default file name 
   tau                = 0.5; // default, femtoseconds
 }
 
@@ -129,6 +130,46 @@ void Dynamics::writeTrajCoords(int mode)
   }
 }
 
+/*-----------------------------------------------------------------
+  Write the current energies, temperature  and timestep to 
+  the output file. Mode 0 = write new file
+  any other mode = append to current file
+  same as write writeTrajCoords
+-----------------------------------------------------------------*/
+
+void Dynamics::WriteStepEner(int mode)
+{
+  if (fmr->master_rank) {
+    int natoms    = fmr->atom->natoms;
+    double *coord = fmr->atom->coord;
+    double *veloc = fmr->atom->veloc;
+    FILE *fs;
+
+    // Check mode
+    if (mode == 0) fs = fopen(enerFile, "w");
+    else           fs = fopen(enerFile, "a");
+    if (fs == NULL) {
+      char tmpstr[256];
+      sprintf(tmpstr, "Failure to write to energy file %s", enerFile);
+      fmr->error(FLERR, tmpstr);
+    }
+
+    // Print header
+    if (mode == 0) fprintf(fs, "# %20s %20s %20s %20s %20s %20s %20s\n",
+			       "StepNumber","Time[fs]","Kin.[a.u.]","Temp[K]","Pot.[a.u.]","Cons Qty[a.u.]","UsedTime[s]");
+    
+    fprintf(fs, "  %20d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f\n",
+                mode,
+                mode*0.1,
+		EKinetic,
+                currentTemperature,
+                EPotential,
+		ETotal,
+                1.1);   
+
+    fclose(fs);
+  }
+}
 
 /*-----------------------------------------------------------------
   Subtracts translational and angular momentum from velocity 

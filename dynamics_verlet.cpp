@@ -131,6 +131,7 @@ void Dynamics::stepReport(int istep)
   /*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/
   writeTrajCoords(iCurrentStep);
   //writeTrajCoords(istep);
+  WriteStepEner(iCurrentStep);
   /*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/
   if (fmr->atom->na || fmr->atom->nb || fmr->atom->nc) { }
 
