@@ -40,6 +40,7 @@ class Dynamics : protected Pointers {
    char   trajFile[256];          // File to write trajectory to
    char   enerFile[256];
    double tau;                    // Thermostat time constant, used in Berendsen and Langevin
+   double stepTime;		  // Time to calculate single time step
 
    // ** Functions ** //
    void   init();                   // Initializer function, calls others to set up MD run

@@ -23,6 +23,11 @@ void Dynamics::runMolecularDynamics()
   // *** The loop *** //
   for (int istep=0; istep<nTimeSteps; ++istep) {
 
+
+    // ** Start clock ** //
+    MPI_Barrier(fmr->world);
+    double clock_start_dynamics = MPI_Wtime();
+
     // Increment global time step index, which may have been read in
     iCurrentStep++;
     
@@ -51,6 +56,11 @@ void Dynamics::runMolecularDynamics()
 
     // ** Handle thermostating ** //
     applyThermostat();
+
+    // ** Stop clock ** //
+    MPI_Barrier(fmr->world);
+    double clock_end_dynamics = MPI_Wtime();
+    stepTime = clock_end_dynamics - clock_start_dynamics;
 
     // ** Reporting for step ** //
     stepReport(istep+1);

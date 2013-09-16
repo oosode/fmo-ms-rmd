@@ -28,6 +28,7 @@ Dynamics::Dynamics(FMR *fmr) : Pointers(fmr)
   sprintf(trajFile, "%s", "fmr_traj.xyz"); // default file name
   sprintf(enerFile, "%s", "fmr_ener.log"); // default file name 
   tau                = 0.5; // default, femtoseconds
+  stepTime	     = 0.0;
 }
 
 /*-----------------------------------------------------------------
@@ -155,17 +156,17 @@ void Dynamics::WriteStepEner(int mode)
     }
 
     // Print header
-    if (mode == 0) fprintf(fs, "# %20s %20s %20s %20s %20s %20s %20s\n",
+    if (mode == 0) fprintf(fs, "# %10s %20s %20s %20s %20s %20s %20s\n",
 			       "StepNumber","Time[fs]","Kin.[a.u.]","Temp[K]","Pot.[a.u.]","Cons Qty[a.u.]","UsedTime[s]");
     
-    fprintf(fs, "  %20d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f\n",
+    fprintf(fs, "  %10d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f\n",
                 mode,
-                mode*0.1,
+                mode*dt/fmr->math->fem2au,
 		EKinetic,
                 currentTemperature,
                 EPotential,
 		ETotal,
-                1.1);   
+                stepTime);   
 
     fclose(fs);
   }
