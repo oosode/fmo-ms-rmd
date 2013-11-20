@@ -136,6 +136,11 @@ void Run::do_fmo_calculations(int FORCE)
       for (int y=-xb; y<=xb; y++) {
         for (int z=-xc; z<=xc; z++) {
 
+          //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+          //if (abs(x)!=abs(y) || abs(y)!=abs(z) || abs(x)!=abs(z)) continue;
+          //if (x==abs(xa) && y==abs(xb) && z==abs(xc)) continue;
+          //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+
 	  for (int ifrag=0; ifrag<nfragments; ++ifrag) {
             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
 
@@ -277,6 +282,11 @@ void Run::do_fmo_calculations(int FORCE)
     for (int x=-xa; x<=xa; x++) {
       for (int y=-xb; y<=xb; y++) {
         for (int z=-xc; z<=xc; z++) {
+
+	  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+          //if (x!=abs(xa) && y==abs(xb) && z==abs(xc)) continue;
+	  //if (abs(x)!=abs(y) || abs(y)!=abs(z) || abs(x)!=abs(z)) continue;
+	  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 
           for (int ifrag=0; ifrag<nfragments; ++ifrag) {
             for (int jfrag=0; jfrag<nfragments; ++jfrag) {
@@ -431,7 +441,7 @@ void Run::do_fmo_calculations(int FORCE)
                     atnum++;
                   }
                   fclose(fs);
-                }
+                } 
 	      }
               ++index_dim;
             }
@@ -641,7 +651,7 @@ void Run::do_fmo_calculations(int FORCE)
     MPI_Bcast(fmo_gradients, nstates*3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   }
 
-#ifdef FMR_DEBUG
+//#ifdef FMR_DEBUG
   if (fmr->master_rank && FORCE) {
     for (int x=-xa; x<=xa; x++) {
       for (int y=-xb; y<=xb; y++) {
@@ -708,7 +718,7 @@ void Run::do_fmo_calculations(int FORCE)
       }
     }
   }
-#endif
+//#endif
 
   if (fmr->master_rank) {
     printf(" Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);

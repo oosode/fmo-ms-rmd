@@ -29,6 +29,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    sprintf(correlation, "%s", "mp2");
    sprintf(exchange, "%s", "hf");
    sprintf(basis, "%s", "cc-pVDZ");
+   sprintf(algorithm, "%s", "diis");
 
    n_monomers = 0;
    n_dimers   = 0;

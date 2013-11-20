@@ -131,6 +131,61 @@ void Dynamics::writeTrajCoords(int mode)
   }
 }
 
+void Dynamics::writePBCTrajCoords(int mode)
+{
+  if (fmr->master_rank) {
+    int natoms     = fmr->atom->natoms;
+
+    int xa = fmr->atom->na;
+    int xb = fmr->atom->nb;
+    int xc = fmr->atom->nc;
+
+    int na = 2*xa + 1;
+    int nb = 2*xb + 1;
+    int nc = 2*xc + 1;
+
+    double cellA = fmr->atom->cellA;
+    double cellB = fmr->atom->cellB;
+    double cellC = fmr->atom->cellC;
+
+    int totalatoms = natoms*na*nb*nc;
+
+    double *coord = fmr->atom->coord;
+    double *veloc = fmr->atom->veloc;
+    FILE *fs;
+
+    // Check mode
+    if (mode == 0) fs = fopen("fmr_pbc_traj.xyz", "w");
+    else           fs = fopen("fmr_pbc_traj.xyz", "a");
+    if (fs == NULL) {
+      char tmpstr[256];
+      sprintf(tmpstr, "Failure to write to trajectory file %s", trajFile);
+      fmr->error(FLERR, tmpstr);
+    }
+
+
+    fprintf(fs, "%d %d %d\n", totalatoms, fmr->atom->nfragments, fmr->atom->ireactive);
+    fprintf(fs, "%d\n", fmr->dynamics->iCurrentStep);
+
+    for (int x=-xa; x<=xa; ++x) {
+      for (int y=-xb; y<=xb; ++y) {
+        for (int z=-xc; z<=xc; ++z) {
+
+          for (int i=0; i<natoms; ++i) {
+            fprintf(fs, "%c %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n",
+                        fmr->atom->symbol[i],
+                        coord[3*i] + x*cellA, coord[3*i+1] + y*cellB, coord[3*i+2] + z*cellC,
+                        fmr->atom->fragment[i], // assuming next pivot state is state index 0, as in updatePivotState
+                        veloc[3*i], veloc[3*i+1], veloc[3*i+2]
+                   );
+          }
+        }
+      }
+    } 
+    fclose(fs);
+  }
+}
+
 /*-----------------------------------------------------------------
   Write the current energies, temperature  and timestep to 
   the output file. Mode 0 = write new file

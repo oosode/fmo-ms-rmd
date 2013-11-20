@@ -116,7 +116,10 @@ void State::state_search()
 	            double dx = atom->coord[3*i]   - atom->coord[3*j] + x*cellA;
 	            double dy = atom->coord[3*i+1] - atom->coord[3*j+1] + y*cellB;
 	            double dz = atom->coord[3*i+2] - atom->coord[3*j+2] + z*cellC;
-	            double dd = dx*dx + dy*dy + dz*dz;
+		    double dd = dx*dx + dy*dy + dz*dz;
+		    //BUGBUGBUGBUGBUGBUGBUGBUG
+		    printf("x=%02d, y=%02d, z=%02d, i=%d, j=%d, d=%.4f, dx=%.4f, dy=%.4f, dz=%.4f\n",x,y,z,i,j,dd,dx,dy,dz);
+		    //BUGBUGBUGBUGBUGBUGBUGBUG
 	            if (dd < cut_OH2) {
 		      // Copy current state to next state, setting acceptor fragment
 		      // as the hydronium fragment in the next state
@@ -337,7 +340,9 @@ void State::write_qchem_inputs(int jobtype)
               //fprintf(fs, "correlation mp2\n");
               fprintf(fs, "correlation %s\n", run->correlation);
               //fprintf(fs, "correlation rimp2\n");
+              fprintf(fs, "scf_algorithm %s\n", run->algorithm);
               fprintf(fs, "scf_convergence 6\n");
+	      fprintf(fs, "max_scf_cycles 500\n");
               fprintf(fs, "qm_mm true\n");
               fprintf(fs, "print_input true\n");
               fprintf(fs, "sym_ignore true\n");
@@ -446,7 +451,9 @@ void State::write_qchem_inputs(int jobtype)
 	        //fprintf(fs, "correlation mp2\n");
 	
 	        //fprintf(fs, "correlation rimp2\n");
+	        fprintf(fs, "scf_algorithm %s\n", run->algorithm);
 	        fprintf(fs, "scf_convergence 6\n");
+		fprintf(fs, "max_scf_cycles 500\n");
 	        fprintf(fs, "qm_mm true\n");
 	        fprintf(fs, "print_input true\n");
 	        fprintf(fs, "sym_ignore true\n");

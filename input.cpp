@@ -175,6 +175,10 @@ void Input::read_input_file()
           printf("Cell distance C: %f\n", atof(arg1));
           fmr->atom->cellC = atof(arg1);
         }
+        else if ( strcmp(arg0, "SCF_algorithm") == 0 ) {
+          printf("SCF algorithm: %s\n", arg1);
+          sprintf(fmr->run->algorithm,"%s", arg1);
+        }
       }
       else if ( sscanf(line, "%s", arg0) == 1 ) {
         // One argument line
@@ -209,6 +213,7 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->run->basis, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->correlation, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->exchange, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->run->algorithm, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&atoms_file, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
