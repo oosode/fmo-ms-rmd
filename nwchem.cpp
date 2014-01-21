@@ -165,12 +165,23 @@ void State::write_nwchem_inputs(int jobtype)
                         fprintf(fs, "basis\n");
                         fprintf(fs, "* library %s\n", run->basis);
                         fprintf(fs, "end\n\n");
+
+			fprintf(fs, "python\n");
+  			fpritnf(fs, "  abc=task_gradient('mp2')\n");
+			fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
+			fprintf(fs, "  fener.write('\%15.10f'\%(abc[0]))\n");
+			fprintf(fs, "  fener.close()\n");
+			fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
+			fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
+			fprintf(fs, "  fgrad.write('\%15.10f \%15.10f \%15.10f\\n'\%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+			fprintf(fs, "  fgrad.close()\n");
+    			fprintf(fs, "end\n\n");
                         
                         // task section
-                        if (jobtype == RUN_ENERGY)
-                            fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
-                        else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                            fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
+                        //if (jobtype == RUN_ENERGY)
+                        //    fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
+                        //else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                        //    fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
                         
                         
                         /*
@@ -396,12 +407,23 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "basis\n");
                             fprintf(fs, "* library %s\n", run->basis);
                             fprintf(fs, "end\n\n");
-                            
+                           
+                            fprintf(fs, "python\n");
+                            fpritnf(fs, "  abc=task_gradient('mp2')\n");
+                            fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
+                            fprintf(fs, "  fener.write('\%15.10f'\%(abc[0]))\n");
+                            fprintf(fs, "  fener.close()\n");
+                            fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
+                            fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
+                            fprintf(fs, "  fgrad.write('\%15.10f \%15.10f \%15.10f\\n'\%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                            fprintf(fs, "  fgrad.close()\n");
+                            fprintf(fs, "end\n\n"); 
+
                             // task section
-                            if (jobtype == RUN_ENERGY)
-                                fprintf(fs, "task %s energy\n\n", run->correlation);
-                            else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                fprintf(fs, "task %s gradient\n\n", run->correlation);
+                            //if (jobtype == RUN_ENERGY)
+                            //    fprintf(fs, "task %s energy\n\n", run->correlation);
+                            //else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                            //    fprintf(fs, "task %s gradient\n\n", run->correlation);
                             
                             /*
                              *
@@ -504,7 +526,8 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "basis\n");
                             fprintf(fs, "* library %s\n", run->basis);
                             fprintf(fs, "end\n\n");
-                            
+                           
+ 
                             // task section
                             if (jobtype == RUN_ENERGY)
                                 fprintf(fs, "task scf energy\n\n", run->correlation);
@@ -674,7 +697,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
               sprintf(filename, "fmo_st%s_m%s_%s", snum, inum, cname);
               sprintf(command, "%s %s/%s.nw > %s/%s.nwout", 
-                      qchem_exec,
+                      exec,
                       state_directory,
                       filename,
                       state_directory,
@@ -693,7 +716,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
               // ** Open output file and get the energy ** //
               char output_file[MAX_LENGTH];
-              sprintf(output_file, "%s/%s.in.energy", state_directory, filename);
+              sprintf(output_file, "%s/%s.nw.energy", state_directory, filename);
               FILE *fs = fopen(output_file, "r");
               if (fs == NULL) {
                 char tmpstr[MAX_LENGTH];
@@ -703,13 +726,14 @@ void Run::do_nwchem_calculations(int FORCE)
               char line[MAX_LENGTH];
               double en;
 
-	      
+
               while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-      	        if ( sscanf(line, "%lf", &en) == 1 ) {
+                if ( sscanf(line, "%lf", &en) == 1 ) {
 
 		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
 		  monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
 		  //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+		  
 	        }
               }
               fclose(fs);
@@ -717,7 +741,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
               if (FORCE) {
                 // ** Get gradient from file ** // 
-                sprintf(output_file, "%s/%s.in.gradient", state_directory, filename);
+                sprintf(output_file, "%s/%s.nw.gradient", state_directory, filename);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                   char tmpstr[MAX_LENGTH];
@@ -733,7 +757,7 @@ void Run::do_nwchem_calculations(int FORCE)
                   while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
                     atnum++;
                   }
-	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+	          if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                     monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;                    
                     monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
@@ -766,7 +790,7 @@ void Run::do_nwchem_calculations(int FORCE)
 		  
 		  //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
 	
-  	          if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+  	          if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
 
 		    if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {	
                       // gx,gy,gz = the electric field
@@ -821,12 +845,10 @@ void Run::do_nwchem_calculations(int FORCE)
                 //char jnum[16];
 
                 sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-   	        sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-		        qchem_exec,
+   	        sprintf(command, "%s %s/%s.in > %s/%s.out", 
+		        exec,
                         state_directory,
    		        filename,
-		        qchem_scratch,
-		        filename,
                         state_directory,
 		        filename
 		       );
@@ -844,7 +866,7 @@ void Run::do_nwchem_calculations(int FORCE)
 	        // ** Open output file and get the energy ** //
                 char output_file[MAX_LENGTH];
                 //sprintf(output_file, "%s/%s.out", state_directory, filename);
-                sprintf(output_file, "%s/%s.in.energy", state_directory, filename);
+                sprintf(output_file, "%s/%s.nw.energy", state_directory, filename);
 	        FILE *fs = fopen(output_file, "r");
 	        if (fs == NULL) {
 	          char tmpstr[MAX_LENGTH];
@@ -873,7 +895,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
                 if (FORCE) {
                   // ** Get gradient from file ** // 
-                  sprintf(output_file, "%s/%s.in.gradient", state_directory, filename);
+                  sprintf(output_file, "%s/%s.nw.gradient", state_directory, filename);
                   fs = fopen(output_file, "r");
                   if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -891,7 +913,7 @@ void Run::do_nwchem_calculations(int FORCE)
                       atnum++; 
                     }
 
-  	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+  	            if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
 
 		      if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
 		      //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {		
@@ -917,11 +939,11 @@ void Run::do_nwchem_calculations(int FORCE)
                   fclose(fs);
 
                   // ** Get field from file ** // 
-                  sprintf(output_file, "%s/%s.in.field", state_directory, filename);
+                  sprintf(output_file, "%s/%s.nw.field", state_directory, filename);
                   fs = fopen(output_file, "r");
                   if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
-                    sprintf(tmpstr, "Failure to read  output file: %s", output_file);
+                    sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
                     fmr->error(FLERR, tmpstr);
                   }
                   atnum = 0; // index of non-QM atom for storing gradient
@@ -934,7 +956,7 @@ void Run::do_nwchem_calculations(int FORCE)
                       atnum++; 
                     }
 
- 	            if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
+ 	            if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
 
 		      if (fmr->atom->AtomInCell(atnum,istate,0,0,0,afield,bfield,cfield)) {
                         // gx,gy,gz = the electric field
