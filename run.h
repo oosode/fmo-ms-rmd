@@ -49,8 +49,10 @@ class Run : protected Pointers {
    void calculate_energy();    // Computes energy only
    void calculate_force();     // Computes energy + force
    void calculate_moldyn();    // Computes molecular dynamics
-   void do_fmo_calculations(int); // Performs the all FMO calculations in parallel
-   void do_fmo_calculations_env();  // Performs the FMO calculations in parallel, using env approximation
+   void do_qchem_calculations(int); // Performs the all FMO calculations in parallel
+   void do_qchem_calculations_env();  // Performs the FMO calculations in parallel, using env approximation
+   void do_nwchem_calculations(int);  // Performs all the NWChem calculations in parallel
+   void do_nwchem_calculations_env(); // Performs the FMO calculations in parallel, using env approximation
    void perturb_coords();      // Just to perturb the coordinates slightly randomly
 
 };

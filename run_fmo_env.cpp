@@ -14,7 +14,7 @@ using namespace FMR_NS;
   Perform FMO calculations but use the env approximation to
   cut down on dimer similar calculations 
 -----------------------------------------------------------------*/
-void Run::do_fmo_calculations_env()
+void Run::do_qchem_calculations_env()
 {
 
   if (fmr->master_rank) printf("Applying the environment dimer approximation.\n");

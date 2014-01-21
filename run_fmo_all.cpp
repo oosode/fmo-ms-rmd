@@ -13,11 +13,11 @@ using namespace FMR_NS;
 /*-----------------------------------------------------------------
   Perform all the FMO calculations 
 -----------------------------------------------------------------*/
-void Run::do_fmo_calculations(int FORCE)
+void Run::do_qchem_calculations(int FORCE)
 {
   // Check if we should branch to the env approximation
   if (EnvApprox) {
-    do_fmo_calculations_env();
+    do_qchem_calculations_env();
     return;
   }
 

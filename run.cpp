@@ -96,7 +96,7 @@ void Run::calculate_energy()
   // Step 2. Write Q-Chem inputs for all FMO calculations
   fmr->state->write_qchem_inputs(RUN_ENERGY);
   // Step 3. Divide up FMO calculation and run in parallel
-  do_fmo_calculations(0);
+  do_qchem_calculations(0);
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian
     fmr->matrix->buildH();
@@ -115,7 +115,7 @@ void Run::calculate_force()
   // Step 2. Write Q-Chem inputs for all FMO calculations
   fmr->state->write_qchem_inputs(RUN_FORCE);
   // Step 3. Divide up FMO calculation and run in parallel
-  do_fmo_calculations(1);
+  do_qchem_calculations(1);
   // Step 4. Construct model Hamiltonian
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian
