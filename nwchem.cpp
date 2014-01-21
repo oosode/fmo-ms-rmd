@@ -510,3 +510,10 @@ void State::write_nwchem_inputs(int jobtype)
 }
 
 
+/*-----------------------------------------------------------------
+  Perform all the FMO calculations 
+-----------------------------------------------------------------*/
+void Run::do_fmo_calculations(int FORCE)
+{
+
+}
