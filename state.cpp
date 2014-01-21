@@ -62,6 +62,14 @@ void State::state_search()
     int cellB      = fmr->atom->cellB;
     int cellC      = fmr->atom->cellC;
 
+    int xa         = fmr->atom->na;
+    int xb         = fmr->atom->nb;
+    int xc         = fmr->atom->nc;
+
+    int afield	   = fmr->atom->afield;
+    int bfield	   = fmr->atom->bfield;
+    int cfield     = fmr->atom->cfield;
+
     // Initialize availability and reactive fragment
     // Here, we assume that state zero is the pivot state
     for (int i=0; i<natoms; ++i) {
@@ -97,9 +105,9 @@ void State::state_search()
 
       // Loop through atoms of state and attempt to donate
       // hydronium H's to all possible O's within cutoff that are available
-      for (int x=-1; x<=1; ++x) {
-        for (int y=-1; y<=1; ++y) {
-          for (int z=-1; z<=1; ++z) {
+      for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xb; y<=xb; ++y) {
+          for (int z=-xc; z<=xc; ++z) {
 
             for (int i=0; i<natoms; ++i) {
   	      if (atom->symbol[i] == 'H' && atom->available[i] && atom->reactive[state*natoms + i]) {
@@ -108,7 +116,10 @@ void State::state_search()
 	            double dx = atom->coord[3*i]   - atom->coord[3*j] + x*cellA;
 	            double dy = atom->coord[3*i+1] - atom->coord[3*j+1] + y*cellB;
 	            double dz = atom->coord[3*i+2] - atom->coord[3*j+2] + z*cellC;
-	            double dd = dx*dx + dy*dy + dz*dz;
+		    double dd = dx*dx + dy*dy + dz*dz;
+		    //BUGBUGBUGBUGBUGBUGBUGBUG
+		    printf("x=%02d, y=%02d, z=%02d, i=%d, j=%d, d=%.4f, dx=%.4f, dy=%.4f, dz=%.4f\n",x,y,z,i,j,dd,dx,dy,dz);
+		    //BUGBUGBUGBUGBUGBUGBUGBUG
 	            if (dd < cut_OH2) {
 		      // Copy current state to next state, setting acceptor fragment
 		      // as the hydronium fragment in the next state
@@ -259,6 +270,10 @@ void State::write_qchem_inputs(int jobtype)
     int xb         = fmr->atom->nb;
     int xc 	   = fmr->atom->nc;
 
+    int afield     = fmr->atom->afield;
+    int bfield     = fmr->atom->bfield;
+    int cfield     = fmr->atom->cfield;
+
     // ***** Loop over states ***** //
     for (int istate=0; istate<nstates; ++istate) {
 
@@ -278,22 +293,13 @@ void State::write_qchem_inputs(int jobtype)
 
       sprintf(snum, "%02d", istate);
       sprintf(state_directory, "state_%02d", istate);
-/*
-      if (istate >= 10) {
-        sprintf(snum, "%d", istate);
-        sprintf(state_directory, "state_%d", istate);
-      } else {
-        sprintf(snum, "0%d", istate);
-        sprintf(state_directory, "state_0%d", istate);
-      }
-*/
       // Make the directory...
       sprintf(make_directory, "mkdir -p %s", state_directory);
       int ierr = system(make_directory);
 
       // *** Monomers *** //
       for (int x=-xa; x<=xa; ++x) {
-        for (int y=-xc; y<=xb; ++y) {
+        for (int y=-xb; y<=xb; ++y) {
           for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
@@ -334,7 +340,9 @@ void State::write_qchem_inputs(int jobtype)
               //fprintf(fs, "correlation mp2\n");
               fprintf(fs, "correlation %s\n", run->correlation);
               //fprintf(fs, "correlation rimp2\n");
+              fprintf(fs, "scf_algorithm %s\n", run->algorithm);
               fprintf(fs, "scf_convergence 6\n");
+	      fprintf(fs, "max_scf_cycles 500\n");
               fprintf(fs, "qm_mm true\n");
               fprintf(fs, "print_input true\n");
               fprintf(fs, "sym_ignore true\n");
@@ -366,9 +374,9 @@ void State::write_qchem_inputs(int jobtype)
 
               // $external_charges section
               fprintf(fs, "$external_charges\n");
-              for (int x0=-xa; x0<=xa; ++x0) {
-                for (int y0=-xc; y0<=xb; ++y0) {
-                  for (int z0=-xc; z0<=xc; ++z0) {
+              for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                  for (int z0=-cfield; z0<=cfield; ++z0) {
 
                     for (int iatom=0; iatom<natoms; ++iatom) {
                       if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
@@ -398,7 +406,7 @@ void State::write_qchem_inputs(int jobtype)
 
       // *** Dimers *** //
       for (int x=-xa; x<=xa; ++x) {
-        for (int y=-xc; y<=xb; ++y) {
+        for (int y=-xb; y<=xb; ++y) {
           for (int z=-xc; z<=xc; ++z) {
 
             for (int ifrag=0; ifrag<nfragments; ++ifrag){ 
@@ -443,7 +451,9 @@ void State::write_qchem_inputs(int jobtype)
 	        //fprintf(fs, "correlation mp2\n");
 	
 	        //fprintf(fs, "correlation rimp2\n");
+	        fprintf(fs, "scf_algorithm %s\n", run->algorithm);
 	        fprintf(fs, "scf_convergence 6\n");
+		fprintf(fs, "max_scf_cycles 500\n");
 	        fprintf(fs, "qm_mm true\n");
 	        fprintf(fs, "print_input true\n");
 	        fprintf(fs, "sym_ignore true\n");
@@ -464,36 +474,45 @@ void State::write_qchem_inputs(int jobtype)
 	          fprintf(fs, "0 1\n");
 	        }
 
-		//zeroth unit cell monomer 
-	        for (int iatom=0; iatom<natoms; ++iatom) {
-	          if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom],
-                            atom->coord[3*iatom],
-                            atom->coord[3*iatom+1],
-                            atom->coord[3*iatom+2]
+		//zeroth unit cell monomer
+		//int posi = getFragPosition(istate,0,0,0,ifrag);
+ 		//int posj = getFragPosition(istate,x,y,z,jfrag)
+	
+	        int ra = 2*xa+1;
+                int rb = 2*xb+1; 
+                int rc = 2*xc+1;
+	
+		int totalatoms = ra*rb*rc*natoms;
+		int state_start = istate*totalatoms;
+		//int totalatoms = istate*ra*rb*rc*natoms;
+
+		for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
+		  if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) { 
+		    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)]   + x*cellA,
+                            atom->coord[3*(iatom%natoms)+1] + y*cellB,
+                            atom->coord[3*(iatom%natoms)+2] + z*cellC
+                           );
+
+		  }
+		  else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
+		    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)],
+                            atom->coord[3*(iatom%natoms)+1],
+                            atom->coord[3*(iatom%natoms)+2]
                            );
 		  }
-                }
+		}
 
-		//other unit cell monomer
-		for (int iatom=0; iatom<natoms; ++iatom) {
-		  if (atom->fragment[istate*natoms + iatom] == jfrag) {
-	            fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-		            atom->symbol[iatom],
-		            atom->coord[3*iatom]   + x*cellA,
-		            atom->coord[3*iatom+1] + y*cellB,
-		            atom->coord[3*iatom+2] + z*cellC
-		           );
-	          }
-	        }
 	        fprintf(fs, "$end\n\n");
 
 	        // $external_charges section
 	        fprintf(fs, "$external_charges\n");
-                for (int x0=-xa; x0<=xa; ++x0) {
-                  for (int y0=-xc; y0<=xb; ++y0) {
-                    for (int z0=-xc; z0<=xc; ++z0) {
+                for (int x0=-afield; x0<=afield; ++x0) {
+                  for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
 
 	              for (int iatom=0; iatom<natoms; ++iatom) {
 	                if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
@@ -517,11 +536,10 @@ void State::write_qchem_inputs(int jobtype)
 	        fclose(fs);
               } 
             } // close loop over fragments for dimers
-	  
+
 	  }
 	}
       }
-
     } // close loop over states
 
     printf("Done writing Q-Chem inputs.\n");

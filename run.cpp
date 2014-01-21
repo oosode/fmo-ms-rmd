@@ -29,6 +29,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    sprintf(correlation, "%s", "mp2");
    sprintf(exchange, "%s", "hf");
    sprintf(basis, "%s", "cc-pVDZ");
+   sprintf(algorithm, "%s", "diis");
 
    n_monomers = 0;
    n_dimers   = 0;
@@ -140,7 +141,8 @@ void Run::calculate_force()
 void Run::calculate_moldyn()
 {
   // Step 1. Calculate force
-  calculate_force(); 
+  calculate_force();
+  //exit(0);
   // Step 2. Initialize for MD
   fmr->dynamics->init();
   // Step 3. Run MD for number of steps

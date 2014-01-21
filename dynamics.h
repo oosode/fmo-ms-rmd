@@ -38,7 +38,9 @@ class Dynamics : protected Pointers {
    double ETotal;                 // EPotential + EKinetic
    int    vseed;                  // RNG seed for random velocities
    char   trajFile[256];          // File to write trajectory to
+   char   enerFile[256];
    double tau;                    // Thermostat time constant, used in Berendsen and Langevin
+   double stepTime;		  // Time to calculate single time step
 
    // ** Functions ** //
    void   init();                   // Initializer function, calls others to set up MD run
@@ -50,6 +52,8 @@ class Dynamics : protected Pointers {
    void   halfStepVelocity(int);    // Propagate the velocities forward half a step
    void   stepReport(int);          // Print out stuff for time step
    void   writeTrajCoords(int);     // Write the current coordinates to trajectory file
+   void   writePBCTrajCoords(int mode);  // Write the current coordinates of the pbc to trajectory file
+   void   WriteStepEner(int);       // Write the current energy,temp values
    void   removeTransRotFromVelocity();  // Remove translation and rotation of atoms from velocity
    void   removeTransRotFromGradient();  // Remove translation and rotation of atoms from gradient
    void   applyThermostat();        // General function for applying thermostat for NVT dynamics

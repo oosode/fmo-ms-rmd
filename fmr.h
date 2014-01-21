@@ -40,6 +40,9 @@ class FMR {
   int master_rank;
   int print_level;
 
+  // ** Time ** //
+  double step_time;
+
   // ** Functions ** //
   void parse_command_line(int, char **);
   void execute();                              // Executes the calculation

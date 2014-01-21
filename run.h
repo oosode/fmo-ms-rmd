@@ -32,6 +32,7 @@ class Run : protected Pointers {
    char correlation[256];     // correlation method
    char exchange[256];	      // exchange method
    char basis[256];	      // basis set name
+   char algorithm[256];       // scf algorithm
 
    int n_monomers;            // (# fragments) * (# states)
    int n_dimers;              // ((# fragments) * (# fragments - 1) / 2 ) * (# states)

@@ -36,7 +36,9 @@ Atom::Atom(FMR *fmr) : Pointers(fmr)
   na			= 0;
   nb			= 0;
   nc 			= 0;
-  
+  afield		= 0;
+  bfield		= 0;  
+  cfield		= 0;
 
   // MM charges
   qO_SPCE = -0.8476;
