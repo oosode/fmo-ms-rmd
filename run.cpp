@@ -93,10 +93,17 @@ void Run::calculate_energy()
 {
   // Step 1. Do state search to determine fragmentation states
   fmr->state->state_search();  
+
   // Step 2. Write Q-Chem inputs for all FMO calculations
-  fmr->state->write_qchem_inputs(RUN_ENERGY);
+  //fmr->state->write_qchem_inputs(RUN_ENERGY);
+  if      ( strstr(run->exec, "qchem") != NULL) fmr->state->write_qchem_inputs(RUN_ENERGY);
+  else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_ENERGY);
+
   // Step 3. Divide up FMO calculation and run in parallel
-  do_qchem_calculations(0);
+  //do_qchem_calculations(RUN_ENERGY);
+  if      ( strstr(run->exec, "qchem") != NULL) do_qchem_calculations(RUN_ENERGY);
+  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_ENERGY);
+
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian
     fmr->matrix->buildH();
@@ -112,10 +119,17 @@ void Run::calculate_force()
 {
   // Step 1. Do state search to determine fragmentation states
   fmr->state->state_search();  
-  // Step 2. Write Q-Chem inputs for all FMO calculations
-  fmr->state->write_qchem_inputs(RUN_FORCE);
+
+  // Step 2. Write inputs for all FMO calculations
+  //fmr->state->write_qchem_inputs(RUN_FORCE);
+  if      ( strstr(run->exec, "qchem") != NULL) fmr->state->write_qchem_inputs(RUN_FORCE);
+  else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_FORCE);
+  
   // Step 3. Divide up FMO calculation and run in parallel
-  do_qchem_calculations(1);
+  //do_qchem_calculations(RUN_FORCE);
+  if      ( strstr(run->exec, "qchem") != NULL) do_qchem_calculations(RUN_FORCE);
+  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_FORCE);
+
   // Step 4. Construct model Hamiltonian
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian

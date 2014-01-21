@@ -5,11 +5,11 @@
 #include "pointers.h"
 
 // Run type definitions
-#define RUN_ENERGY   1
-#define RUN_FORCE    2
-#define RUN_MOLDYN   3
-#define RUN_TYPE_MIN 1
-#define RUN_TYPE_MAX 3
+#define RUN_ENERGY   0
+#define RUN_FORCE    1
+#define RUN_MOLDYN   2
+#define RUN_TYPE_MIN 0
+#define RUN_TYPE_MAX 2
 
 namespace FMR_NS {
 
