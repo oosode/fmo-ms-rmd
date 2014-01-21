@@ -8,6 +8,9 @@
 #include <vector>
 #include <string>
 
+#define MAX_LENGTH 1024
+#define MAX_SIZE 12474
+
 using namespace FMR_NS;
 
 /*-----------------------------------------------------------------
@@ -90,10 +93,8 @@ void State::write_nwchem_inputs(int jobtype)
                         fprintf(fs, "symmetry c1\n");
                         for (int iatom=0; iatom<natoms; ++iatom) {
                             if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                                fprintf(fs, "%c %3.1lf %20.10lf %20.10lf %20.10lf\n",
+                                fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
                                         atom->symbol[iatom],
-                                        atom->getAtomicNumber(iatom),
-                                        atom->charge[iatom],
                                         atom->coord[3*iatom] + x*cellA,
                                         atom->coord[3*iatom+1] + y*cellB,
                                         atom->coord[3*iatom+2] + z*cellC
@@ -167,13 +168,13 @@ void State::write_nwchem_inputs(int jobtype)
                         fprintf(fs, "end\n\n");
 
 			fprintf(fs, "python\n");
-  			fpritnf(fs, "  abc=task_gradient('mp2')\n");
+  			fprintf(fs, "  abc=task_gradient('mp2')\n");
 			fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
-			fprintf(fs, "  fener.write('\%15.10f'\%(abc[0]))\n");
+			fprintf(fs, "  fener.write('%15.10f'%(abc[0]))\n");
 			fprintf(fs, "  fener.close()\n");
 			fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
 			fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-			fprintf(fs, "  fgrad.write('\%15.10f \%15.10f \%15.10f\\n'\%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+			fprintf(fs, "  fgrad.write('%15.10f %15.10f %15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
 			fprintf(fs, "  fgrad.close()\n");
     			fprintf(fs, "end\n\n");
                         
@@ -196,10 +197,8 @@ void State::write_nwchem_inputs(int jobtype)
                         fprintf(fs, "symmetry c1\n");
                         for (int iatom=0; iatom<natoms; ++iatom) {
                             if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                                fprintf(fs, "%c %3.1lf %20.10lf %20.10lf %20.10lf\n",
+                                fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
                                         atom->symbol[iatom],
-                                        atom->getAtomicNumber(iatom),
-                                        atom->charge[iatom],
                                         atom->coord[3*iatom] + x*cellA,
                                         atom->coord[3*iatom+1] + y*cellB,
                                         atom->coord[3*iatom+2] + z*cellC
@@ -266,9 +265,9 @@ void State::write_nwchem_inputs(int jobtype)
                         
                         // task section
                         if (jobtype == RUN_ENERGY)
-                            fprintf(fs, "task scf %s\n\n", run->correlation, "energy");
+                            fprintf(fs, "task scf energy\n\n");
                         else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                            fprintf(fs, "task scf %s\n\n", run->correlation, "gradient");
+                            fprintf(fs, "task scf gradient\n\n");
 
                         
                         fclose(fs);
@@ -320,9 +319,8 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
                                 if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                                    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
                                             atom->symbol[iatom%natoms],
-                                            atom->getAtomicNumber(iatom%natoms),
                                             atom->coord[3*(iatom%natoms)]   + x*cellA,
                                             atom->coord[3*(iatom%natoms)+1] + y*cellB,
                                             atom->coord[3*(iatom%natoms)+2] + z*cellC
@@ -330,9 +328,8 @@ void State::write_nwchem_inputs(int jobtype)
                                     
                                 }
                                 else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                                    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
                                             atom->symbol[iatom%natoms],
-                                            atom->getAtomicNumber(iatom%natoms),
                                             atom->coord[3*(iatom%natoms)],
                                             atom->coord[3*(iatom%natoms)+1],
                                             atom->coord[3*(iatom%natoms)+2]
@@ -409,13 +406,13 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "end\n\n");
                            
                             fprintf(fs, "python\n");
-                            fpritnf(fs, "  abc=task_gradient('mp2')\n");
+                            fprintf(fs, "  abc=task_gradient('mp2')\n");
                             fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
-                            fprintf(fs, "  fener.write('\%15.10f'\%(abc[0]))\n");
+                            fprintf(fs, "  fener.write('%15.10f'%(abc[0]))\n");
                             fprintf(fs, "  fener.close()\n");
                             fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
                             fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                            fprintf(fs, "  fgrad.write('\%15.10f \%15.10f \%15.10f\\n'\%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                            fprintf(fs, "  fgrad.write('%15.10f %15.10f %15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
                             fprintf(fs, "  fgrad.close()\n");
                             fprintf(fs, "end\n\n"); 
 
@@ -438,11 +435,11 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "geometry nocenter noautoz units angstrom\n");
                             fprintf(fs, "symmetry c1\n");
                             
-                            int ra = 2*xa+1;
-                            int rb = 2*xb+1;
-                            int rc = 2*xc+1;
-                            int totalatoms = ra*rb*rc*natoms;
-                            int state_start = istate*totalatoms;
+                            //int ra = 2*xa+1;
+                            //int rb = 2*xb+1;
+                            //int rc = 2*xc+1;
+                            //int totalatoms = ra*rb*rc*natoms;
+                            //int state_start = istate*totalatoms;
                             //int totalatoms = istate*ra*rb*rc*natoms;
                             
                             for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
@@ -530,9 +527,9 @@ void State::write_nwchem_inputs(int jobtype)
  
                             // task section
                             if (jobtype == RUN_ENERGY)
-                                fprintf(fs, "task scf energy\n\n", run->correlation);
+                                fprintf(fs, "task scf energy\n\n");
                             else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                fprintf(fs, "task scf gradient\n\n", run->correlation);
+                                fprintf(fs, "task scf gradient\n\n");
 
                             
                             fclose(fs);
@@ -559,7 +556,9 @@ void Run::do_nwchem_calculations(int FORCE)
 {
   // Check if we should branch to the env approximation
   if (EnvApprox) {
-    do_nwchem_calculations_env();
+    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+    //do_nwchem_calculations_env();
+    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
     return;
   }
     

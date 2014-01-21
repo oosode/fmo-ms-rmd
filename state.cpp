@@ -640,16 +640,16 @@ void State::write_gamess_inputs(int jobtype)
               } else {
                 fprintf(fs, "ICHARG=0 ");
               }
-              fpritnf(fs, "MULT=1 ");  
+              fprintf(fs, "MULT=1 ");  
 	      fprintf(fs, "$END\n");
               
               // $CONTRL section
               // theory parameters
               fprintf(fs, " $CONTRL ");
               std::string MP(run->correlation);
-              if ((MP[0]=="m") && (MP[1]=="p")) { 
-                fprintf(fs, "MPLEVL=%s ",MP[2]);
-	      }
+              //if ((MP[0].c_str()=="m") && (MP[1].c_str()=="p")) { 
+              //  fprintf(fs, "MPLEVL=%s ",MP[2].c_str());
+	      //}
  	      fprintf(fs, "ISPHER=1 ");
               fprintf(fs, "$END\n");
 
@@ -689,14 +689,14 @@ void State::write_gamess_inputs(int jobtype)
      
               for (int iatom=0; iatom<natoms; ++iatom) {
                 if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                  fprintf(fs, "  %c %3.1lf %20.10lf %20.10lf %20.10lf\n",
-                          atom->symbol[iatom],
-			  atom->getAtomicNumber(iatom),
-                          atom->charge[iatom],
-                          atom->coord[3*iatom] + x*cellA,
-                          atom->coord[3*iatom+1] + y*cellB,
-                          atom->coord[3*iatom+2] + z*cellC
-                         );
+                  //fprintf(fs, "  %c %3.1lf %20.10lf %20.10lf %20.10lf\n",
+                  //        atom->symbol[iatom],
+		  //	  atom->getAtomicNumber(iatom),
+                  //        atom->charge[iatom],
+                  //        atom->coord[3*iatom] + x*cellA,
+                  //        atom->coord[3*iatom+1] + y*cellB,
+                  //        atom->coord[3*iatom+2] + z*cellC
+                  //       );
                 }
               } 
               fprintf(fs, " $END\n");
@@ -818,16 +818,16 @@ void State::write_gamess_inputs(int jobtype)
 	        } else {
 	          fprintf(fs, "ICHARG=0 ");
 	        }
-                fpritnf(fs, "MULT=1 ");  
+                fprintf(fs, "MULT=1 ");  
 	        fprintf(fs, "$END\n");
               
                 // $CONTRL section
                 // theory parameters
                 fprintf(fs, " $CONTRL ");
                 std::string MP(run->correlation);
-                if ((MP[0]=="m") && (MP[1]=="p")) {
-                  fprintf(fs, "MPLEVL=%s ",MP[2]);
-                }
+                //if ((MP[0].c_str()=="m") && (MP[1].c_str()=="p")) {
+                //  fprintf(fs, "MPLEVL=%s ",MP[2].c_str());
+                //}
                 fprintf(fs, "ISPHER=1 ");
                 fprintf(fs, "$END\n");
 
@@ -919,23 +919,23 @@ void State::write_gamess_inputs(int jobtype)
 
 		for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
 		  if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) { 
-		    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
-                            atom->getAtomicNumber(iatom%natoms),
-                            atom->coord[3*(iatom%natoms)]   + x*cellA,
-                            atom->coord[3*(iatom%natoms)+1] + y*cellB,
-                            atom->coord[3*(iatom%natoms)+2] + z*cellC
-                           );
+		    //fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                    //        atom->symbol[iatom%natoms],
+                    //        atom->getAtomicNumber(iatom%natoms),
+                    //        atom->coord[3*(iatom%natoms)]   + x*cellA,
+                    //        atom->coord[3*(iatom%natoms)+1] + y*cellB,
+                    //        atom->coord[3*(iatom%natoms)+2] + z*cellC
+                    //       );
 
 		  }
 		  else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-		    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
-                            atom->getAtomicNumber(iatom%natoms),
-                            atom->coord[3*(iatom%natoms)],
-                            atom->coord[3*(iatom%natoms)+1],
-                            atom->coord[3*(iatom%natoms)+2]
-                           );
+		    //fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                    //        atom->symbol[iatom%natoms],
+                    //        atom->getAtomicNumber(iatom%natoms),
+                    //        atom->coord[3*(iatom%natoms)],
+                    //        atom->coord[3*(iatom%natoms)+1],
+                    //        atom->coord[3*(iatom%natoms)+2]
+                    //       );
 		  }
 		}
 
