@@ -228,6 +228,7 @@ void Run::do_fmo_calculations(int FORCE)
                 fclose(fs);
 		//printf("Rank %d: grad\n", my_rank);
 
+
                 // ** Get field from file ** // 
                 sprintf(output_file, "%s/%s.in.field", state_directory, filename);
                 fs = fopen(output_file, "r");
@@ -267,6 +268,7 @@ void Run::do_fmo_calculations(int FORCE)
                 }
                 fclose(fs);
 		//printf("Rank %d: efield\n", my_rank);
+	
 		
               }
 
@@ -441,6 +443,7 @@ void Run::do_fmo_calculations(int FORCE)
                     atnum++;
                   }
                   fclose(fs);
+
                 } 
 	      }
               ++index_dim;

@@ -156,6 +156,14 @@ class Atom : protected Pointers {
      return mass;     
    }
 
+   double getAtomicNumber(int iatom) {
+     // Return atomic number.
+     double number = 0.0;
+     if      (symbol[iatom] == 'H') number = 1.0;
+     else if (symbol[iatom] == 'O') number = 8.0;
+     return number;
+   }
+
    void setAtomMasses(); // in atom.cpp
 
 };
