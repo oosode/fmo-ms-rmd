@@ -22,8 +22,8 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    run_type   = RUN_ENERGY;
    FMO_only   = 0; 
    EnvApprox  = 0;
-   sprintf(qchem_scratch, "%s", "null");
-   sprintf(qchem_exec, "%s", "null");
+   sprintf(scratch_dir, "%s", "null");
+   sprintf(exec, "%s", "null");
 
    // Electronic structure defaults
    sprintf(correlation, "%s", "mp2");

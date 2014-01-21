@@ -26,8 +26,8 @@ class Run : protected Pointers {
    int FMO_only;              // Run with only FMO, no Multi-state FMO
    int EnvApprox;             // Environment approximation on/off
 
-   char qchem_scratch[256];   // Full path of Q-Chem scratch directory 
-   char qchem_exec[256];      // Full path of Q-Chem exectuable
+   char scratch_dir[256];     // Full path of Q-Chem scratch directory 
+   char exec[256];            // Full path of Q-Chem exectuable
 
    char correlation[256];     // correlation method
    char exchange[256];	      // exchange method

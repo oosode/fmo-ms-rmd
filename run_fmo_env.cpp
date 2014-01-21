@@ -135,10 +135,10 @@ void Run::do_fmo_calculations_env()
         }
         sprintf(filename, "fmo_st%sm%s", snum, inum);
         sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-                qchem_exec,
+                exec,
                 state_directory,
                 filename,
-                qchem_scratch,
+                scratch_dir,
                 filename,
                 state_directory,
                 filename
@@ -213,10 +213,10 @@ void Run::do_fmo_calculations_env()
           }
           sprintf(filename, "fmo_st%sd%s-%s", snum, inum, jnum);
 	  sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-		  qchem_exec,
+		  exec,
                   state_directory,
 		  filename,
-		  qchem_scratch,
+		  scratch_dir,
 		  filename,
                   state_directory,
 		  filename
@@ -313,10 +313,10 @@ void Run::do_fmo_calculations_env()
 	    }
 	    sprintf(filename, "fmo_st%sd%s-%s", snum, inum, jnum);
 	    sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-		    qchem_exec,
+		    exec,
 		    state_directory,
 		    filename,
-		    qchem_scratch,
+		    scratch_dir,
 		    filename,
 		    state_directory,
 		    filename

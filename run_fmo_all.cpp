@@ -154,10 +154,10 @@ void Run::do_fmo_calculations(int FORCE)
 
               sprintf(filename, "fmo_st%s_m%s_%s", snum, inum, cname);
               sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-                      qchem_exec,
+                      exec,
                       state_directory,
                       filename,
-                      qchem_scratch,
+                      scratch_dir,
                       filename,
                       state_directory,
                       filename
@@ -303,10 +303,10 @@ void Run::do_fmo_calculations(int FORCE)
 
                 sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
    	        sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out", 
-		        qchem_exec,
+		        exec,
                         state_directory,
    		        filename,
-		        qchem_scratch,
+		        scratch_dir,
 		        filename,
                         state_directory,
 		        filename

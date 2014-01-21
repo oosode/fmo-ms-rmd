@@ -153,7 +153,14 @@ void State::write_nwchem_inputs(int jobtype)
                         } else {
                             fprintf(fs, "charge 0\n\n");
                         }
-                        
+                       
+			// scratch section
+			char fname[256];
+			char scratch[256];
+			sprintf(fname, "fmo_st%s_m%03d_cell.%d.%d.%d.nw", snum, ifrag, x+xa, y+xb, z+xc);
+			sprintf(scratch, "%s/%s/",run->scratch_dir,fname);	
+			fprintf(fs, "scratch_dir %s\n\n",scratch);
+ 
                         // basis set section
                         fprintf(fs, "basis\n");
                         fprintf(fs, "* library %s\n", run->basis);
@@ -238,6 +245,9 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "charge 0\n\n");
                         }
                         
+			// scratch section
+			fprintf(fs, "scratch_dir %s\n\n",scratch); 
+
                         // basis set section
                         fprintf(fs, "basis\n");
                         fprintf(fs, "* library %s\n", run->basis);
@@ -330,7 +340,6 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
-                            fprintf(fs, "force fmo_st%s_m%03d_cell.%d.%d.%d.nw.field\n", snum, ifrag, x+xa, y+xb, z+xc);
                             for (int x0=-afield; x0<=afield; ++x0) {
                                 for (int y0=-bfield; y0<=bfield; ++y0) {
                                     for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -375,7 +384,14 @@ void State::write_nwchem_inputs(int jobtype)
                             } else {
                                 fprintf(fs, "charge 0\n\n");
                             }
-                            
+                        
+			    // scratch section
+			    char fname[256];
+			    char scratch[256];
+			    sprintf(fname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+			    sprintf(scratch, "%s/%s/",run->scratch_dir,fname);
+			    fprintf(fs, "scratch_dir %s\n\n",scratch);
+    
                             // basis set section
                             fprintf(fs, "basis\n");
                             fprintf(fs, "* library %s\n", run->basis);
@@ -440,7 +456,7 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
-                            fprintf(fs, "force fmo_st%s_m%03d_cell.%d.%d.%d.nw.field\n", snum, ifrag, x+xa, y+xb, z+xc);
+			    fprintf(fs, "force fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw.field\n", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
                             for (int x0=-afield; x0<=afield; ++x0) {
                                 for (int y0=-bfield; y0<=bfield; ++y0) {
                                     for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -480,7 +496,10 @@ void State::write_nwchem_inputs(int jobtype)
                             } else {
                                 fprintf(fs, "charge 0\n\n");
                             }
-                            
+                           
+ 			    // scratch section
+ 			    fprintf(fs, "scratch_dir %s\n\n",scratch);
+ 
                             // basis set section
                             fprintf(fs, "basis\n");
                             fprintf(fs, "* library %s\n", run->basis);
