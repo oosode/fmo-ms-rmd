@@ -156,7 +156,6 @@ void Run::calculate_moldyn()
 {
   // Step 1. Calculate force
   calculate_force();
-  //exit(0);
   // Step 2. Initialize for MD
   fmr->dynamics->init();
   // Step 3. Run MD for number of steps

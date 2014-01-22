@@ -143,11 +143,6 @@ void State::write_nwchem_inputs(int jobtype)
                         fprintf(fs, "sym off\n");
                         fprintf(fs, "end\n\n");
                         
-                        // correlation section
-                        fprintf(fs, "mp2\n");
-                        fprintf(fs, "freeze core atomic\n");
-                        fprintf(fs, "end\n\n");
-                        
                         // charge section
                         if (ifrag == chgfrag) {
                             fprintf(fs, "charge 1\n\n");
@@ -379,11 +374,6 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "direct\n");
                             fprintf(fs, "thresh 1e-6\n");
                             fprintf(fs, "sym off\n");
-                            fprintf(fs, "end\n\n");
-                            
-                            // correlation section
-                            fprintf(fs, "mp2\n");
-                            fprintf(fs, "freeze core atomic\n");
                             fprintf(fs, "end\n\n");
                             
                             // charge section
@@ -796,10 +786,10 @@ void Run::do_nwchem_calculations(int FORCE)
 		    if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {	
                       // gx,gy,gz = the electric field
                       // multiply by charge to get force (i.e. negative gradient) on atom
-                      double mmq = fmr->atom->getCharge(atnum%natoms, istate);
-                      gx *= -mmq;
-                      gy *= -mmq;
-                      gz *= -mmq;
+                      //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
+                      //gx *= -mmq;
+                      //gy *= -mmq;
+                      //gz *= -mmq;
 	  	      //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
   		      monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
@@ -948,6 +938,7 @@ void Run::do_nwchem_calculations(int FORCE)
                     fmr->error(FLERR, tmpstr);
                   }
                   atnum = 0; // index of non-QM atom for storing gradient
+		  fgets(line, MAX_LENGTH, fs); // skip initial comment line
                   while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                     // Advance atnum until it matches as a non-QM atom index for this dimer fragment
                     //while ( (fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
@@ -962,10 +953,10 @@ void Run::do_nwchem_calculations(int FORCE)
 		      if (fmr->atom->AtomInCell(atnum,istate,0,0,0,afield,bfield,cfield)) {
                         // gx,gy,gz = the electric field
                         // multiply by charge to get force (i.e. negative gradient) on atom
-                        double mmq = fmr->atom->getCharge(atnum%natoms, istate);
-                        gx *= -mmq;
-                        gy *= -mmq;
-                        gz *= -mmq;
+                        //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
+                        //gx *= -mmq;
+                        //gy *= -mmq;
+                        //gz *= -mmq;
                         // store symmetrically for zeroth unit cell
                         if (x==0 && y==0 && z==0) { 
                           dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx; 
