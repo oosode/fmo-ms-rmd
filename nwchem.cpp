@@ -85,8 +85,8 @@ void State::write_nwchem_inputs(int jobtype)
                         }
                         
                         // Comment for labeling
-                        fprintf(fs, "start energy_gradients\n");
-                        fprintf(fs, "title 'State %d Monomer %d Cell %d %d %d'\n\n", istate, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "start grad_s%02d_m%02d_c%02d_%02d_%02d\n", istate, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "title \"State %d Monomer %d Cell %d %d %d\"\n\n", istate, ifrag, x+xa, y+xb, z+xc);
                         
                         // geometry section
                         fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -160,7 +160,7 @@ void State::write_nwchem_inputs(int jobtype)
 			char scratch[256];
 			sprintf(fname, "fmo_st%s_m%03d_cell.%d.%d.%d.nw", snum, ifrag, x+xa, y+xb, z+xc);
 			sprintf(scratch, "%s/%s/",run->scratch_dir,fname);	
-			fprintf(fs, "scratch_dir %s\n\n",scratch);
+			//fprintf(fs, "scratch_dir %s\n\n",scratch);
  
                         // basis set section
                         fprintf(fs, "basis\n");
@@ -169,14 +169,16 @@ void State::write_nwchem_inputs(int jobtype)
 
 			fprintf(fs, "python\n");
   			fprintf(fs, "  abc=task_gradient('mp2')\n");
-			fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
-			fprintf(fs, "  fener.write('%15.10f'%(abc[0]))\n");
+			fprintf(fs, "  fener=open('state_%02d/%s.energy','w')\n",istate,fname);
+			fprintf(fs, "  fener.write('%%15.10f'%(abc[0]))\n");
 			fprintf(fs, "  fener.close()\n");
-			fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
+			fprintf(fs, "  fgrad=open('state_%02d/%s.gradient','w')\n",istate,fname);
 			fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-			fprintf(fs, "  fgrad.write('%15.10f %15.10f %15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+			fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
 			fprintf(fs, "  fgrad.close()\n");
     			fprintf(fs, "end\n\n");
+
+			fprintf(fs, "task python\n\n");
                         
                         // task section
                         //if (jobtype == RUN_ENERGY)
@@ -190,7 +192,7 @@ void State::write_nwchem_inputs(int jobtype)
                          */
                         
                         // Comment for labeling
-                        fprintf(fs, "\n\nstart field\n");
+                        fprintf(fs, "\n\nstart field_s%02d_m%02d_c%02d_%02d_%02d\n\n", istate, ifrag, x+xa, y+xb, z+xc);
                 
                         // geometry section
                         fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -218,7 +220,7 @@ void State::write_nwchem_inputs(int jobtype)
                         
                         // bq section
                         fprintf(fs, "bq units angstrom\n");
-                        fprintf(fs, "force fmo_st%s_m%03d_cell.%d.%d.%d.nw.field\n", snum, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "force state_%02d/fmo_st%s_m%03d_cell.%d.%d.%d.nw.field\n", istate, snum, ifrag, x+xa, y+xb, z+xc);
                         for (int x0=-afield; x0<=afield; ++x0) {
                             for (int y0=-bfield; y0<=bfield; ++y0) {
                                 for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -256,7 +258,7 @@ void State::write_nwchem_inputs(int jobtype)
                         }
                         
 			// scratch section
-			fprintf(fs, "scratch_dir %s\n\n",scratch); 
+			//fprintf(fs, "scratch_dir %s\n\n",scratch); 
 
                         // basis set section
                         fprintf(fs, "basis\n");
@@ -303,8 +305,8 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                             
                             // Comment for labeling
-                            fprintf(fs, "start energy_gradients\n");
-                            fprintf(fs, "title 'State %d Monomer %d Cell %d %d %d'\n\n", istate, ifrag, x+xa, y+xb, z+xc);
+                            fprintf(fs, "start grad_s%02d_d%02d_d%02d_c%02d_%02d_%02d\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+                            fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
                             
                             // geometry section
                             fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -398,7 +400,7 @@ void State::write_nwchem_inputs(int jobtype)
 			    char scratch[256];
 			    sprintf(fname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
 			    sprintf(scratch, "%s/%s/",run->scratch_dir,fname);
-			    fprintf(fs, "scratch_dir %s\n\n",scratch);
+			    //fprintf(fs, "scratch_dir %s\n\n",scratch);
     
                             // basis set section
                             fprintf(fs, "basis\n");
@@ -407,14 +409,16 @@ void State::write_nwchem_inputs(int jobtype)
                            
                             fprintf(fs, "python\n");
                             fprintf(fs, "  abc=task_gradient('mp2')\n");
-                            fprintf(fs, "  fener=open('%s.energy','w')\n",fname);
-                            fprintf(fs, "  fener.write('%15.10f'%(abc[0]))\n");
+                            fprintf(fs, "  fener=open('state_%02d/%s.energy','w')\n",istate,fname);
+                            fprintf(fs, "  fener.write('%%15.10f'%(abc[0]))\n");
                             fprintf(fs, "  fener.close()\n");
-                            fprintf(fs, "  fgrad=open('%s.gradient','w')\n",fname);
+                            fprintf(fs, "  fgrad=open('state_%02d/%s.gradient','w')\n",istate,fname);
                             fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                            fprintf(fs, "  fgrad.write('%15.10f %15.10f %15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                            fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
                             fprintf(fs, "  fgrad.close()\n");
                             fprintf(fs, "end\n\n"); 
+			
+			    fprintf(fs, "task python\n\n");
 
                             // task section
                             //if (jobtype == RUN_ENERGY)
@@ -428,8 +432,8 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             
                             // Comment for labeling
-                            fprintf(fs, "\n\nstart field\n");
-                            fprintf(fs, "title 'State %d Monomer %d Cell %d %d %d'\n\n", istate, ifrag, x+xa, y+xb, z+xc);
+                            fprintf(fs, "start field_s%02d_d%02d_d%02d_c%02d_%02d_%02d\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+                            fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
                             
                             // geometry section
                             fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -444,9 +448,8 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
                                 if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                                    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
                                             atom->symbol[iatom%natoms],
-                                            atom->getAtomicNumber(iatom%natoms),
                                             atom->coord[3*(iatom%natoms)]   + x*cellA,
                                             atom->coord[3*(iatom%natoms)+1] + y*cellB,
                                             atom->coord[3*(iatom%natoms)+2] + z*cellC
@@ -454,9 +457,8 @@ void State::write_nwchem_inputs(int jobtype)
                                     
                                 }
                                 else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                                    fprintf(fs, "  %c %4.2lf %20.10lf %20.10lf %20.10lf\n",
+                                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
                                             atom->symbol[iatom%natoms],
-                                            atom->getAtomicNumber(iatom%natoms),
                                             atom->coord[3*(iatom%natoms)],
                                             atom->coord[3*(iatom%natoms)+1],
                                             atom->coord[3*(iatom%natoms)+2]
@@ -475,7 +477,7 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
-			    fprintf(fs, "force fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw.field\n", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+			    fprintf(fs, "force state_%02d/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw.field\n", istate, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
                             for (int x0=-afield; x0<=afield; ++x0) {
                                 for (int y0=-bfield; y0<=bfield; ++y0) {
                                     for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -517,7 +519,7 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                            
  			    // scratch section
- 			    fprintf(fs, "scratch_dir %s\n\n",scratch);
+ 			    //fprintf(fs, "scratch_dir %s\n\n",scratch);
  
                             // basis set section
                             fprintf(fs, "basis\n");
@@ -844,7 +846,7 @@ void Run::do_nwchem_calculations(int FORCE)
                 //char jnum[16];
 
                 sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-   	        sprintf(command, "%s %s/%s.in > %s/%s.out", 
+   	        sprintf(command, "%s %s/%s.nw > %s/%s.nwout", 
 		        exec,
                         state_directory,
    		        filename,
