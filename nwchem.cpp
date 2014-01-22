@@ -74,8 +74,17 @@ void State::write_nwchem_inputs(int jobtype)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag){
                         // Get name of file to open
+  		        char jobname[256];
                         char filename[256];
-                        sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
+
+			// Get name of job
+			sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
+
+		        // Make the job directory...
+		        sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
+		        ierr = system(make_directory);
+
+                        sprintf(filename, "%s/%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, jobname, snum, ifrag, x+xa, y+xb, z+xc);
                         
                         FILE *fs = fopen(filename, "w");
                         if (fs == NULL) {
@@ -85,7 +94,7 @@ void State::write_nwchem_inputs(int jobtype)
                         }
                         
                         // Comment for labeling
-                        fprintf(fs, "start grad_s%02d_m%02d_c%02d_%02d_%02d\n", istate, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "start grad_%s\n", jobname);
                         fprintf(fs, "title \"State %d Monomer %d Cell %d %d %d\"\n\n", istate, ifrag, x+xa, y+xb, z+xc);
                         
                         // geometry section
@@ -149,13 +158,17 @@ void State::write_nwchem_inputs(int jobtype)
                         } else {
                             fprintf(fs, "charge 0\n\n");
                         }
-                       
+                      
+ 
 			// scratch section
-			char fname[256];
 			char scratch[256];
-			sprintf(fname, "fmo_st%s_m%03d_cell.%d.%d.%d.nw", snum, ifrag, x+xa, y+xb, z+xc);
-			sprintf(scratch, "%s/%s/",run->scratch_dir,fname);	
-			//fprintf(fs, "scratch_dir %s\n\n",scratch);
+			sprintf(scratch, "%s/%s/%s/", run->scratch_dir,state_directory,jobname);
+			fprintf(fs, "scratch_dir %s\n\n", scratch);
+
+			// Make the scratch directory...
+                        sprintf(make_directory, "mkdir -p %s", scratch);
+                        ierr = system(make_directory);
+	
  
                         // basis set section
                         fprintf(fs, "basis\n");
@@ -164,12 +177,12 @@ void State::write_nwchem_inputs(int jobtype)
 
 			fprintf(fs, "python\n");
   			fprintf(fs, "  abc=task_gradient('mp2')\n");
-			fprintf(fs, "  fener=open('state_%02d/%s.energy','w')\n",istate,fname);
-			fprintf(fs, "  fener.write('%%15.10f'%(abc[0]))\n");
+			fprintf(fs, "  fener=open('%s.energy','w')\n",filename);
+			fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
 			fprintf(fs, "  fener.close()\n");
-			fprintf(fs, "  fgrad=open('state_%02d/%s.gradient','w')\n",istate,fname);
+			fprintf(fs, "  fgrad=open('%s.gradient','w')\n",filename);
 			fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-			fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+			fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
 			fprintf(fs, "  fgrad.close()\n");
     			fprintf(fs, "end\n\n");
 
@@ -187,7 +200,7 @@ void State::write_nwchem_inputs(int jobtype)
                          */
                         
                         // Comment for labeling
-                        fprintf(fs, "\n\nstart field_s%02d_m%02d_c%02d_%02d_%02d\n\n", istate, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "\n\nstart field_%s\n\n", jobname);
                 
                         // geometry section
                         fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -215,7 +228,7 @@ void State::write_nwchem_inputs(int jobtype)
                         
                         // bq section
                         fprintf(fs, "bq units angstrom\n");
-                        fprintf(fs, "force state_%02d/fmo_st%s_m%03d_cell.%d.%d.%d.nw.field\n", istate, snum, ifrag, x+xa, y+xb, z+xc);
+                        fprintf(fs, "force %s.nw.field\n", jobname);
                         for (int x0=-afield; x0<=afield; ++x0) {
                             for (int y0=-bfield; y0<=bfield; ++y0) {
                                 for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -253,7 +266,7 @@ void State::write_nwchem_inputs(int jobtype)
                         }
                         
 			// scratch section
-			//fprintf(fs, "scratch_dir %s\n\n",scratch); 
+			fprintf(fs, "scratch_dir %s\n\n", scratch); 
 
                         // basis set section
                         fprintf(fs, "basis\n");
@@ -286,11 +299,17 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             
                             // Get name of file to open
+ 			    char jobname[256];
                             char filename[256];
-                            char inum[16];
-                            char jnum[16];
+
+                            // Get name of job
+                            sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+
+                            // Make the job directory...
+                            sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
+                            ierr = system(make_directory);
                             
-                            sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+                            sprintf(filename, "%s/%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, jobname, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
                             
                             FILE *fs = fopen(filename, "w");
                             if (fs == NULL) {
@@ -300,7 +319,7 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                             
                             // Comment for labeling
-                            fprintf(fs, "start grad_s%02d_d%02d_d%02d_c%02d_%02d_%02d\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+			    fprintf(fs, "start grad_%s\n", jobname);
                             fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
                             
                             // geometry section
@@ -386,11 +405,13 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                         
 			    // scratch section
-			    char fname[256];
 			    char scratch[256];
-			    sprintf(fname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-			    sprintf(scratch, "%s/%s/",run->scratch_dir,fname);
-			    //fprintf(fs, "scratch_dir %s\n\n",scratch);
+			    sprintf(scratch, "%s/%s/%s/", run->scratch_dir,state_directory,jobname);
+			    fprintf(fs, "scratch_dir %s\n\n", scratch);
+
+                            // Make the scratch directory...
+                            sprintf(make_directory, "mkdir -p %s", scratch);
+                            ierr = system(make_directory);	
     
                             // basis set section
                             fprintf(fs, "basis\n");
@@ -399,12 +420,12 @@ void State::write_nwchem_inputs(int jobtype)
                            
                             fprintf(fs, "python\n");
                             fprintf(fs, "  abc=task_gradient('mp2')\n");
-                            fprintf(fs, "  fener=open('state_%02d/%s.energy','w')\n",istate,fname);
-                            fprintf(fs, "  fener.write('%%15.10f'%(abc[0]))\n");
+                            fprintf(fs, "  fener=open('%s.energy','w')\n",filename);
+                            fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
                             fprintf(fs, "  fener.close()\n");
-                            fprintf(fs, "  fgrad=open('state_%02d/%s.gradient','w')\n",istate,fname);
+                            fprintf(fs, "  fgrad=open('%s.gradient','w')\n",filename);
                             fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                            fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                            fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
                             fprintf(fs, "  fgrad.close()\n");
                             fprintf(fs, "end\n\n"); 
 			
@@ -422,7 +443,7 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             
                             // Comment for labeling
-                            fprintf(fs, "start field_s%02d_d%02d_d%02d_c%02d_%02d_%02d\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+			    fprintf(fs, "start field_%s\n", jobname);
                             fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
                             
                             // geometry section
@@ -467,7 +488,7 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
-			    fprintf(fs, "force state_%02d/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw.field\n", istate, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+			    fprintf(fs, "force %s.nw.field\n", jobname);
                             for (int x0=-afield; x0<=afield; ++x0) {
                                 for (int y0=-bfield; y0<=bfield; ++y0) {
                                     for (int z0=-cfield; z0<=cfield; ++z0) {
@@ -509,7 +530,7 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                            
  			    // scratch section
- 			    //fprintf(fs, "scratch_dir %s\n\n",scratch);
+ 			    fprintf(fs, "scratch_dir %s\n\n",scratch);
  
                             // basis set section
                             fprintf(fs, "basis\n");
@@ -662,7 +683,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
     char state_directory[256];
     char snum[16];
-    sprintf(snum, "%02d", istate);
+    sprintf(snum, "%02d", istate); 
     sprintf(state_directory, "state_%02d", istate);
 
     // ********** Handle FMO monomers here ************ //
@@ -677,7 +698,8 @@ void Run::do_nwchem_calculations(int FORCE)
 
 	  for (int ifrag=0; ifrag<nfragments; ++ifrag) {
             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-
+	
+	      char jobname[256];
               char filename[256];
               char inum[16];
 
@@ -686,15 +708,19 @@ void Run::do_nwchem_calculations(int FORCE)
 	      char cname[16];
 	      sprintf(cname,"cell.%d.%d.%d", x+xa, y+xb, z+xc);
 
-              sprintf(filename, "fmo_st%s_m%s_%s", snum, inum, cname);
-              sprintf(command, "%s %s/%s.nw > %s/%s.nwout", 
+	      sprintf(jobname, "fmo_st%s_m%03d_%s", snum, ifrag, cname);
+              sprintf(filename, "fmo_st%s_m%03d_%s", snum, ifrag, cname);
+
+	      // change directory
+              char directory[512];
+	      sprintf(directory, "%s/%s/", state_directory, jobname);
+ 	      chdir(directory);
+
+              sprintf(command, "%s %s.nw > %s.nwout", 
                       exec,
-                      state_directory,
-                      filename,
-                      state_directory,
-                      filename
+                      jobname,
+                      jobname
                      );
-              //printf("Rank %d: %s\n", my_rank, command);
 
               // ** The system call ** //
               ierr = system(command);
@@ -707,7 +733,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
               // ** Open output file and get the energy ** //
               char output_file[MAX_LENGTH];
-              sprintf(output_file, "%s/%s.nw.energy", state_directory, filename);
+              sprintf(output_file, "%s.nw.energy",  jobname);
               FILE *fs = fopen(output_file, "r");
               if (fs == NULL) {
                 char tmpstr[MAX_LENGTH];
@@ -732,7 +758,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
               if (FORCE) {
                 // ** Get gradient from file ** // 
-                sprintf(output_file, "%s/%s.nw.gradient", state_directory, filename);
+                sprintf(output_file, "%s.nw.gradient", jobname);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                   char tmpstr[MAX_LENGTH];
@@ -763,7 +789,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
 
                 // ** Get field from file ** // 
-                sprintf(output_file, "%s/%s.nw.field", state_directory, filename);
+                sprintf(output_file, "%s.nw.field", jobname);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                   char tmpstr[MAX_LENGTH];
@@ -805,7 +831,7 @@ void Run::do_nwchem_calculations(int FORCE)
 	
 		
               }
-
+	      chdir("../..");
             }
             ++index_mono;
           }
@@ -831,19 +857,22 @@ void Run::do_nwchem_calculations(int FORCE)
 
               if (ifrom_dim <= index_dim && index_dim < ito_dim) {
 
+		char jobname[256];
   	        char filename[256];
-                //char inum[16];
-                //char jnum[16];
 
-                sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-   	        sprintf(command, "%s %s/%s.nw > %s/%s.nwout", 
+		sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+		sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+
+                // change directory
+                char directory[512];
+                sprintf(directory, "%s/%s/", state_directory, jobname);
+                chdir(directory);
+
+   	        sprintf(command, "%s %s.nw > %s.nwout", 
 		        exec,
-                        state_directory,
-   		        filename,
-                        state_directory,
-		        filename
+   		        jobname,
+		        jobname
 		       );
-	        //printf("Rank %d: %s\n", my_rank, command);
 
                 // ** The system call ** //
 	        ierr = system(command);
@@ -857,7 +886,7 @@ void Run::do_nwchem_calculations(int FORCE)
 	        // ** Open output file and get the energy ** //
                 char output_file[MAX_LENGTH];
                 //sprintf(output_file, "%s/%s.out", state_directory, filename);
-                sprintf(output_file, "%s/%s.nw.energy", state_directory, filename);
+                sprintf(output_file, "%s.nw.energy", jobname);
 	        FILE *fs = fopen(output_file, "r");
 	        if (fs == NULL) {
 	          char tmpstr[MAX_LENGTH];
@@ -886,7 +915,7 @@ void Run::do_nwchem_calculations(int FORCE)
 
                 if (FORCE) {
                   // ** Get gradient from file ** // 
-                  sprintf(output_file, "%s/%s.nw.gradient", state_directory, filename);
+                  sprintf(output_file, "%s.nw.gradient", jobname);
                   fs = fopen(output_file, "r");
                   if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -930,7 +959,7 @@ void Run::do_nwchem_calculations(int FORCE)
                   fclose(fs);
 
                   // ** Get field from file ** // 
-                  sprintf(output_file, "%s/%s.nw.field", state_directory, filename);
+                  sprintf(output_file, "%s.nw.field", jobname);
                   fs = fopen(output_file, "r");
                   if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -978,6 +1007,7 @@ void Run::do_nwchem_calculations(int FORCE)
                   fclose(fs);
 
                 } 
+		chdir("../..");
 	      }
               ++index_dim;
             }
