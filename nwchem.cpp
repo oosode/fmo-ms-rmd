@@ -177,10 +177,10 @@ void State::write_nwchem_inputs(int jobtype)
 
 			fprintf(fs, "python\n");
   			fprintf(fs, "  abc=task_gradient('mp2')\n");
-			fprintf(fs, "  fener=open('%s.energy','w')\n",filename);
+			fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
 			fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
 			fprintf(fs, "  fener.close()\n");
-			fprintf(fs, "  fgrad=open('%s.gradient','w')\n",filename);
+			fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
 			fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
 			fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
 			fprintf(fs, "  fgrad.close()\n");
@@ -420,10 +420,10 @@ void State::write_nwchem_inputs(int jobtype)
                            
                             fprintf(fs, "python\n");
                             fprintf(fs, "  abc=task_gradient('mp2')\n");
-                            fprintf(fs, "  fener=open('%s.energy','w')\n",filename);
+                            fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
                             fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
                             fprintf(fs, "  fener.close()\n");
-                            fprintf(fs, "  fgrad=open('%s.gradient','w')\n",filename);
+                            fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
                             fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
                             fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
                             fprintf(fs, "  fgrad.close()\n");
