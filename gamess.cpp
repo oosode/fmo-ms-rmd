@@ -18,114 +18,124 @@ using namespace FMR_NS;
 -----------------------------------------------------------------*/
 void State::write_gamess_inputs(int jobtype)
 {
-  // Writes a separate input file for all monomers and all dimers
-  // Master rank does all the work here
-
-  if (fmr->master_rank) {
-
-    printf("Writing Gamess inputs.\n");
-    printf("Read MOs: %d\n", flag_read_MOs);
-
-    Run *run       = fmr->run;
-    Atom *atom     = fmr->atom;
-    int natoms     = atom->natoms;
-    int nstates    = atom->nstates;
-    int nfragments = atom->nfragments;
-      
-    int cellA      = fmr->atom->cellA;
-    int cellB      = fmr->atom->cellB;
-    int cellC      = fmr->atom->cellC;
-      
-    int xa         = fmr->atom->na;
-    int xb         = fmr->atom->nb;
-    int xc         = fmr->atom->nc;
-      
-    int afield     = fmr->atom->afield;
-    int bfield     = fmr->atom->bfield;
-    int cfield     = fmr->atom->cfield;
-
-    // ***** Loop over states ***** //
-    for (int istate=0; istate<nstates; ++istate) {
+    // Writes a separate input file for all monomers and all dimers
+    // Master rank does all the work here
+    
+    if (fmr->master_rank) {
         
-        // Determine the charged reactive fragment for this state
-        int chgfrag = 0;
-        for (int i=0; i<natoms; ++i) {
-            if (atom->reactive[istate*natoms + i]) {
-                chgfrag = atom->fragment[istate*natoms + i];
-                break;
+        printf("Writing Gamess inputs.\n");
+        printf("Read MOs: %d\n", flag_read_MOs);
+        
+        Run *run       = fmr->run;
+        Atom *atom     = fmr->atom;
+        int natoms     = atom->natoms;
+        int nstates    = atom->nstates;
+        int nfragments = atom->nfragments;
+        
+        int cellA      = fmr->atom->cellA;
+        int cellB      = fmr->atom->cellB;
+        int cellC      = fmr->atom->cellC;
+        
+        int xa         = fmr->atom->na;
+        int xb         = fmr->atom->nb;
+        int xc         = fmr->atom->nc;
+        
+        int afield     = fmr->atom->afield;
+        int bfield     = fmr->atom->bfield;
+        int cfield     = fmr->atom->cfield;
+        
+        // ***** Loop over states ***** //
+        for (int istate=0; istate<nstates; ++istate) {
+            
+            // Determine the charged reactive fragment for this state
+            int chgfrag = 0;
+            for (int i=0; i<natoms; ++i) {
+                if (atom->reactive[istate*natoms + i]) {
+                    chgfrag = atom->fragment[istate*natoms + i];
+                    break;
+                }
             }
-        }
+            
+            // Put files in directory for organization
+            char state_directory[256];
+            char snum[16];
+            char make_directory[256];
+            
+            sprintf(snum, "%02d", istate);
+            sprintf(state_directory, "state_%02d", istate);
+            // Make the directory...
+            sprintf(make_directory, "mkdir -p %s", state_directory);
+            int ierr = system(make_directory);
+            
+            char jobname[256];
+            char filename[256];
+            
+            // Get name of job
+            sprintf(jobname, "fmo_st%s", snum);
+            
+            sprintf(filename, "%s/%s.inp", state_directory, jobname);
+            
+            FILE *fs = fopen(filename, "w");
+            if (fs == NULL) {
+                char tmpstr[256];
+                sprintf(tmpstr, "Failure to write Gamess input for file %s", filename);
+                fmr->error(FLERR, tmpstr);
+            }
+            
+            // Comment for labeling
+            fprintf(fs, "! State %s\n", snum);
+            
+            // contrl section
+            fprintf(fs, " $contrl scftyp=rhf runtyp=gradient $end\n");
+            fprintf(fs, " $system timlim=1 $end\n");
+            
+            // scf section
+            fprintf(fs, " $scf conv=1.0d-06 dirscf=.true. $end\n");
+            
+            // basis section
+            fprintf(fs, " $basis  gbasis=sto ngauss=3 $end");
+            
+            // fmo section
+            fprintf(fs, " $fmo mplevl=2 nfrag=3 icharg(1)=1,0,0\n");
+            fprintf(fs, " $fmo mplevl=2 nfrag=%d ", nfragments);
+            fprintf(fs, "icharg(1)=");
+            for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+                if (ifrag == chgfrag) fprintf(fs, "1");
+                else                  fprintf(fs, "0");
+                
+                if (ifrag == nfragments-1) fprintf(fs, "\n");
+                else                       fprintf(fs, ",");
+            }
+            fprintf(fs, "      indat(1)=1,2,2,2,1,1,1,3,3,3\n");
+            fprintf(fs, "      indat(1)=");
+            fprintf(fs, " $end\n");
+            fprintf(fs, " $fmoprp nprint=0 $end\n");
+            fprintf(fs, " $fmoxyz\n");
+            
+            // geometry section
+            for (int iatom=0; iatom<natoms; ++iatom) {
+                fprintf(fs, "%c %c %20.10lf %20.10lf %20.10lf\n",
+                        atom->symbol[iatom],
+                        atom->symbol[iatom],
+                        atom->coord[3*iatom],
+                        atom->coord[3*iatom+1],
+                        atom->coord[3*iatom+2]
+                        );
+            }
+            fprintf(fs, " $end\n");
+            fprintf(fs, " $data\n");
+            fprintf(fs, "Basis set input, with no atomic coordinates\n");
+            fprintf(fs, "C1\n");
+            fprintf(fs, "h-1 1\n");
+            fprintf(fs, "o-1 8\n");
+            fprintf(fs, " $end\n");
+            
+            fclose(fs);
+            
+        } // close loop over states
         
-        // Put files in directory for organization
-        char state_directory[256];
-        char snum[16];
-        char make_directory[256];
-        
-        sprintf(snum, "%02d", istate);
-        sprintf(state_directory, "state_%02d", istate);
-        // Make the directory...
-        sprintf(make_directory, "mkdir -p %s", state_directory);
-        int ierr = system(make_directory);
-        
-        char jobname[256];
-        char filename[256];
-        
-        // Get name of job
-        sprintf(jobname, "fmo_st%s", snum);
-        
-        sprintf(filename, "%s/%s.inp", state_directory, jobname);
-        
-        FILE *fs = fopen(filename, "w");
-        if (fs == NULL) {
-            char tmpstr[256];
-            sprintf(tmpstr, "Failure to write Gamess input for file %s", filename);
-            fmr->error(FLERR, tmpstr);
-        }
-        
-        // Comment for labeling
-        fprintf(fs, "! State %s\n", snum);
-        
-        // contrl section
-        fprintf(fs, " $contrl scftyp=rhf runtyp=gradient $end\n");
-        fprintf(fs, " $system timlim=1 $end\n");
-        
-        // scf section
-        fprintf(fs, " $scf conv=1.0d-06 dirscf=.true. $end\n");
-        
-        // basis section
-        fprintf(fs, " $basis  gbasis=sto ngauss=3 $end");
-        
-        // fmo section
-        fprintf(fs, " $fmo mplevl=2 nfrag=3 icharg(1)=1,0,0\n");
-        fprintf(fs, "      indat(1)=1,2,2,2,1,1,1,3,3,3\n");
-        fprintf(fs, " $end\n");
-        fprintf(fs, " $fmoprp nprint=0 $end\n");
-        fprintf(fs, " $fmoxyz\n");
-        
-        // geometry section
-        for (int iatom=0; iatom<natoms; ++iatom) {
-            fprintf(fs, "%c %c %20.10lf %20.10lf %20.10lf\n",
-                    atom->symbol[iatom],
-                    atom->symbol[iatom],
-                    atom->coord[3*iatom],
-                    atom->coord[3*iatom+1],
-                    atom->coord[3*iatom+2]
-                    );
-        }
-        fprintf(fs, " $end\n");
-        fprintf(fs, " $data\n");
-        fprintf(fs, "Basis set input, with no atomic coordinates\n");
-        fprintf(fs, "C1\n");
-        fprintf(fs, "h-1 1\n");
-        fprintf(fs, "o-1 8\n");
-        fprintf(fs, " $end\n");
-        
-        fclose(fs);
-
-    } // close loop over states
-      
-      printf("Done writing Gamess inputs.\n");
-  }
+        printf("Done writing Gamess inputs.\n");
+    }
     
     // Hold up
     MPI_Barrier(fmr->world);
@@ -133,7 +143,7 @@ void State::write_gamess_inputs(int jobtype)
 
 
 /*-----------------------------------------------------------------
-  Perform all the FMO calculations 
+  Perform all the FMO calculations
 -----------------------------------------------------------------*/
 void Run::do_gamess_calculations(int FORCE)
 {
