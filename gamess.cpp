@@ -246,6 +246,11 @@ void Run::do_gamess_calculations(int FORCE)
     // ** Make the system calls to run each FMO calculation now ** //
     char command[MAX_LENGTH];
     int ierr;
+    int nnodes=1;
+    char verno[256];
+
+    
+    
     int index_mono = 0;
     int index_dim  = 0;
 
@@ -266,9 +271,10 @@ void Run::do_gamess_calculations(int FORCE)
         sprintf(directory, "%s", state_directory);
         chdir(directory);
         
-        sprintf(command, "%s %s.inp > %s.log",
+        sprintf(command, "%s %s.inp May12012R2 %d > %s.log",
                 exec,
                 jobname,
+                nnodes,
                 jobname
                 );
         
