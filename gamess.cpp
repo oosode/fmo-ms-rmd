@@ -93,10 +93,10 @@ void State::write_gamess_inputs(int jobtype)
             fprintf(fs, " $scf conv=1.0d-06 dirscf=.true. $end\n");
             
             // basis section
-            fprintf(fs, " $basis  gbasis=sto ngauss=3 $end");
+            fprintf(fs, " $basis  gbasis=sto ngauss=3 $end\n");
             
             // fmo section
-            fprintf(fs, " $fmo mplevl=2 nfrag=3 icharg(1)=1,0,0\n");
+            //fprintf(fs, " $fmo mplevl=2 nfrag=3 icharg(1)=1,0,0\n");
             fprintf(fs, " $fmo mplevl=2 nfrag=%d ", nfragments);
             fprintf(fs, "icharg(1)=");
             for (int ifrag=0; ifrag<nfragments; ++ifrag) {
@@ -106,8 +106,13 @@ void State::write_gamess_inputs(int jobtype)
                 if (ifrag == nfragments-1) fprintf(fs, "\n");
                 else                       fprintf(fs, ",");
             }
-            fprintf(fs, "      indat(1)=1,2,2,2,1,1,1,3,3,3\n");
             fprintf(fs, "      indat(1)=");
+            for (int iatom=0; iatom<natoms; ++iatom) {
+                if (iatom == natoms-1) fprintf(fs, "%d\n",atom->fragment[istate*natoms+iatom]+1);
+                else                   fprintf(fs, "%d,",atom->fragment[istate*natoms+iatom]+1);
+            }
+            //fprintf(fs, "      indat(1)=1,2,2,2,1,1,1,3,3,3\n");
+            //fprintf(fs, "      indat(1)=");
             fprintf(fs, " $end\n");
             fprintf(fs, " $fmoprp nprint=0 $end\n");
             fprintf(fs, " $fmoxyz\n");
@@ -188,7 +193,7 @@ void Run::do_gamess_calculations(int FORCE)
     
     if (fmr->master_rank) {
         printf("Preparing to run FMO calculations:\n");
-        printf("State FMO calculations: %d\n", n_states);
+        printf("State FMO calculations: %d\n", nstates);
         
     }
     
@@ -281,7 +286,7 @@ void Run::do_gamess_calculations(int FORCE)
         sprintf(directory, "%s", state_directory);
         chdir(directory);
         
-        sprintf(command, "%s %s.inp May12012R2 %d > %s.log",
+        sprintf(command, "%s %s.inp May12012R2 %d >& %s.log",
                 exec,
                 jobname,
                 nnodes,
@@ -310,41 +315,60 @@ void Run::do_gamess_calculations(int FORCE)
         double en;
         double gx, gy, gz;
         
+        char tmp0[16],tmp1[16],tmp2[16],tmp3[16];
+        
         
         while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+            //printf("%s",line);
             if ( strstr(line, "Two-body FMO properties") ) {
                 
                 while ( fgets(line, MAX_LENGTH, fs) != NULL) {
-                    if ( strstr(line, "#ATOM# FRG#") ) {
+                    
+                    if ( strstr(line, "ATOM# FRG#") ) {
                         
                         for (int iatom=0; iatom<natoms; ++iatom) {
                             
                             fgets(line, MAX_LENGTH, fs);
-                            if ( sscanf(line, "%*s %lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                            //printf("%s",line);
+                            if ( sscanf(line, "%s %s %s %lf %lf %lf", tmp0, tmp1, tmp2, &gx, &gy, &gz) == 6 ) {
                                 
                                 fmo_gradients[3*natoms*istate + 3*iatom]   = gx;
                                 fmo_gradients[3*natoms*istate + 3*iatom+1] = gy;
                                 fmo_gradients[3*natoms*istate + 3*iatom+2] = gz;
                                 
                             }
-                            
                         }
                     }
                     else if ( strstr(line, "TOTAL ENERGY =") ) {
-                        if ( sscanf(line, "%*s %lf", &en) == 1 ) {
+
+                        //printf("%s",line);
+                        if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
                             fmo_energies[istate] = en;
+                        }
                     }
                 }
                 break;
             }
-            break;
-
         }
         fclose(fs);
-        chdir("../");
-    
-    }
+        
 
+        // clean up directory
+        sprintf(command, "rm -rf %s.dat",jobname);
+        
+        // ** The system call ** //
+        ierr = system(command);
+        
+        // ** Check for error ** //
+        if (ierr) {
+            printf("Gamess run error on rank %d:\n", fmr->my_rank);
+            fmr->error(FLERR, command);
+        }
+        
+        chdir("../");
+        
+    }
+    
     // Clock
     double FMO_end = MPI_Wtime();
     MPI_Barrier(fmr->world);
@@ -536,10 +560,10 @@ void Run::do_gamess_calculations(int FORCE)
             }
         }
     }
-    fprintf(fs,"\n");
-    fclose(fs);
+    //fprintf(fs,"\n");
+    //fclose(fs);
     */
-        
+     
     // Broadcast the FMO energy/force to worker ranks
     MPI_Bcast(fmo_energies, nstates, MPI_DOUBLE, MASTER_RANK, fmr->world);
     if (FORCE) {
