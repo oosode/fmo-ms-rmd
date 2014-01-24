@@ -230,25 +230,15 @@ void Run::do_gamess_calculations(int FORCE)
     }
     
     // ** Determine load balance ** //
-    int div = n_monomers / fmr->world_size;
-    int rem = n_monomers % fmr->world_size;
-    int ifrom_mono, ito_mono;
+    int div = nstates / fmr->world_size;
+    int rem = nstates % fmr->world_size;
+    int ifrom_state, ito_state;
     if (my_rank < rem) {
-        ifrom_mono = my_rank*div + my_rank;
-        ito_mono   = ifrom_mono + div + 1;
+        ifrom_state = my_rank*div + my_rank;
+        ito_state   = ifrom_state + div + 1;
     } else {
-        ifrom_mono = my_rank*div + rem;
-        ito_mono   = ifrom_mono + div;
-    }
-    div = n_dimers / fmr->world_size;
-    rem = n_dimers % fmr->world_size;
-    int ifrom_dim, ito_dim;
-    if (my_rank < rem) {
-        ifrom_dim = my_rank*div + my_rank;
-        ito_dim   = ifrom_dim + div + 1;
-    } else {
-        ifrom_dim = my_rank*div + rem;
-        ito_dim   = ifrom_dim + div;
+        ifrom_state = my_rank*div + rem;
+        ito_state   = ifrom_state + div;
     }
     
     // Clock
@@ -261,95 +251,93 @@ void Run::do_gamess_calculations(int FORCE)
     // ** Make the system calls to run each FMO calculation now ** //
     char command[MAX_LENGTH];
     int ierr;
-    int nnodes=1;
+    int nnodes=4;
     char verno[256];
-
     
-    
-    int index_mono = 0;
-    int index_dim  = 0;
+    int index_state = 0;
 
     for (int istate=0; istate<nstates; ++istate) {
-        
-        char state_directory[256];
-        char snum[16];
-        sprintf(snum, "%02d", istate);
-        sprintf(state_directory, "state_%02d", istate);
-        
-        char jobname[256];
-        char filename[256];
-        
-        sprintf(jobname, "fmo_st%s", snum);
-        
-        // change directory
-        char directory[512];
-        sprintf(directory, "%s", state_directory);
-        chdir(directory);
-        
-        sprintf(command, "%s %s.inp May12012R2 %d >& %s.log",
-                exec,
-                jobname,
-                nnodes,
-                jobname
-                );
-        
-        // ** The system call ** //
-        ierr = system(command);
-        
-        // ** Check for error ** //
-        if (ierr) {
-            printf("Gamess run error on rank %d:\n", fmr->my_rank);
-            fmr->error(FLERR, command);
-        }
-        
-        // ** Open output file and get the energy ** //
-        char output_file[MAX_LENGTH];
-        sprintf(output_file, "%s.log",  jobname);
-        FILE *fs = fopen(output_file, "r");
-        if (fs == NULL) {
-            char tmpstr[MAX_LENGTH];
-            sprintf(tmpstr, "Failure to read Gamess output file: %s", output_file);
-            fmr->error(FLERR, tmpstr);
-        }
-        char line[MAX_LENGTH];
-        double en;
-        double gx, gy, gz;
-        
-        char tmp0[16],tmp1[16],tmp2[16],tmp3[16];
-        
-        
-        while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-            //printf("%s",line);
-            if ( strstr(line, "Two-body FMO properties") ) {
-                
-                while ( fgets(line, MAX_LENGTH, fs) != NULL) {
+//        if (ifrom_state <= index_state && index_state < ito_state) {
+            
+            char state_directory[256];
+            char snum[16];
+            sprintf(snum, "%02d", istate);
+            sprintf(state_directory, "state_%02d", istate);
+            
+            char jobname[256];
+            char filename[256];
+            
+            sprintf(jobname, "fmo_st%s", snum);
+            
+            // change directory
+            char directory[512];
+            sprintf(directory, "%s", state_directory);
+            chdir(directory);
+            
+            sprintf(command, "%s %s.inp May12012R2 %d >& %s.log",
+                    exec,
+                    jobname,
+                    nnodes,
+                    jobname
+                    );
+            
+            // ** The system call ** //
+            ierr = system(command);
+            
+            // ** Check for error ** //
+            if (ierr) {
+                printf("Gamess run error on rank %d:\n", fmr->my_rank);
+                fmr->error(FLERR, command);
+            }
+            
+            // ** Open output file and get the energy ** //
+            char output_file[MAX_LENGTH];
+            sprintf(output_file, "%s.log",  jobname);
+            FILE *fs = fopen(output_file, "r");
+            if (fs == NULL) {
+                char tmpstr[MAX_LENGTH];
+                sprintf(tmpstr, "Failure to read Gamess output file: %s", output_file);
+                fmr->error(FLERR, tmpstr);
+            }
+            char line[MAX_LENGTH];
+            double en;
+            double gx, gy, gz;
+            
+            char tmp0[16],tmp1[16],tmp2[16],tmp3[16];
+            
+            
+            while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                //printf("%s",line);
+                if ( strstr(line, "Two-body FMO properties") ) {
                     
-                    if ( strstr(line, "ATOM# FRG#") ) {
+                    while ( fgets(line, MAX_LENGTH, fs) != NULL) {
                         
-                        for (int iatom=0; iatom<natoms; ++iatom) {
+                        if ( strstr(line, "ATOM# FRG#") ) {
                             
-                            fgets(line, MAX_LENGTH, fs);
+                            for (int iatom=0; iatom<natoms; ++iatom) {
+                                
+                                fgets(line, MAX_LENGTH, fs);
+                                //printf("%s",line);
+                                if ( sscanf(line, "%s %s %s %lf %lf %lf", tmp0, tmp1, tmp2, &gx, &gy, &gz) == 6 ) {
+                                    
+                                    fmo_gradients[3*natoms*istate + 3*iatom]   = gx;
+                                    fmo_gradients[3*natoms*istate + 3*iatom+1] = gy;
+                                    fmo_gradients[3*natoms*istate + 3*iatom+2] = gz;
+                                    
+                                }
+                            }
+                        }
+                        else if ( strstr(line, "TOTAL ENERGY =") ) {
+                            
                             //printf("%s",line);
-                            if ( sscanf(line, "%s %s %s %lf %lf %lf", tmp0, tmp1, tmp2, &gx, &gy, &gz) == 6 ) {
-                                
-                                fmo_gradients[3*natoms*istate + 3*iatom]   = gx;
-                                fmo_gradients[3*natoms*istate + 3*iatom+1] = gy;
-                                fmo_gradients[3*natoms*istate + 3*iatom+2] = gz;
-                                
+                            if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                fmo_energies[istate] = en;
                             }
                         }
                     }
-                    else if ( strstr(line, "TOTAL ENERGY =") ) {
-
-                        //printf("%s",line);
-                        if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
-                            fmo_energies[istate] = en;
-                        }
-                    }
+                    break;
                 }
-                break;
             }
-        }
         fclose(fs);
         
 
@@ -366,7 +354,7 @@ void Run::do_gamess_calculations(int FORCE)
         }
         
         chdir("../");
-        
+//        }
     }
     
     // Clock
