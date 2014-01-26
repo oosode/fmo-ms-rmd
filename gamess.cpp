@@ -7,6 +7,7 @@
 #include "matrix.h"
 #include <vector>
 #include <string>
+#include <unistd.h>
 
 #define MAX_LENGTH 1024
 #define MAX_SIZE 12474
@@ -251,13 +252,13 @@ void Run::do_gamess_calculations(int FORCE)
     // ** Make the system calls to run each FMO calculation now ** //
     char command[MAX_LENGTH];
     int ierr;
-    int nnodes=4;
+    int nnodes=12;
     char verno[256];
     
     int index_state = 0;
 
     for (int istate=0; istate<nstates; ++istate) {
-//        if (ifrom_state <= index_state && index_state < ito_state) {
+        if (fmr->master_rank) {
             
             char state_directory[256];
             char snum[16];
@@ -274,10 +275,12 @@ void Run::do_gamess_calculations(int FORCE)
             sprintf(directory, "%s", state_directory);
             chdir(directory);
             
-            sprintf(command, "%s %s.inp May12012R2 %d >& %s.log",
+            //printf("Number of Gamess ncores: %d\n", gamess_ncores); 
+            sprintf(command, "%s %s.inp %s %d >& %s.log &",
                     exec,
                     jobname,
-                    nnodes,
+		    gamess_version,
+                    gamess_ncores,
                     jobname
                     );
             
@@ -342,7 +345,7 @@ void Run::do_gamess_calculations(int FORCE)
         
 
         // clean up directory
-        sprintf(command, "rm -rf %s.dat",jobname);
+        sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
         
         // ** The system call ** //
         ierr = system(command);
@@ -354,7 +357,7 @@ void Run::do_gamess_calculations(int FORCE)
         }
         
         chdir("../");
-//        }
+        }
     }
     
     // Clock
@@ -551,7 +554,6 @@ void Run::do_gamess_calculations(int FORCE)
     //fprintf(fs,"\n");
     //fclose(fs);
     */
-     
     // Broadcast the FMO energy/force to worker ranks
     MPI_Bcast(fmo_energies, nstates, MPI_DOUBLE, MASTER_RANK, fmr->world);
     if (FORCE) {

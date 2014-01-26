@@ -7,6 +7,7 @@
 #include "matrix.h"
 #include <vector>
 #include <string>
+#include <unistd.h>
 
 #define MAX_LENGTH 1024
 #define MAX_SIZE 12474
