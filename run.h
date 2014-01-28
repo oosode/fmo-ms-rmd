@@ -29,6 +29,9 @@ class Run : protected Pointers {
    char scratch_dir[256];     // Full path of Q-Chem scratch directory 
    char exec[256];            // Full path of Q-Chem exectuable
 
+   char gamess_version[256];  // Gamess version number
+   int  gamess_ncores;        // Number of cores to run FMO with GDDI
+
    char correlation[256];     // correlation method
    char exchange[256];	      // exchange method
    char basis[256];	      // basis set name

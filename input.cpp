@@ -87,6 +87,13 @@ void Input::read_input_file()
 	  printf("Scratch directory: %s\n", arg1);
 	  sprintf(fmr->run->scratch_dir,"%s", arg1); 
 	}
+	else if ( strcmp(arg0, "Gamess_version") == 0 ) {
+          printf("Gamess Version: %s\n", arg1);
+          sprintf(fmr->run->gamess_version,"%s", arg1);
+        }
+        else if ( strcmp(arg0, "Gamess_ncores") == 0 ) {
+          fmr->run->gamess_ncores = atoi(arg1);
+        }
 	else if ( strcmp(arg0, "Atoms_File") == 0 ) {
 	  printf("Atoms file: %s\n", arg1);
 	  sprintf(atoms_file,"%s", arg1); 
@@ -210,6 +217,8 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->run->run_type, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->exec, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->scratch_dir, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->run->gamess_version, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->run->gamess_ncores, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->basis, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->correlation, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->exchange, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);

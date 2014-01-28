@@ -25,6 +25,9 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    sprintf(scratch_dir, "%s", "null");
    sprintf(exec, "%s", "null");
 
+   sprintf(gamess_version, "%s", "null");
+   gamess_ncores = 12;   
+
    // Electronic structure defaults
    sprintf(correlation, "%s", "mp2");
    sprintf(exchange, "%s", "hf");

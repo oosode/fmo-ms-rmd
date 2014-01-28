@@ -7,7 +7,8 @@
 # ** User defined variables **
 # ----------------------------------------------- #
 # MPI C++ compiler
-CPP = mpicxx
+#CPP = mpicxx
+CPP = CC
 
 # Debugging flags
 #DEBUG = -g -DFMR_DEBUG
