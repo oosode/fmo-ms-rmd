@@ -252,7 +252,7 @@ void Run::do_gamess_calculations(int FORCE)
     // ** Make the system calls to run each FMO calculation now ** //
     char command[MAX_LENGTH];
     int ierr;
-    int nnodes=8;
+    int nnodes=4;
     char verno[256];
     
     int index_state = 0;
