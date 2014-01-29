@@ -276,15 +276,33 @@ void Run::do_gamess_calculations(int FORCE)
             chdir(directory);
             
             //printf("Number of Gamess ncores: %d\n", gamess_ncores); 
-            sprintf(command, "%s %s.inp %s %d >& %s.log &",
+            sprintf(command, "%s %s.inp %s %d > %s.log",
                     exec,
                     jobname,
-		    gamess_version,
+	            gamess_version,
                     gamess_ncores,
                     jobname
                     );
             
-            // ** The system call ** //
+ /*
+            ierr = system("ls");
+            ierr = system("/bin/ls");
+
+	    ierr = system("echo dir=$PWD");
+	    ierr = system("pwd");
+
+            ierr = system("echo $PATH");
+	    
+
+	    ierr = system("cat rungms-xt");
+ 	    ierr = system("PATH=$PATH:. ; rungms-xt");
+
+	    ierr = system("sh -c 'echo hi'");
+            ierr = system("./sys");
+            ierr = system("./gamess.asis.x");
+*/
+
+	    // ** The system call ** //
             ierr = system(command);
             
             // ** Check for error ** //
