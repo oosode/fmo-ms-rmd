@@ -193,14 +193,15 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             fprintf(fs, "task python\n\n");
                             
-                            } 
+                            } else {
+
                             // task section
-                            //if (jobtype == RUN_ENERGY)
-                            //    fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
-                            //else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                            //    fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
+                              if (jobtype == RUN_ENERGY)
+                                fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
+                              else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                                fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
                             
-                            
+                            }
                             /*
                              *
                              */
@@ -438,14 +439,15 @@ void State::write_nwchem_inputs(int jobtype)
                                     fprintf(fs, "end\n\n");
                                     fprintf(fs, "task python\n\n");
                                     
-                                }
+                                } else {
                                 
-                                // task section
-                                //if (jobtype == RUN_ENERGY)
-                                //    fprintf(fs, "task %s energy\n\n", run->correlation);
-                                //else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                //    fprintf(fs, "task %s gradient\n\n", run->correlation);
+                                  // task section
+                                  if (jobtype == RUN_ENERGY)
+                                    fprintf(fs, "task %s energy\n\n", run->correlation);
+                                  else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                                    fprintf(fs, "task %s gradient\n\n", run->correlation);
                                 
+				}
                                 /*
                                  *
                                  */
@@ -828,7 +830,6 @@ void Run::do_nwchem_calculations(int FORCE)
                                         fgets(line, MAX_LENGTH, fs);
                                         fgets(line, MAX_LENGTH, fs);
                                         
-                                        
                                         for (int iatom=0; iatom<natoms; ++iatom) {
                                             
                                             fgets(line, MAX_LENGTH, fs);
@@ -838,7 +839,7 @@ void Run::do_nwchem_calculations(int FORCE)
                                             }
                                             //printf("%s",line);
                                             if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
-                                                
+                                                //printf("%s %d",line,atnum);    
                                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                                 monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
                                                 monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
@@ -846,6 +847,7 @@ void Run::do_nwchem_calculations(int FORCE)
                                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                                 
                                             }
+					    atnum++;
                                         }
                                         
                                     } else if ( strstr(line, "Total MP2 energy") ) {
@@ -1084,6 +1086,7 @@ void Run::do_nwchem_calculations(int FORCE)
                                                 //printf("%s",line);
                                                 if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
                                                     
+						    //printf(line); 
                                                     if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
                                                         //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
                                                         
@@ -1101,8 +1104,8 @@ void Run::do_nwchem_calculations(int FORCE)
                                                             dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                                                         }
                                                     }
-                                                    
                                                 }
+						atnum++;
                                             }
                                             
                                         } else if ( strstr(line, "Total MP2 energy") ) {
