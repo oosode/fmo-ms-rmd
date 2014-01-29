@@ -19,7 +19,8 @@ reactions to take place between fragments, like proton transfers.
 This code is only set up to work for protonated water clusters 
 for the moment. 
 
-Also, this code works with a development version of Q-Chem, NWChem6.3 with python module, and Gamess.
+Also, this code works with a development version of Q-Chem, 
+NWChem6.3 with python module, and Gamess.
 
 
 Sample input script:

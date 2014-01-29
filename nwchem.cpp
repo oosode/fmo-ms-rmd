@@ -44,6 +44,8 @@ void State::write_nwchem_inputs(int jobtype)
         int afield     = fmr->atom->afield;
         int bfield     = fmr->atom->bfield;
         int cfield     = fmr->atom->cfield;
+       
+        bool python    = false;
         
         // ***** Loop over states ***** //
         for (int istate=0; istate<nstates; ++istate) {
@@ -176,6 +178,8 @@ void State::write_nwchem_inputs(int jobtype)
                             fprintf(fs, "* library %s\n", run->basis);
                             fprintf(fs, "end\n\n");
                             
+                            if (python) {
+	
                             fprintf(fs, "python\n");
                             fprintf(fs, "  abc=task_gradient('mp2')\n");
                             fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
@@ -189,6 +193,7 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             fprintf(fs, "task python\n\n");
                             
+                            } 
                             // task section
                             //if (jobtype == RUN_ENERGY)
                             //    fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
@@ -419,18 +424,21 @@ void State::write_nwchem_inputs(int jobtype)
                                 fprintf(fs, "* library %s\n", run->basis);
                                 fprintf(fs, "end\n\n");
                                 
-                                fprintf(fs, "python\n");
-                                fprintf(fs, "  abc=task_gradient('mp2')\n");
-                                fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
-                                fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
-                                fprintf(fs, "  fener.close()\n");
-                                fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
-                                fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                                fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
-                                fprintf(fs, "  fgrad.close()\n");
-                                fprintf(fs, "end\n\n");
-                                
-                                fprintf(fs, "task python\n\n");
+                                if (python) {
+                                    
+                                    fprintf(fs, "python\n");
+                                    fprintf(fs, "  abc=task_gradient('mp2')\n");
+                                    fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
+                                    fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
+                                    fprintf(fs, "  fener.close()\n");
+                                    fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
+                                    fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
+                                    fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                                    fprintf(fs, "  fgrad.close()\n");
+                                    fprintf(fs, "end\n\n");
+                                    fprintf(fs, "task python\n\n");
+                                    
+                                }
                                 
                                 // task section
                                 //if (jobtype == RUN_ENERGY)
@@ -602,6 +610,8 @@ void Run::do_nwchem_calculations(int FORCE)
     int bfield     = fmr->atom->bfield;
     int cfield     = fmr->atom->cfield;
     
+    bool python    = false;
+    
     n_monomers = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers, for now
     n_dimers = nstates * (nf2 * (na*nb*nc-1) + (nfragments * (nfragments-1)) / 2);
@@ -732,115 +742,174 @@ void Run::do_nwchem_calculations(int FORCE)
                                 fmr->error(FLERR, command);
                             }
                             
-                            // ** Open output file and get the energy ** //
-                            char output_file[MAX_LENGTH];
-                            sprintf(output_file, "%s.nw.energy",  jobname);
-                            FILE *fs = fopen(output_file, "r");
-                            if (fs == NULL) {
-                                char tmpstr[MAX_LENGTH];
-                                sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
-                                fmr->error(FLERR, tmpstr);
-                            }
-                            char line[MAX_LENGTH];
-                            double en;
-                            
-                            
-                            while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                if ( sscanf(line, "%lf", &en) == 1 ) {
-                                    
-                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                    monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
-                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                    
-                                }
-                            }
-                            fclose(fs);
-                            //printf("Rank %d: energy\n", my_rank);
-                            
-                            if (FORCE) {
-                                // ** Get gradient from file ** //
-                                sprintf(output_file, "%s.nw.gradient", jobname);
-                                fs = fopen(output_file, "r");
+                            if (python) {
+                                // ** Open output file and get the energy ** //
+                                char output_file[MAX_LENGTH];
+                                sprintf(output_file, "%s.nw.energy",  jobname);
+                                FILE *fs = fopen(output_file, "r");
                                 if (fs == NULL) {
                                     char tmpstr[MAX_LENGTH];
                                     sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
                                     fmr->error(FLERR, tmpstr);
                                 }
                                 char line[MAX_LENGTH];
-                                int iatom, atnum;
-                                atnum = 0; // index of QM atom for storing gradient
-                                double gx, gy, gz;
+                                double en;
+                                
+                                
                                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                    // Advance atnum until it matches as a QM atom index for this monomer fragment
-                                    while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
-                                        atnum++;
-                                    }
-                                    if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                    if ( sscanf(line, "%lf", &en) == 1 ) {
+                                        
                                         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                        monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
                                         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                        
                                     }
-                                    // Increment atnum for the next round
-                                    atnum++;
                                 }
                                 fclose(fs);
-                                //printf("Rank %d: grad\n", my_rank);
                                 
+                                //printf("Rank %d: energy\n", my_rank);
                                 
-                                // ** Get field from file ** //
-                                sprintf(output_file, "%s.nw.field", jobname);
-                                fs = fopen(output_file, "r");
-                                if (fs == NULL) {
-                                    char tmpstr[MAX_LENGTH];
-                                    sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
-                                    fmr->error(FLERR, tmpstr);
-                                }
-                                atnum = 0; // index of non-QM atom for storing gradient
-                                fgets(line, MAX_LENGTH, fs); // skip initial comment line
-                                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                    // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                                    while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
-                                        //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
-                                        atnum++;
+                                if (FORCE) {
+                                    // ** Get gradient from file ** //
+                                    sprintf(output_file, "%s.nw.gradient", jobname);
+                                    fs = fopen(output_file, "r");
+                                    if (fs == NULL) {
+                                        char tmpstr[MAX_LENGTH];
+                                        sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                        fmr->error(FLERR, tmpstr);
                                     }
-                                    
-                                    //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
-                                    
-                                    if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
-                                        
-                                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
-                                            // gx,gy,gz = the electric field
-                                            // multiply by charge to get force (i.e. negative gradient) on atom
-                                            //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
-                                            //gx *= -mmq;
-                                            //gy *= -mmq;
-                                            //gz *= -mmq;
+                                    char line[MAX_LENGTH];
+                                    int iatom, atnum;
+                                    atnum = 0; // index of QM atom for storing gradient
+                                    double gx, gy, gz;
+                                    while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                        // Advance atnum until it matches as a QM atom index for this monomer fragment
+                                        while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                            atnum++;
+                                        }
+                                        if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
                                             //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                             monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
                                             monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
                                             monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                                             //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                         }
+                                        // Increment atnum for the next round
+                                        atnum++;
                                     }
-                                    // Increment atnum for the next round
-                                    atnum++;
+                                    fclose(fs);
+                                    //printf("Rank %d: grad\n", my_rank);
+                                }
+                                
+                            } else {
+                                
+                                // ** Open output file and get the energy ** //
+                                char output_file[MAX_LENGTH];
+                                sprintf(output_file, "%s.nwout",  jobname);
+                                FILE *fs = fopen(output_file, "r");
+                                if (fs == NULL) {
+                                    char tmpstr[MAX_LENGTH];
+                                    sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                    fmr->error(FLERR, tmpstr);
+                                }
+                                char line[MAX_LENGTH];
+                                double en;
+                                double gw, gx, gy, gz;
+                                
+                                char tmp0[16],tmp1[16],tmp2[16],tmp3[16]; tmp4[16];
+                                atnum = 0; // index of QM atom for storing gradient
+ 
+                                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                    //printf("%s",line);
+                                    if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
+                                        
+                                        while ( fgets(line, MAX_LENGTH, fs) != NULL) {
+                                            
+                                            if ( strstr(line, "atom") ) {
+                                                
+                                                fgets(line, MAX_LENGTH, fs);
+                                                for (int iatom=0; iatom<natoms; ++iatom) {
+                                                    
+                                                    fgets(line, MAX_LENGTH, fs);
+                                                    while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                                        atnum++;
+                                                    }
+                                                    //printf("%s",line);
+                                                    if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                        
+                                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                        
+                                                    }
+                                                }
+                                            }
+                                            else if ( strstr(line, "Total MP2 energy") ) {
+                                                
+                                                //printf("%s",line);
+                                                if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                                    fmo_energies[istate] = en;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
                                 }
                                 fclose(fs);
-                                //printf("Rank %d: efield\n", my_rank);
-                                
                                 
                             }
+                            
+                            // ** Get field from file ** //
+                            sprintf(output_file, "%s.nw.field", jobname);
+                            fs = fopen(output_file, "r");
+                            if (fs == NULL) {
+                                char tmpstr[MAX_LENGTH];
+                                sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                fmr->error(FLERR, tmpstr);
+                            }
+                            atnum = 0; // index of non-QM atom for storing gradient
+                            fgets(line, MAX_LENGTH, fs); // skip initial comment line
+                            while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                // Advance atnum until it matches as a non-QM atom index for this monomer fragment
+                                while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
+                                    //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                    atnum++;
+                                }
+                                
+                                //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
+                                
+                                if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                    
+                                    if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
+                                        // gx,gy,gz = the electric field
+                                        // multiply by charge to get force (i.e. negative gradient) on atom
+                                        //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
+                                        //gx *= -mmq;
+                                        //gy *= -mmq;
+                                        //gz *= -mmq;
+                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                    }
+                                }
+                                // Increment atnum for the next round
+                                atnum++;
+                            }
+                            fclose(fs);
+                            //printf("Rank %d: efield\n", my_rank);
+                            
                             chdir("../..");
                         }
                         ++index_mono;
                     }
-                    
                 }
             }
         }
-        
+    
         // ********** Handle FMO dimers in this loop ************ //
         for (int x=-xa; x<=xa; x++) {
             for (int y=-xb; y<=xb; y++) {
