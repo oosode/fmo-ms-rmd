@@ -816,7 +816,8 @@ void Run::do_nwchem_calculations(int FORCE)
                                 double en;
                                 double gw, gx, gy, gz;
                                 
-                                char tmp0[16],tmp1[16],tmp2[16],tmp3[16]; tmp4[16];
+                                char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
+				int atnum;
                                 atnum = 0; // index of QM atom for storing gradient
  
                                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
@@ -862,6 +863,10 @@ void Run::do_nwchem_calculations(int FORCE)
                             }
                             
                             // ** Get field from file ** //
+                            char output_file[MAX_LENGTH];
+                            sprintf(output_file, "%s.nwout",  jobname);
+                            FILE *fs = fopen(output_file, "r");
+
                             sprintf(output_file, "%s.nw.field", jobname);
                             fs = fopen(output_file, "r");
                             if (fs == NULL) {
@@ -869,6 +874,13 @@ void Run::do_nwchem_calculations(int FORCE)
                                 sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
                                 fmr->error(FLERR, tmpstr);
                             }
+
+                            char line[MAX_LENGTH];
+                            double en;
+                            double gw, gx, gy, gz;
+                            char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
+			    int atnum;
+
                             atnum = 0; // index of non-QM atom for storing gradient
                             fgets(line, MAX_LENGTH, fs); // skip initial comment line
                             while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
