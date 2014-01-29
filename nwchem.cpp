@@ -817,101 +817,105 @@ void Run::do_nwchem_calculations(int FORCE)
                                 double gw, gx, gy, gz;
                                 
                                 char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
-				int atnum;
+                                int atnum;
                                 atnum = 0; // index of QM atom for storing gradient
  
                                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                                     //printf("%s",line);
                                     if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
                                         
-                                        while ( fgets(line, MAX_LENGTH, fs) != NULL) {
+                                        fgets(line, MAX_LENGTH, fs);
+                                        fgets(line, MAX_LENGTH, fs);
+                                        fgets(line, MAX_LENGTH, fs);
+                                        
+                                        
+                                        for (int iatom=0; iatom<natoms; ++iatom) {
                                             
-                                            if ( strstr(line, "atom") ) {
-                                                
-                                                fgets(line, MAX_LENGTH, fs);
-                                                for (int iatom=0; iatom<natoms; ++iatom) {
-                                                    
-                                                    fgets(line, MAX_LENGTH, fs);
-                                                    while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
-                                                        atnum++;
-                                                    }
-                                                    //printf("%s",line);
-                                                    if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
-                                                        
-                                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                                        
-                                                    }
-                                                }
+                                            fgets(line, MAX_LENGTH, fs);
+                                            if (strcmp(line,"\n") == 0) break;
+                                            while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                                atnum++;
                                             }
-                                            else if ( strstr(line, "Total MP2 energy") ) {
+                                            //printf("%s",line);
+                                            if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
                                                 
-                                                //printf("%s",line);
-                                                if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
-                                                    fmo_energies[istate] = en;
-                                                }
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                
                                             }
                                         }
-                                        break;
+                                        
+                                    } else if ( strstr(line, "Total MP2 energy") ) {
+                                        
+                                        //printf("%s",line);
+                                        if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                            
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            
+                                        }
                                     }
                                 }
                                 fclose(fs);
                                 
                             }
                             
-                            // ** Get field from file ** //
-                            char output_file[MAX_LENGTH];
-                            sprintf(output_file, "%s.nwout",  jobname);
-                            FILE *fs = fopen(output_file, "r");
-
-                            sprintf(output_file, "%s.nw.field", jobname);
-                            fs = fopen(output_file, "r");
-                            if (fs == NULL) {
-                                char tmpstr[MAX_LENGTH];
-                                sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
-                                fmr->error(FLERR, tmpstr);
-                            }
-
-                            char line[MAX_LENGTH];
-                            double en;
-                            double gw, gx, gy, gz;
-                            char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
-			    int atnum;
-
-                            atnum = 0; // index of non-QM atom for storing gradient
-                            fgets(line, MAX_LENGTH, fs); // skip initial comment line
-                            while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                                while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
-                                    //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                            if (FORCE) {
+                                // ** Get field from file ** //
+                                char output_file[MAX_LENGTH];
+                                sprintf(output_file, "%s.nwout",  jobname);
+                                FILE *fs = fopen(output_file, "r");
+                                
+                                sprintf(output_file, "%s.nw.field", jobname);
+                                fs = fopen(output_file, "r");
+                                if (fs == NULL) {
+                                    char tmpstr[MAX_LENGTH];
+                                    sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                    fmr->error(FLERR, tmpstr);
+                                }
+                                
+                                char line[MAX_LENGTH];
+                                double en;
+                                double gw, gx, gy, gz;
+                                char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
+                                int atnum;
+                                
+                                atnum = 0; // index of non-QM atom for storing gradient
+                                fgets(line, MAX_LENGTH, fs); // skip initial comment line
+                                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                    // Advance atnum until it matches as a non-QM atom index for this monomer fragment
+                                    while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
+                                        //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                        atnum++;
+                                    }
+                                    
+                                    //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
+                                    
+                                    if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                        
+                                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
+                                            // gx,gy,gz = the electric field
+                                            // multiply by charge to get force (i.e. negative gradient) on atom
+                                            //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
+                                            //gx *= -mmq;
+                                            //gy *= -mmq;
+                                            //gz *= -mmq;
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                        }
+                                    }
+                                    // Increment atnum for the next round
                                     atnum++;
                                 }
-                                
-                                //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
-                                
-                                if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
-                                    
-                                    if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
-                                        // gx,gy,gz = the electric field
-                                        // multiply by charge to get force (i.e. negative gradient) on atom
-                                        //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
-                                        //gx *= -mmq;
-                                        //gy *= -mmq;
-                                        //gz *= -mmq;
-                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                    }
-                                }
-                                // Increment atnum for the next round
-                                atnum++;
+                                fclose(fs);
                             }
-                            fclose(fs);
                             //printf("Rank %d: efield\n", my_rank);
                             
                             chdir("../..");
@@ -965,90 +969,180 @@ void Run::do_nwchem_calculations(int FORCE)
                                     fmr->error(FLERR, command);
                                 }
                                 
-                                // ** Open output file and get the energy ** //
-                                char output_file[MAX_LENGTH];
-                                //sprintf(output_file, "%s/%s.out", state_directory, filename);
-                                sprintf(output_file, "%s.nw.energy", jobname);
-                                FILE *fs = fopen(output_file, "r");
-                                if (fs == NULL) {
-                                    char tmpstr[MAX_LENGTH];
-                                    sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
-                                    fmr->error(FLERR, tmpstr);
-                                }
-                                char line[MAX_LENGTH];
-                                double en=0.0;
-                                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                    if ( sscanf(line, "%lf", &en) == 1 ) {
-                                        // save symmetrized
-                                        
-                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                        // save symmetrized for zeroth unit cell
-                                        if (x==0 && y==0 && z==0) {
-                                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
-                                        } else {
-                                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                                        }
-                                        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                        
-                                    }
-                                }
-                                fclose(fs);
-                                
-                                if (FORCE) {
-                                    // ** Get gradient from file ** //
-                                    sprintf(output_file, "%s.nw.gradient", jobname);
-                                    fs = fopen(output_file, "r");
+                                if (python) {
+                                    // ** Open output file and get the energy ** //
+                                    char output_file[MAX_LENGTH];
+                                    //sprintf(output_file, "%s/%s.out", state_directory, filename);
+                                    sprintf(output_file, "%s.nw.energy", jobname);
+                                    FILE *fs = fopen(output_file, "r");
                                     if (fs == NULL) {
                                         char tmpstr[MAX_LENGTH];
                                         sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
                                         fmr->error(FLERR, tmpstr);
                                     }
                                     char line[MAX_LENGTH];
-                                    int iatom; // dummy index
-                                    int atnum = 0; // index of QM atom for storing gradient
-                                    double gx, gy, gz;
+                                    double en=0.0;
                                     while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                        // Advance atnum until it matches as a QM atom index for this dimer fragment
-                                        while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
-                                                  fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
-                                            atnum++;
-                                        }
-                                        
-                                        if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                        if ( sscanf(line, "%lf", &en) == 1 ) {
+                                            // save symmetrized
                                             
-                                            if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
-                                                //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
-                                                
-                                                // store symmetrically for zeroth unit cell
-                                                if (x==0 && y==0 && z==0) {
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                } else {
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                }
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            // save symmetrized for zeroth unit cell
+                                            if (x==0 && y==0 && z==0) {
+                                                dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                            } else {
+                                                dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
                                             }
+                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            
                                         }
-                                        // Increment atnum for the next round
-                                        atnum++;
                                     }
                                     fclose(fs);
                                     
-                                    // ** Get field from file ** //
-                                    sprintf(output_file, "%s.nw.field", jobname);
-                                    fs = fopen(output_file, "r");
+                                    if (FORCE) {
+                                        // ** Get gradient from file ** //
+                                        sprintf(output_file, "%s.nw.gradient", jobname);
+                                        fs = fopen(output_file, "r");
+                                        if (fs == NULL) {
+                                            char tmpstr[MAX_LENGTH];
+                                            sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                            fmr->error(FLERR, tmpstr);
+                                        }
+                                        char line[MAX_LENGTH];
+                                        int iatom; // dummy index
+                                        int atnum = 0; // index of QM atom for storing gradient
+                                        double gx, gy, gz;
+                                        while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                            // Advance atnum until it matches as a QM atom index for this dimer fragment
+                                            while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
+                                                      fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
+                                                atnum++;
+                                            }
+                                            
+                                            if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                                
+                                                if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
+                                                    //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
+                                                    
+                                                    // store symmetrically for zeroth unit cell
+                                                    if (x==0 && y==0 && z==0) {
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                    } else {
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                        dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                    }
+                                                }
+                                            }
+                                            // Increment atnum for the next round
+                                            atnum++;
+                                        }
+                                        fclose(fs);
+                                    }
+                                } else {
+                                    
+                                    // ** Open output file and get the energy ** //
+                                    char output_file[MAX_LENGTH];
+                                    sprintf(output_file, "%s.nwout",  jobname);
+                                    FILE *fs = fopen(output_file, "r");
                                     if (fs == NULL) {
                                         char tmpstr[MAX_LENGTH];
                                         sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
                                         fmr->error(FLERR, tmpstr);
                                     }
-                                    atnum = 0; // index of non-QM atom for storing gradient
+                                    char line[MAX_LENGTH];
+                                    double en;
+                                    double gw, gx, gy, gz;
+                                    
+                                    char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
+                                    int atnum;
+                                    atnum = 0; // index of QM atom for storing gradient
+                                    
+                                    while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                                        //printf("%s",line);
+                                        if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
+                                            
+                                            fgets(line, MAX_LENGTH, fs);
+                                            fgets(line, MAX_LENGTH, fs);
+                                            fgets(line, MAX_LENGTH, fs);
+                                                                                        
+                                            for (int iatom=0; iatom<natoms; ++iatom) {
+                                                
+                                                fgets(line, MAX_LENGTH, fs);
+                                                if (strcmp(line,"\n") == 0) break;
+                                                
+                                                while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
+                                                          fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
+                                                    atnum++;
+                                                }
+                                                //printf("%s",line);
+                                                if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                    
+                                                    if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
+                                                        //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
+                                                        
+                                                        // store symmetrically for zeroth unit cell
+                                                        if (x==0 && y==0 && z==0) {
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                        } else {
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                        }
+                                                    }
+                                                    
+                                                }
+                                            }
+                                            
+                                        } else if ( strstr(line, "Total MP2 energy") ) {
+                                            
+                                            //printf("%s",line);
+                                            if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                                
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                // save symmetrized for zeroth unit cell
+                                                if (x==0 && y==0 && z==0) {
+                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                                } else {
+                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                }
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                
+                                            }
+                                        }
+                                        
+                                    }
+                                    fclose(fs);
+                                    
+                                }
+                                
+                                if (FORCE) {
+                                
+                                    // ** Get field from file ** //
+                                    char output_file[MAX_LENGTH];
+                                    sprintf(output_file, "%s.nw.field", jobname);
+                                    FILE *fs = fopen(output_file, "r");
+                                    if (fs == NULL) {
+                                        char tmpstr[MAX_LENGTH];
+                                        sprintf(tmpstr, "Failure to read NWChem output file: %s", output_file);
+                                        fmr->error(FLERR, tmpstr);
+                                    }
+                                    char line[MAX_LENGTH];
+                                    double gw, gx, gy, gz;
+                                    int atnum = 0; // index of non-QM atom for storing gradient
+
                                     fgets(line, MAX_LENGTH, fs); // skip initial comment line
                                     while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                                         // Advance atnum until it matches as a non-QM atom index for this dimer fragment
