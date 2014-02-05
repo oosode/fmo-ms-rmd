@@ -69,6 +69,7 @@ void State::write_nwchem_inputs(int jobtype)
             // Make the directory...
             sprintf(make_directory, "mkdir -p %s", state_directory);
             int ierr = system(make_directory);
+
             
             // *** Monomers *** //
             for (int x=-xa; x<=xa; ++x) {
@@ -85,6 +86,8 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // Make the job directory...
                             sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
+                            ierr = system(make_directory);
+                            sprintf(make_directory, "cp -p %s %s/%s", run->exec,state_directory,jobname);
                             ierr = system(make_directory);
                             
                             sprintf(filename, "%s/%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, jobname, snum, ifrag, x+xa, y+xb, z+xc);
@@ -115,15 +118,6 @@ void State::write_nwchem_inputs(int jobtype)
                             }
                             fprintf(fs, "end\n\n");
                             
-                            
-                            // $GUESS section
-                            // Read previous step MO coeffs?
-                            //if (flag_read_MOs) {
-                            //    fprintf(fs, " $GUESS ");
-                            //    fprintf(fs, "GUESS=MOREAD ");
-                            //    fprintf(fs, "$END\n");
-                            //}
-                            
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
                             for (int x0=-afield; x0<=afield; ++x0) {
@@ -149,11 +143,22 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // scf section
                             fprintf(fs, "scf\n");
+			    fprintf(fs, "print low\n");
                             fprintf(fs, "singlet\n");
                             fprintf(fs, "direct\n");
                             fprintf(fs, "thresh 1e-6\n");
                             fprintf(fs, "sym off\n");
+			    //if (flag_read_MOs) 
+			    //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
+			    //else
+			    //  fprintf(fs, "vectors output %s.movecs\n",jobname);
                             fprintf(fs, "end\n\n");
+
+			    if (strcmp(run->correlation,"mp2") == 0) {
+			      fprintf(fs, "mp2\n");
+			      fprintf(fs, "print low\n");
+			      fprintf(fs, "end\n");
+			    }
                             
                             // charge section
                             if (ifrag == chgfrag) {
@@ -166,8 +171,8 @@ void State::write_nwchem_inputs(int jobtype)
                             // scratch section
                             char scratch[256];
                             sprintf(scratch, "%s/%s/%s/", run->scratch_dir,state_directory,jobname);
-                            fprintf(fs, "scratch_dir %s\n\n", scratch);
-                            
+                            fprintf(fs, "scratch_dir %s\n", scratch);
+                            fprintf(fs, "permanent_dir %s\n\n",scratch);
                             // Make the scratch directory...
                             sprintf(make_directory, "mkdir -p %s", scratch);
                             ierr = system(make_directory);
@@ -207,8 +212,9 @@ void State::write_nwchem_inputs(int jobtype)
                              */
                             
                             // Comment for labeling
-                            fprintf(fs, "\n\nstart field_%s\n\n", jobname);
-                            
+                            fprintf(fs, "\n\nstart field_%s\n", jobname);
+                            fprintf(fs, "print none\n\n");
+ 
                             // geometry section
                             fprintf(fs, "geometry nocenter noautoz units angstrom\n");
                             fprintf(fs, "symmetry c1\n");
@@ -223,15 +229,6 @@ void State::write_nwchem_inputs(int jobtype)
                                 }
                             }
                             fprintf(fs, "end\n\n");
-                            
-                            
-                            // $GUESS section
-                            // Read previous step MO coeffs?
-                            //if (flag_read_MOs) {
-                            //    fprintf(fs, " $GUESS ");
-                            //    fprintf(fs, "GUESS=MOREAD ");
-                            //    fprintf(fs, "$END\n");
-                            //}
                             
                             // bq section
                             fprintf(fs, "bq units angstrom\n");
@@ -259,12 +256,14 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // scf section
                             fprintf(fs, "scf\n");
+			    fprintf(fs, "print none\n");
                             fprintf(fs, "singlet\n");
                             fprintf(fs, "direct\n");
                             fprintf(fs, "thresh 1e-6\n");
                             fprintf(fs, "sym off\n");
+                            //fprintf(fs, "vectors input %s.movecs\n",jobname);
                             fprintf(fs, "end\n\n");
-                            
+
                             // charge section
                             if (ifrag == chgfrag) {
                                 fprintf(fs, "charge 1\n\n");
@@ -274,7 +273,8 @@ void State::write_nwchem_inputs(int jobtype)
                             
                             // scratch section
                             fprintf(fs, "scratch_dir %s\n\n", scratch);
-                            
+                            fprintf(fs, "permanent_dir %s\n\n", scratch);
+
                             // basis set section
                             fprintf(fs, "basis\n");
                             fprintf(fs, "* library %s\n", run->basis);
@@ -315,6 +315,8 @@ void State::write_nwchem_inputs(int jobtype)
                                 // Make the job directory...
                                 sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
                                 ierr = system(make_directory);
+				sprintf(make_directory, "cp -p %s %s/%s", run->exec,state_directory,jobname);
+				ierr = system(make_directory);
                                 
                                 sprintf(filename, "%s/%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, jobname, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
                                 
@@ -361,14 +363,6 @@ void State::write_nwchem_inputs(int jobtype)
                                 }
                                 fprintf(fs, "end\n\n");
                                 
-                                // $GUESS section
-                                // Read previous step MO coeffs?
-                                //if (flag_read_MOs) {
-                                //    fprintf(fs, " $GUESS ");
-                                //    fprintf(fs, "GUESS=MOREAD ");
-                                //    fprintf(fs, "$END\n");
-                                //}
-                                
                                 // bq section
                                 fprintf(fs, "bq units angstrom\n");
                                 for (int x0=-afield; x0<=afield; ++x0) {
@@ -396,11 +390,22 @@ void State::write_nwchem_inputs(int jobtype)
                                 
                                 // scf section
                                 fprintf(fs, "scf\n");
+				fprintf(fs, "print low\n");
                                 fprintf(fs, "singlet\n");
                                 fprintf(fs, "direct\n");
                                 fprintf(fs, "thresh 1e-6\n");
                                 fprintf(fs, "sym off\n");
+				//if (flag_read_MOs)
+                                //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
+                                //else
+                                //  fprintf(fs, "vectors output %s.movecs\n",jobname);
                                 fprintf(fs, "end\n\n");
+
+                                if (strcmp(run->correlation,"mp2") == 0) {
+                                  fprintf(fs, "mp2\n");
+                                  fprintf(fs, "print low\n");
+                                  fprintf(fs, "end\n");
+                                }
                                 
                                 // charge section
                                 if (ifrag == chgfrag && jfrag == chgfrag) {
@@ -414,7 +419,8 @@ void State::write_nwchem_inputs(int jobtype)
                                 // scratch section
                                 char scratch[256];
                                 sprintf(scratch, "%s/%s/%s/", run->scratch_dir,state_directory,jobname);
-                                fprintf(fs, "scratch_dir %s\n\n", scratch);
+                                fprintf(fs, "scratch_dir %s\n", scratch);
+				fprintf(fs, "permanent_dir %s\n\n", scratch);
                                 
                                 // Make the scratch directory...
                                 sprintf(make_directory, "mkdir -p %s", scratch);
@@ -455,7 +461,8 @@ void State::write_nwchem_inputs(int jobtype)
                                 
                                 // Comment for labeling
                                 fprintf(fs, "start field_%s\n", jobname);
-                                fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+                                fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+				fprintf(fs, "print none\n\n");
                                 
                                 // geometry section
                                 fprintf(fs, "geometry nocenter noautoz units angstrom\n");
@@ -489,14 +496,6 @@ void State::write_nwchem_inputs(int jobtype)
                                 }
                                 fprintf(fs, "end\n\n");
                                 
-                                // $GUESS section
-                                // Read previous step MO coeffs?
-                                //if (flag_read_MOs) {
-                                //    fprintf(fs, " $GUESS ");
-                                //    fprintf(fs, "GUESS=MOREAD ");
-                                //    fprintf(fs, "$END\n");
-                                //}
-                                
                                 // bq section
                                 fprintf(fs, "bq units angstrom\n");
                                 fprintf(fs, "force %s.nw.field\n", jobname);
@@ -529,6 +528,8 @@ void State::write_nwchem_inputs(int jobtype)
                                 fprintf(fs, "direct\n");
                                 fprintf(fs, "thresh 1e-6\n");
                                 fprintf(fs, "sym off\n");
+				fprintf(fs, "print none\n");
+			        //fprintf(fs, "vectors input %s.movecs\n",jobname);
                                 fprintf(fs, "end\n\n");
                                 
                                 // charge section
@@ -541,8 +542,9 @@ void State::write_nwchem_inputs(int jobtype)
                                 }
                                 
                                 // scratch section
-                                fprintf(fs, "scratch_dir %s\n\n",scratch);
-                                
+                                fprintf(fs, "scratch_dir %s\n",scratch);
+                                fprintf(fs, "permanent_dir %s\n\n",scratch);
+
                                 // basis set section
                                 fprintf(fs, "basis\n");
                                 fprintf(fs, "* library %s\n", run->basis);
@@ -729,7 +731,7 @@ void Run::do_nwchem_calculations(int FORCE)
                             sprintf(directory, "%s/%s/", state_directory, jobname);
                             chdir(directory);
                             
-                            sprintf(command, "%s %s.nw > %s.nwout",
+                            sprintf(command, "./%s %s.nw > %s.nwout",
                                     exec,
                                     jobname,
                                     jobname
@@ -956,7 +958,7 @@ void Run::do_nwchem_calculations(int FORCE)
                                 sprintf(directory, "%s/%s/", state_directory, jobname);
                                 chdir(directory);
                                 
-                                sprintf(command, "%s %s.nw > %s.nwout",
+                                sprintf(command, "./%s %s.nw > %s.nwout",
                                         exec,
                                         jobname,
                                         jobname
