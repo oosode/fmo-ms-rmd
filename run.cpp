@@ -127,10 +127,20 @@ void Run::calculate_force()
 
   // Step 2. Write inputs for all FMO calculations
   //fmr->state->write_qchem_inputs(RUN_FORCE);
+  MPI_Barrier(fmr->world);
+  double clock_start = MPI_Wtime();
+
   if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs(RUN_FORCE);
   else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_FORCE);
   else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_FORCE);
-  
+
+  // ** Stop clock ** //
+  MPI_Barrier(fmr->world);
+  double clock_end = MPI_Wtime();
+  double run_time = clock_end - clock_start;
+  if (fmr->master_rank) {
+    printf("\nWriting inputs run time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size);
+  }
   // Step 3. Divide up FMO calculation and run in parallel
   //do_qchem_calculations(RUN_FORCE);
   if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_FORCE);
@@ -138,6 +148,9 @@ void Run::calculate_force()
   else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_FORCE);
 
   // Step 4. Construct model Hamiltonian
+  MPI_Barrier(fmr->world);
+  clock_start = MPI_Wtime();
+
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian
     fmr->matrix->buildH();
@@ -153,6 +166,14 @@ void Run::calculate_force()
     // Well, I haven't put this in here yet, but you can do it by just turning off the repulsion and coupling
     if (fmr->master_rank) printf("Sorry. FMO-only gradient not yet in place.\n");
     fmr->error(FLERR, "Sorry. FMO-only gradient not yet in place.\n");
+  }
+
+  // ** Stop clock ** //
+  MPI_Barrier(fmr->world);
+  clock_end = MPI_Wtime();
+  run_time = clock_end - clock_start;
+  if (fmr->master_rank) {
+    printf("\nEVB post-process run time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size); 
   }
 }
 
