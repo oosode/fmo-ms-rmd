@@ -124,9 +124,7 @@ void State::state_search()
 	            double dy = atom->coord[3*i+1] - atom->coord[3*j+1] + y*cellB;
 	            double dz = atom->coord[3*i+2] - atom->coord[3*j+2] + z*cellC;
 		    double dd = dx*dx + dy*dy + dz*dz;
-		    //BUGBUGBUGBUGBUGBUGBUGBUG
-		    printf("x=%02d, y=%02d, z=%02d, i=%d, j=%d, d=%.4f, dx=%.4f, dy=%.4f, dz=%.4f\n",x,y,z,i,j,dd,dx,dy,dz);
-		    //BUGBUGBUGBUGBUGBUGBUGBUG
+
 	            if (dd < cut_OH2) {
 		      // Copy current state to next state, setting acceptor fragment
 		      // as the hydronium fragment in the next state

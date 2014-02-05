@@ -285,11 +285,13 @@ void Run::do_gamess_calculations(int FORCE)
             chdir(directory);
             
             //printf("Number of Gamess ncores: %d\n", gamess_ncores); 
-            sprintf(command, "%s %s.inp %s %d > %s.log 2>&1",
+            //sprintf(command, "%s %s.inp %s %d > %s.log 2>&1", for local machine
+            sprintf(command, "%s %s.inp %s %d 8 %s > %s.log",
                     exec,
                     jobname,
 	            gamess_version,
                     gamess_ncores,
+		    scratch_dir,
                     jobname
                     );
             printf("%s\n", command); 
@@ -372,8 +374,10 @@ void Run::do_gamess_calculations(int FORCE)
         
 
         // clean up directory
-        sprintf(command, "rm -rf %s/%s/%s.dat",scratch_dir,state_directory,jobname);
-	
+        //char* scratch = getenv("USERSCR");
+	//sprintf(command, "rm -rf %s/%s.dat",scratch,jobname);
+        //sprintf(command, "rm -rf %s/%s/%s.dat",scratch_dir,state_directory,jobname); // local machine
+        sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
         
         // ** The system call ** //
         ierr = system(command);
