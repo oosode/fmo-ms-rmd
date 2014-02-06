@@ -285,7 +285,7 @@ void Run::do_gamess_calculations(int FORCE)
             chdir(directory);
             
             //printf("Number of Gamess ncores: %d\n", gamess_ncores); 
-            //sprintf(command, "%s %s.inp %s %d > %s.log 2>&1", for local machine
+            //sprintf(command, "%s %s.inp %s %d > %s.log 2>&1", //for local machine
             sprintf(command, "%s %s.inp %s %d 8 %s > %s.log",
                     exec,
                     jobname,
@@ -294,24 +294,6 @@ void Run::do_gamess_calculations(int FORCE)
 		    scratch_dir,
                     jobname
                     );
-            printf("%s\n", command); 
- /*
-            ierr = system("ls");
-            ierr = system("/bin/ls");
-
-	    ierr = system("echo dir=$PWD");
-	    ierr = system("pwd");
-
-            ierr = system("echo $PATH");
-	    
-
-	    ierr = system("cat rungms-xt");
- 	    ierr = system("PATH=$PATH:. ; rungms-xt");
-
-	    ierr = system("sh -c 'echo hi'");
-            ierr = system("./sys");
-            ierr = system("./gamess.asis.x");
-*/
 
 	    // ** The system call ** //
             ierr = system(command);
@@ -376,8 +358,8 @@ void Run::do_gamess_calculations(int FORCE)
         // clean up directory
         //char* scratch = getenv("USERSCR");
 	//sprintf(command, "rm -rf %s/%s.dat",scratch,jobname);
-        //sprintf(command, "rm -rf %s/%s/%s.dat",scratch_dir,state_directory,jobname); // local machine
-        sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
+        sprintf(command, "rm -rf %s/%s/%s.dat",scratch_dir,state_directory,jobname); // local machine
+        //sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
         
         // ** The system call ** //
         ierr = system(command);
