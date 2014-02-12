@@ -88,7 +88,9 @@ void State::write_gamess_inputs(int jobtype)
             
             // contrl section
             fprintf(fs, " $contrl scftyp=rhf runtyp=gradient $end\n");
-            fprintf(fs, " $system timlim=1 $end\n");
+	    int tmlm = nfragments * nfragments * 0.5 / 60;
+	    if ( tmlm < 1 ) tmlm=1;
+            fprintf(fs, " $system timlim=%d $end\n", tmlm);
             
             // scf section
             fprintf(fs, " $scf conv=1.0d-06 dirscf=.true. $end\n");
@@ -99,18 +101,25 @@ void State::write_gamess_inputs(int jobtype)
             // fmo section
             //fprintf(fs, " $fmo mplevl=2 nfrag=3 icharg(1)=1,0,0\n");
             fprintf(fs, " $fmo mplevl=2 nfrag=%d ", nfragments);
+	    int count = 0;
             fprintf(fs, "icharg(1)=");
             for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                 if (ifrag == chgfrag) fprintf(fs, "1");
                 else                  fprintf(fs, "0");
                 
-                if (ifrag == nfragments-1) fprintf(fs, "\n");
-                else                       fprintf(fs, ",");
+                if (ifrag == nfragments-1) { fprintf(fs, "\n"); break; }
+                else                         fprintf(fs, ",");
+		++count;
+		if (count >= 10) { fprintf(fs, "\n                                       "); count = 0; } // keep frag charges from overunning
+
             }
             fprintf(fs, "      indat(1)=");
+ 	    count = 0;
             for (int iatom=0; iatom<natoms; ++iatom) {
-                if (iatom == natoms-1) fprintf(fs, "%d\n",atom->fragment[istate*natoms+iatom]+1);
-                else                   fprintf(fs, "%d,",atom->fragment[istate*natoms+iatom]+1);
+                if (iatom == natoms-1) { fprintf(fs, "%0d\n",atom->fragment[istate*natoms+iatom]+1); break; }
+                else                     fprintf(fs, "%0d,",atom->fragment[istate*natoms+iatom]+1);
+		++count;
+		if (count >= 5) { fprintf(fs, "\n               "); count = 0; } // keep frag ids from overunning
             }
             //fprintf(fs, "      indat(1)=1,2,2,2,1,1,1,3,3,3\n");
             //fprintf(fs, "      indat(1)=");
@@ -276,31 +285,15 @@ void Run::do_gamess_calculations(int FORCE)
             chdir(directory);
             
             //printf("Number of Gamess ncores: %d\n", gamess_ncores); 
-            sprintf(command, "%s %s.inp %s %d > %s.log",
+            //sprintf(command, "%s %s.inp %s %d > %s.log 2>&1", //for local machine
+            sprintf(command, "%s %s.inp %s %d 8 %s > %s.log",
                     exec,
                     jobname,
 	            gamess_version,
                     gamess_ncores,
+		    scratch_dir,
                     jobname
                     );
-            
- /*
-            ierr = system("ls");
-            ierr = system("/bin/ls");
-
-	    ierr = system("echo dir=$PWD");
-	    ierr = system("pwd");
-
-            ierr = system("echo $PATH");
-	    
-
-	    ierr = system("cat rungms-xt");
- 	    ierr = system("PATH=$PATH:. ; rungms-xt");
-
-	    ierr = system("sh -c 'echo hi'");
-            ierr = system("./sys");
-            ierr = system("./gamess.asis.x");
-*/
 
 	    // ** The system call ** //
             ierr = system(command);
@@ -363,7 +356,10 @@ void Run::do_gamess_calculations(int FORCE)
         
 
         // clean up directory
-        sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
+        //char* scratch = getenv("USERSCR");
+	//sprintf(command, "rm -rf %s/%s.dat",scratch,jobname);
+        sprintf(command, "rm -rf %s/%s/%s.dat",scratch_dir,state_directory,jobname); // local machine
+        //sprintf(command, "rm -rf %s/%s.dat",scratch_dir,jobname);
         
         // ** The system call ** //
         ierr = system(command);
