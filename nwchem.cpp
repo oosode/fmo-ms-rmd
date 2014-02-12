@@ -745,6 +745,9 @@ void Run::do_nwchem_calculations(int FORCE)
                                 printf("NWChem run error on rank %d:\n", fmr->my_rank);
                                 fmr->error(FLERR, command);
                             }
+				
+ 			    sprintf(command, "rm %s/%s/%s/*",scratch_dir,state_directory,jobname);
+ 			    ierr = system(command);
                             
                             if (python) {
                                 // ** Open output file and get the energy ** //
