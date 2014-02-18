@@ -22,11 +22,8 @@ void State::write_nwchem_inputs(int jobtype)
     // Writes a separate input file for all monomers and all dimers
     // Master rank does all the work here
     
-    if (fmr->master_rank) {
-        
-        printf("Writing NWChem inputs.\n");
-        printf("Read MOs: %d\n", flag_read_MOs);
-        
+    if (fmr->master_rank) { printf("Writing NWChem inputs.\n"); printf("Read MOs: %d\n", flag_read_MOs); }
+ 
         Run *run       = fmr->run;
         Atom *atom     = fmr->atom;
         int natoms     = atom->natoms;
@@ -80,8 +77,6 @@ void State::write_nwchem_inputs(int jobtype)
             ito_dim   = ifrom_dim + div;
         }
        
-        printf("ito %d, ifrom %d\n",ito_mono, ifrom_mono);
- 
         // ***** Loop over states ***** //
         for (int istate=0; istate<nstates; ++istate) {
            
@@ -117,7 +112,6 @@ void State::write_nwchem_inputs(int jobtype)
                         for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
                                 
-				printf("index_mono %d\n", index_mono);
                                 // Get name of file to open
                                 char jobname[256];
                                 char filename[256];
@@ -132,8 +126,6 @@ void State::write_nwchem_inputs(int jobtype)
                                 //ierr = system(make_directory);
                                 
                                 sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
-				printf(filename);
-				printf("\n");                                
 
                                 FILE *fs = fopen(filename, "w");
                                 if (fs == NULL) {
@@ -614,9 +606,8 @@ void State::write_nwchem_inputs(int jobtype)
                 }
             }
         } // close loop over states
-        
-        printf("Done writing NWChem inputs.\n");
-    }
+
+    if (fmr->master_rank) printf("Done writing NWChem inputs.\n");
     
     // Hold up
     MPI_Barrier(fmr->world);
@@ -762,25 +753,22 @@ void Run::do_nwchem_calculations(int FORCE)
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
                             
-			    printf("next monomer\n");
                             char jobname[256];
                             char filename[256];
                             char inum[16];
-                            printf("get variable names\n"); 
+
                             sprintf(inum,"%03d",ifrag);
-                            printf("name inum\n");
                             char cname[16];
                             sprintf(cname,"cell.%d.%d.%d", x+xa, y+xb, z+xc);
-                            printf("name cname\n");
+
                             sprintf(jobname, "fmo_st%s_m%03d_%s", snum, ifrag, cname);
                             sprintf(filename, "fmo_st%s_m%03d_%s",  snum, ifrag, cname);
-                            printf("before change directory\n");
+
                             // change directory
                             char directory[512];
                             sprintf(directory, "%s/", state_directory);
                             chdir(directory);
                            
-  			    printf("before job run\n"); 
                             sprintf(command, "%s %s.nw > %s.nwout",
                                     exec,
                                     jobname,
@@ -788,8 +776,6 @@ void Run::do_nwchem_calculations(int FORCE)
                                     );
                             
                             // ** The system call ** //
-			    printf(command);
-			    ierr = system("echo $PWD");
                             ierr = system(command);
                             
                             // ** Check for error ** //
@@ -798,7 +784,7 @@ void Run::do_nwchem_calculations(int FORCE)
                                 fmr->error(FLERR, command);
                             }
 				
- 			    sprintf(command, "rm %s/%s/*",scratch_dir,state_directory);
+ 			    sprintf(command, "rm %s/%s/field_%s*",scratch_dir,state_directory,jobname);
  			    ierr = system(command);
                             
                             if (python) {
@@ -974,14 +960,11 @@ void Run::do_nwchem_calculations(int FORCE)
                                     atnum++;
                                 }
                                 fclose(fs);
-				printf("\nBBBBBBBBBBBBUUUUUUUUUUUUUUUUGGGGGGGGGGGGG\n");
                             }
                             //printf("Rank %d: efield\n", my_rank);
                             chdir("..");
-			    system("echo $PWD");
                         }
                         ++index_mono;
-			printf("outside of loadbalance loop\n");
                     }
                 }
             }
@@ -1022,8 +1005,6 @@ void Run::do_nwchem_calculations(int FORCE)
                                         );
                                 
                                 // ** The system call ** //
-				printf(command);
-				ierr = system("echo $PWD");
                                 ierr = system(command);
                                 
                                 // ** Check for error ** //
@@ -1031,6 +1012,9 @@ void Run::do_nwchem_calculations(int FORCE)
                                     printf("NWChem run error on rank %d:\n", fmr->my_rank);
                                     fmr->error(FLERR, command);
                                 }
+
+                                sprintf(command, "rm %s/%s/field_%s*",scratch_dir,state_directory,jobname);
+                                ierr = system(command);
                                 
                                 if (python) {
                                     // ** Open output file and get the energy ** //
