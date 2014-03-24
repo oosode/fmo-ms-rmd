@@ -598,7 +598,7 @@ void State::write_nwchem_inputs(int jobtype)
                                 
                                 fclose(fs);
                             }
-                            ++index_mono;
+                            ++index_dim;
                         }
                     } // close loop over fragments for dimers
                     
