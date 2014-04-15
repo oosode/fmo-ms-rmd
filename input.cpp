@@ -115,6 +115,10 @@ void Input::read_input_file()
           fmr->state->max_hops = atoi(arg1);
 	  printf("Max hops: %d\n", fmr->state->max_hops);
 	}
+        else if ( strcmp(arg0, "Dimer_Cut") == 0 ) {
+          fmr->state->max_hops = atof(arg1);
+          printf("Dimer cutoff: %f\n", fmr->run->cut_dimer);
+        }
 	else if ( strcmp(arg0, "PrintLevel") == 0 ) {
           fmr->print_level = atoi(arg1);
 	}
@@ -227,6 +231,7 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->state->max_hops, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->run->cut_dimer, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->print_level, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->dynamics->nTimeSteps, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->dynamics->dt, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);

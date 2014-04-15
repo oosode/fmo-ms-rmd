@@ -26,6 +26,8 @@ class Run : protected Pointers {
    int FMO_only;              // Run with only FMO, no Multi-state FMO
    int EnvApprox;             // Environment approximation on/off
 
+   double cut_dimer;          // radius of dimer cut
+
    char scratch_dir[256];     // Full path of Q-Chem scratch directory 
    char exec[256];            // Full path of Q-Chem exectuable
 
@@ -38,8 +40,10 @@ class Run : protected Pointers {
    char algorithm[256];       // scf algorithm
 
    int n_monomers;            // (# fragments) * (# states)
-   int n_dimers;              // ((# fragments) * (# fragments - 1) / 2 ) * (# states)
+   int n_dimers;              // # fragments within range
+   int n_dimers_tmp;          // ((# fragments) * (# fragments - 1) / 2 ) * (# states)
    int n_dimers_sq;           // ((# fragments) * (# fragments) ) * (# states)
+   int    *dimer_queue;       // list of dimers to calculate
    double *fmo_energies;      // FMO energies for each state
    double *monomer_energies;  // FMO monomer energies
    double *dimer_energies;    // FMO dimer energies
@@ -55,6 +59,7 @@ class Run : protected Pointers {
    void do_qchem_calculations(int); // Performs the all Q-Chem FMO calculations in parallel
    void do_qchem_calculations_env();  // Performs the FMO calculations in parallel, using env approximation
    void do_nwchem_calculations(int);  // Performs all the NWChem calculations in parallel
+   void do_nwchem_calculations_cutoff(int);
    void do_nwchem_calculations_env(); // Performs the FMO calculations in parallel, using env approximation
    void do_gamess_calculations(int);  // Performs all the Gamess calculations in parallel
    void do_gamess_calculations_env(); // Performs the FMO calculations in parallel, using env approximation

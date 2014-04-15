@@ -28,6 +28,8 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    sprintf(gamess_version, "%s", "null");
    gamess_ncores = 12;   
 
+   cut_dimer  = 0.0;
+
    // Electronic structure defaults
    sprintf(correlation, "%s", "mp2");
    sprintf(exchange, "%s", "hf");
@@ -36,6 +38,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
 
    n_monomers = 0;
    n_dimers   = 0;
+   dimer_queue       = NULL;
    fmo_energies      = NULL;
    monomer_energies  = NULL;
    dimer_energies    = NULL;
@@ -106,7 +109,7 @@ void Run::calculate_energy()
   // Step 3. Divide up FMO calculation and run in parallel
   //do_qchem_calculations(RUN_ENERGY);
   if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_ENERGY);
-  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_ENERGY);
+  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations_cutoff(RUN_ENERGY);
   else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_ENERGY);
 
   if (!fmr->run->FMO_only) {
@@ -131,7 +134,10 @@ void Run::calculate_force()
   double clock_start = MPI_Wtime();
 
   if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs(RUN_FORCE);
-  else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_FORCE);
+  else if ( strstr(run->exec, "nwchem") != NULL) {
+    if ( run->cut_dimer == 0.0 ) fmr->state->write_nwchem_inputs(RUN_FORCE);
+    else                         fmr->state->write_nwchem_inputs_cutoff(RUN_FORCE);
+  }
   else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_FORCE);
 
   // ** Stop clock ** //
@@ -144,7 +150,10 @@ void Run::calculate_force()
   // Step 3. Divide up FMO calculation and run in parallel
   //do_qchem_calculations(RUN_FORCE);
   if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_FORCE);
-  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_FORCE);
+  else if ( strstr(run->exec, "nwchem") != NULL) { 
+    if ( run->cut_dimer == 0.0 ) do_nwchem_calculations(RUN_FORCE);
+    else                         do_nwchem_calculations_cutoff(RUN_FORCE);
+  }
   else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_FORCE);
 
   // Step 4. Construct model Hamiltonian
