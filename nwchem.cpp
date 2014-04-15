@@ -76,13 +76,11 @@ void State::write_nwchem_inputs(int jobtype)
         ifrom_dim = my_rank*div + rem;
         ito_dim   = ifrom_dim + div;
     }
-    
     int index_mono = 0;
     int index_dim  = 0;
-    
+   
     // ***** Loop over states ***** //
     for (int istate=0; istate<nstates; ++istate) {
-        
         // Determine the charged reactive fragment for this state
         int chgfrag = 0;
         for (int i=0; i<natoms; ++i) {
@@ -111,7 +109,6 @@ void State::write_nwchem_inputs(int jobtype)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-                            
                             // Get name of file to open
                             char jobname[256];
                             char filename[256];
@@ -126,7 +123,7 @@ void State::write_nwchem_inputs(int jobtype)
                             //ierr = system(make_directory);
                             
                             sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
-                            
+
                             FILE *fs = fopen(filename, "w");
                             if (fs == NULL) {
                                 char tmpstr[256];
@@ -598,7 +595,7 @@ void State::write_nwchem_inputs(int jobtype)
                                 
                                 fclose(fs);
                             }
-                            ++index_mono;
+                            ++index_dim;
                         }
                     } // close loop over fragments for dimers
                     
