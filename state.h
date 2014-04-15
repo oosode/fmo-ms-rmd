@@ -24,7 +24,9 @@ class State : protected Pointers {
    void state_search();           // The breadth-first search for fragmentation states
    void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
    void write_nwchem_inputs(int); // Writes the inputs for NWChem
+   void write_nwchem_inputs_cutoff(int);
    void write_gamess_inputs(int); // Writes the inputs for Gamess
+   
    void updatePivotState();       // Update pivot state information *after* matrix diagonalization
 
 };
