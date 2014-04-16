@@ -1076,7 +1076,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
-                            if (run->dimer_queue[idx] == 1) {
+                            if (dimer_queue[idx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
                                     
@@ -1371,14 +1371,14 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         MPI_Allreduce(dimer_gradients, rbuffer, n_dimers_sq*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
         for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i] = rbuffer[i];
     }
-    
+    MPI_Barrier(fmr->world);
+
     delete [] rbuffer;
     
     // *** Compute the FMO energies/forces for each state *** //
     
-    
+     
     FILE *fs = fopen("fmr_calc.log", "a");
-    
     if (fmr->master_rank) {
         for (int istate=0; istate<nstates; ++istate) {
             printf("----- State %4d -----\n", istate);
@@ -1419,7 +1419,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 
                                 if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                                 
-				if (run->dimer_queue[idx] == 1) {
+				if (dimer_queue[idx] == 1) {
                                   //overcount for unit cell
                                   double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
                                 
@@ -1488,7 +1488,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     
                                     if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                                   
-				    if (run->dimer_queue[idx] == 1) {  
+				    if (dimer_queue[idx] == 1) {  
                                         //overcount for unit cell
                                         double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
                                     
