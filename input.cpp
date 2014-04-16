@@ -116,7 +116,7 @@ void Input::read_input_file()
 	  printf("Max hops: %d\n", fmr->state->max_hops);
 	}
         else if ( strcmp(arg0, "Dimer_Cut") == 0 ) {
-          fmr->state->max_hops = atof(arg1);
+          fmr->run->cut_dimer = atof(arg1);
           printf("Dimer cutoff: %f\n", fmr->run->cut_dimer);
         }
 	else if ( strcmp(arg0, "PrintLevel") == 0 ) {

@@ -88,7 +88,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             for (int y=-xb; y<=xb; ++y) {
                 for (int z=-xc; z<=xc; ++z) {
                     
-                    printf("for dimers\n");
+                    //printf("for dimers\n");
                     
                     for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                         
@@ -117,13 +117,13 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                         }
                         
                         d=sqrt(d2);
-                        printf("%.10f distance\n",d);
+                        //printf("%.10f distance\n",d);
                         
                         if (d <= run->cut_dimer) {
                             
                             run->dimer_queue[idx] = 1;
                             statedimers += 1;
-                            printf("undercut\n");
+                            //printf("%.10f distance undercut\n",d);
                         }
                         ++idx;
                         
@@ -1328,14 +1328,15 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 }
                                 ++index_dim;
                                 
-                            }
-                        }
-                    }
+                            } // close loop over dimer queue
+			    ++idx;
+                        } // close loop over fragment j
+                    } // close loop over fragment i
                     
-                }
-            }
-        }
-    }
+                } 
+            } 
+        } 
+    } // close loop over states
     
     // Clock
     double FMO_end = MPI_Wtime();
@@ -1384,6 +1385,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             if (fmr->print_level > 0) {
                 fprintf(fs,"Monomer | EI\n");
             }
+	
+	    int idx = 0;
             double en_fmo1 = 0.0;
             for (int x=-xa; x<=xa; x++) {
                 for (int y=-xb; y<=xb; y++) {
@@ -1416,23 +1419,26 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 
                                 if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                                 
-                                //overcount for unit cell
-                                double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
+				if (run->dimer_queue[idx] == 1) {
+                                  //overcount for unit cell
+                                  double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
                                 
-                                double etmp = dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] -
-                                monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
-                                monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
-                                if (fmr->print_level > 0) {
-                                    fprintf(fs,"FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag,x,y,z,
-                                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],
-                                            monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
-                                            monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
-                                            //dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag],
-                                            //monomer_energies[nfragments*istate + ifrag],
-                                            //monomer_energies[nfragments*istate + jfrag], etmp
-                                            );
-                                }
-                                en_fmo2 += etmp*oc;
+                                  double etmp = dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] -
+                                  monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
+                                  monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
+                                  if (fmr->print_level > 0) {
+                                      fprintf(fs,"FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", ifrag, jfrag,x,y,z,
+                                              dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],
+                                              monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
+                                              monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
+                                              //dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag],
+                                              //monomer_energies[nfragments*istate + ifrag],
+                                              //monomer_energies[nfragments*istate + jfrag], etmp
+                                              );
+                                  }
+                                  en_fmo2 += etmp*oc;
+				}
+				++idx;
                             }
                         }
                         
@@ -1472,6 +1478,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 }
                 // Dimer force
                 //
+                idx = 0;
                 for (int x=-xa; x<=xa; x++) {
                     for (int y=-xb; y<=xb; y++) {
                         for (int z=-xc; z<=xc; z++) {
@@ -1480,45 +1487,48 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                                     
                                     if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+                                  
+				    if (run->dimer_queue[idx] == 1) {  
+                                        //overcount for unit cell
+                                        double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
                                     
-                                    //overcount for unit cell
-                                    double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
-                                    
-                                    for (int i=0; i<natoms; ++i) {
-                                        double tmpx, tmpy, tmpz;
+                                        for (int i=0; i<natoms; ++i) {
+                                            double tmpx, tmpy, tmpz;
                                         
-                                        //double dx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
-                                        //double dy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
-                                        //double dz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
+                                            //double dx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
+                                            //double dy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
+                                            //double dz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
                                         
-                                        gx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
-                                        gy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
-                                        gz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
+                                            gx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
+                                            gy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
+                                            gz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
                                         
-                                        //double m1x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i];
-                                        //double m1y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+1];
-                                        //double m1z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+2];
+                                            //double m1x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i];
+                                            //double m1y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+1];
+                                            //double m1z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+2];
                                         
-                                        //double m2x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
-                                        //double m2y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
-                                        //double m2z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
+                                            //double m2x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
+                                            //double m2y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
+                                            //double m2z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
                                         
-                                        gx -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i] +
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
-                                        gy -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+1] +
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
-                                        gz -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+2] +
-                                        monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
+                                            gx -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i] +
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
+                                            gy -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+1] +
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
+                                            gz -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+2] +
+                                            monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
                                         
-                                        fmo_gradients[3*natoms*istate + 3*i]   += gx*oc;
-                                        fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
-                                        fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
+                                            fmo_gradients[3*natoms*istate + 3*i]   += gx*oc;
+                                            fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
+                                            fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
                                         
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dx,m1x,m2x,gx);
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dy,m1y,m2y,gy);
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dz,m1z,m2z,gz);
+                                            //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dx,m1x,m2x,gx);
+                                            //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dy,m1y,m2y,gy);
+                                            //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dz,m1z,m2z,gz);
                                         
-                                    }
+                                        }
+				    }
+				    ++idx;
                                 }
                             }
                             
@@ -1559,7 +1569,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                         }
                     }
                 }
-            }
+            k}
         }
         printf("Dimer gradients:\n");
         for (int x=-xa; x<=xa; x++) {
