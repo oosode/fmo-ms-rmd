@@ -39,10 +39,12 @@ class Run : protected Pointers {
    char basis[256];	      // basis set name
    char algorithm[256];       // scf algorithm
 
-   int n_monomers;            // (# fragments) * (# states)
+   int n_monomers;            // # monomers within range
+   int n_monomers_tmp;        // (# fragments) * (# states)
    int n_dimers;              // # fragments within range
    int n_dimers_tmp;          // ((# fragments) * (# fragments - 1) / 2 ) * (# states)
    int n_dimers_sq;           // ((# fragments) * (# fragments) ) * (# states)
+   int    *monomer_queue;     // list of monomers to calculate
    int    *dimer_queue;       // list of dimers to calculate
    double *fmo_energies;      // FMO energies for each state
    double *monomer_energies;  // FMO monomer energies
