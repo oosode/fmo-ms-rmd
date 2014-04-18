@@ -132,6 +132,20 @@ class Atom : protected Pointers {
      int pos = istate*ra*rb*rc*natoms + ar*rb*rc*natoms + br*rc*natoms + cr*natoms + iatom;
 	
      return pos;	
+   }
+   int getFragPosition(int istate, int icella, int icellb, int icellc, int ifrag) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     int ar = icella + na;
+     int br = icellb + nb;
+     int cr = icellc + nc;
+
+     int pos = istate*ra*rb*rc*nfragments + ar*rb*rc*nfragments + br*rc*nfragments + cr*nfragments + ifrag;
+
+     return pos;
    }	
    double getCharge(int iatom, int istate) {
      double mmq = 0.0;

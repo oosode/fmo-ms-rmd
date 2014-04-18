@@ -54,13 +54,27 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     double massi,massj,tmp,d2,d;
     
     int statedimers=0;
+    int statemonomers=nfragments;
     int idx = 0;
+    int pos,idxj;
     
     run->n_monomers = nstates * nfragments * na*nb*nc;
+    run->n_monomers_tmp = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers, for now
     run->n_dimers_tmp = nstates * (nf2 * (na*nb*nc-1) + (nfragments * (nfragments-1)) / 2);
     run->n_dimers_sq = nstates * nf2 *na*nb*nc; // inclues self
+
+    // initialize monomer queue list
+    if (run->monomer_queue == NULL) run->monomer_queue = new int [run->n_monomers_tmp];    
+    for (int i=0; i<run->n_monomers_tmp; ++i) run->monomer_queue[i] = 0;
     
+    // include zeroth cell monomers in queue list
+    for (int istate=0; istate<nstates; ++istate) {
+        pos=getFragPosition(istate,0,0,0,0);
+        for (int ifrag=0; ifrag<nfragments; ++ifrag) run->monomer_queue[pos+ifrag] = 1;
+    }
+
+    // initialize dimer queue lisi
     if (run->dimer_queue == NULL)   run->dimer_queue = new int [run->n_dimers_tmp];
     for (int i=0; i<run->n_dimers_tmp; ++i) run->dimer_queue[i] = 0;
     
@@ -80,16 +94,12 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
         comi[0] /= massi;
         comi[1] /= massi;
         comi[2] /= massi;
-        //if (print_level > 0) {
-        //    printf("Center of mass before:   %14.8f %14.8f %14.8f\n", COM[0], COM[1], COM[2]);
-        //}
         
         for (int x=-xa; x<=xa; ++x) {
             for (int y=-xb; y<=xb; ++y) {
                 for (int z=-xc; z<=xc; ++z) {
                     
                     //printf("for dimers\n");
-                    
                     for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                         
                         if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
@@ -108,7 +118,6 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                         comj[1] /= massj;
                         comj[2] /= massj;
                         
-                        
                         // distance between comi and comj
                         d2 = 0;
                         for (int l=0; l<3; ++l) {
@@ -117,13 +126,18 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                         }
                         
                         d=sqrt(d2);
-                        //printf("%.10f distance\n",d);
                         
                         if (d <= run->cut_dimer) {
                             
+			    // include dimer in queue list
                             run->dimer_queue[idx] = 1;
-                            statedimers += 1;
-                            //printf("%.10f distance undercut\n",d);
+                            statedimers++;
+			
+ 			    // include j monomer in queue list	
+			    idxj=getFragPosition(0,x,y,z,jfrag)
+  			    run->monomer_queue[idxj] = 1;	
+		            statemonomers++;
+
                         }
                         ++idx;
                         
@@ -136,8 +150,10 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
         
     }
     
-    // Assuming all states have equal number of dimers, for now
-    run->n_dimers = nstates * statedimers;
+    // Assuming all states have equal number of dimers and monomers, for now
+    run->n_monomers = nstates * statemonomers; 
+    run->n_dimers   = nstates * statedimers;
+
     
     // ** Determine load balance ** //
     int div = run->n_monomers / fmr->world_size;
