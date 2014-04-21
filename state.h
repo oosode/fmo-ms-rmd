@@ -28,7 +28,7 @@ class State : protected Pointers {
    void write_gamess_inputs(int); // Writes the inputs for Gamess
    
    void updatePivotState();       // Update pivot state information *after* matrix diagonalization
-
+   void updateCoordinates();      // Update geometry coordinates of atoms in unit cell.
 };
 
 }

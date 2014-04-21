@@ -404,6 +404,9 @@ void Input::write_restart_file()
              );
     }
     fclose(fs);
+
+    // Update coordinates to minimum image convention
+    fmr->state->updateCoordinates();
   }
 }
 
@@ -470,6 +473,9 @@ void Input::read_restart_file()
       line_index++;
     }
     fclose(fs);
+
+    // Update coordinates to minimum image convention
+    fmr->state->updateCoordinates();
   }
   MPI_Barrier(fmr->world);
 

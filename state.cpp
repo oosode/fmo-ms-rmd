@@ -610,3 +610,71 @@ void State::updatePivotState()
   MPI_Bcast(fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&flag_read_MOs, 1, MPI_INT, MASTER_RANK, fmr->world);
 }
+
+/*-----------------------------------------------------------------
+ Update geometry position of atoms, etc. for next step
+ Minimum image convention
+ -----------------------------------------------------------------*/
+void State::updateCoordinates()
+{
+
+    Atom *atom     = fmr->atom;
+    double *coord  = fmr->atom->coord;
+    int natoms     = fmr->atom->natoms;
+    int nfragments = fmr->atom->nfragments;
+    
+    int    pbc[3];
+    double cel[3];
+    
+    double com,mass;
+    int shift;
+    
+    pbc[0] = fmr->atom->na;
+    pbc[1] = fmr->atom->nb;
+    pbc[2] = fmr->atom->nc;
+    
+    cel[0] = fmr->atom->cellA;
+    cel[1] = fmr->atom->cellB;
+    cel[2] = fmr->atom->cellC;
+    
+    if (fmr->master_rank) {
+ 
+        for (int l=0; l<3; ++l) {
+            
+            if (pbc[l] >= 0) {
+                
+                for (int frag=0; frag<nfragments; ++frag) {
+                    // center of mass of fragment
+                    com = mass = 0.0;
+                    for (int i=0; i<natoms; ++i) {
+                        
+                        if (atom->fragment[i] == frag) {
+                            com  += atom->mass[i] * coord[3*i+l];
+                            mass += atom->mass[i];
+                        }
+                        
+                    }
+                    
+                    com /= mass;
+                    shift = com/cel[l];
+                    
+                    for (int i=0; i<natoms; ++i) {
+                        if (atom->fragment[i] == frag)
+                            // shift coordinate to minimum cell
+                            coord[3*i+l] -= cel[l]*shift;
+                    }
+                    
+                }
+                
+            }
+        }
+
+    }
+    
+    // ** Broadcast the above to workers ** //
+    MPI_Bcast(coord, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    
+    if(fmr->master_rank) {
+        printf("Shifted atom coordinates to minimum image convention.\n");
+    }
+}

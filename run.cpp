@@ -135,7 +135,7 @@ void Run::calculate_force()
 
   if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs(RUN_FORCE);
   else if ( strstr(run->exec, "nwchem") != NULL) {
-    if ( run->cut_dimer == 0.0 ) fmr->state->write_nwchem_inputs(RUN_FORCE);
+    if ( run->cut_dimer <= 0.0 ) fmr->state->write_nwchem_inputs(RUN_FORCE);
     else                         fmr->state->write_nwchem_inputs_cutoff(RUN_FORCE);
   }
   else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_FORCE);
@@ -151,7 +151,7 @@ void Run::calculate_force()
   //do_qchem_calculations(RUN_FORCE);
   if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_FORCE);
   else if ( strstr(run->exec, "nwchem") != NULL) { 
-    if ( run->cut_dimer == 0.0 ) do_nwchem_calculations(RUN_FORCE);
+    if ( run->cut_dimer <= 0.0 ) do_nwchem_calculations(RUN_FORCE);
     else                         do_nwchem_calculations_cutoff(RUN_FORCE);
   }
   else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_FORCE);
@@ -171,6 +171,9 @@ void Run::calculate_force()
     fmr->matrix->ComputeHellmanFeynmanGradient();
     // Step 8. Update pivot state information, etc. for next step
     fmr->state->updatePivotState();
+    // Step 9. Update coordinates of unit cell atoms 
+    fmr->state->updateCoordinates();
+    
   } else {
     // Well, I haven't put this in here yet, but you can do it by just turning off the repulsion and coupling
     if (fmr->master_rank) printf("Sorry. FMO-only gradient not yet in place.\n");
