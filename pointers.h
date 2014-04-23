@@ -15,7 +15,8 @@ class Pointers {
    run(ptr->run),
    matrix(ptr->matrix),
    state(ptr->state),
-   dynamics(ptr->dynamics) {}
+   dynamics(ptr->dynamics),
+   cec(ptr->cec) {}
   virtual ~Pointers() {}
 
  protected:
@@ -26,6 +27,7 @@ class Pointers {
   Matrix *&matrix;
   State *&state;
   Dynamics *&dynamics;
+  Cec *&cec;
 
 };
 
