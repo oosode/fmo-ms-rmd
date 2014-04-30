@@ -171,6 +171,9 @@ void Run::calculate_force()
     fmr->matrix->ComputeHellmanFeynmanGradient();
     // Step 8. Update pivot state information, etc. for next step
     fmr->state->updatePivotState();
+    //
+    fmr->cec->compute_coc();
+    fmr->cec->compute();
     // Step 9. Update coordinates of unit cell atoms 
     fmr->state->updateCoordinates();
     

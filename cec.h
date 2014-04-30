@@ -15,7 +15,10 @@ class Cec : protected Pointers {
 
    // ** Variables ** //
    double r_cec[3];
-   double *r_coc;         
+   double r_coc[MAX_STATES][3];        
+
+   double qsum_coc[MAX_STATES];
+   int natom_coc[MAX_STATES]; 
    //int next_pivot_state; // The state index of the next step's pivot state
    //int max_hops;         // Maximum number of hops in search
    //double cut_OH;        // Distance cutoff in state search between O and H atoms
@@ -24,6 +27,7 @@ class Cec : protected Pointers {
 
    // ** Functions ** //
    void compute_coc();
+   void compute();
    //void state_search();           // The breadth-first search for fragmentation states
    //void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
    //void write_nwchem_inputs(int); // Writes the inputs for NWChem
@@ -35,5 +39,18 @@ class Cec : protected Pointers {
 };
 
 }
+
+#define VECTOR_ZERO(a) a[0]=a[1]=a[2]=0.0
+#define VECTOR_PBC(a) domain->minimum_image(a[0],a[1],a[2])
+#define VECTOR_R2(b,a) b=a[0]*a[0]+a[1]*a[1]+a[2]*a[2]
+#define VECTOR_R(b,a) b=sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2])
+#define VECTOR_SELF_ADD(b,a) b[0]+=a[0];b[1]+=a[1];b[2]+=a[2]
+#define VECTOR_SELF_SUB(b,a) b[0]-=a[0];b[1]-=a[1];b[2]-=a[2]
+#define VECTOR_SCALE(c,b) c[0]*=b;c[1]*=b;c[2]*=b
+#define VECTOR_SUB(c,a,b) c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2]
+#define VECTOR_SCALE_SUB(c,a,b) c[0]-=(a[0]*b);c[1]-=(a[1]*b);c[2]-=(a[2]*b)
+#define VECTOR_ADD(c,a,b) c[0]=a[0]+b[0];c[1]=a[1]+b[1];c[2]=a[2]+b[2]
+#define VECTOR_SCALE_ADD(c,a,b) c[0]+=(a[0]*b);c[1]+=(a[1]*b);c[2]+=(a[2]*b)
+#define VECTOR_COPY(a,b) a[0]=b[0];a[1]=b[1];a[2]=b[2];
 
 #endif
