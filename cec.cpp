@@ -17,6 +17,9 @@ using namespace FMR_NS;
 Cec::Cec(FMR *fmr) : Pointers(fmr)
 {
   // Basic initializations
+  qsum_coc   = NULL;
+  r_coc      = NULL;
+
   //next_pivot_state = 0;
   //cut_OH   = 2.5; // Angstroms
   //cut_OH   = 2.4; // Angstroms
@@ -39,8 +42,6 @@ Cec::~Cec()
 void Cec::compute_coc()
 {
 
-    if (fmr->master_rank) {
-        
         Atom *atom	 = fmr->atom;
         int natoms       = atom->natoms;
         int nstates      = atom->nstates;
@@ -55,7 +56,6 @@ void Cec::compute_coc()
 	// Allocate qsum_coc array based on number of states
         qsum_coc = new double [nstates];
         for (int i=0; i<nstates; ++i) qsum_coc[i] = 0.0;
-
 
         // ** Allocate r_coc array ** //
         // If r_coc is already allocated from previous step, de-allocate
@@ -79,6 +79,8 @@ void Cec::compute_coc()
             r_coc[i][1] = 0.0;
             r_coc[i][2] = 0.0;
         }
+
+    if (fmr->master_rank) {
 
         double ref[3];
         /********************************************/
