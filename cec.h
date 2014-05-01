@@ -15,9 +15,10 @@ class Cec : protected Pointers {
 
    // ** Variables ** //
    double r_cec[3];
-   double r_coc[MAX_STATES][3];        
+   //double r_coc[MAX_STATES][3];        
 
-   double qsum_coc[MAX_STATES];
+   double **r_coc;
+   double *qsum_coc;
    int natom_coc[MAX_STATES]; 
    //int next_pivot_state; // The state index of the next step's pivot state
    //int max_hops;         // Maximum number of hops in search

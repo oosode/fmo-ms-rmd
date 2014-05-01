@@ -7,6 +7,7 @@
 #include "input.h"
 #include "matrix.h"
 #include "dynamics.h"
+#include "cec.h"
 
 #define MAX_LENGTH 1024
 
@@ -169,11 +170,11 @@ void Run::calculate_force()
     fmr->matrix->buildHX();
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
-    // Step 8. Update pivot state information, etc. for next step
-    fmr->state->updatePivotState();
     //
     fmr->cec->compute_coc();
     fmr->cec->compute();
+    // Step 8. Update pivot state information, etc. for next step
+    fmr->state->updatePivotState();
     // Step 9. Update coordinates of unit cell atoms 
     fmr->state->updateCoordinates();
     

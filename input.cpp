@@ -406,7 +406,7 @@ void Input::write_restart_file()
     fclose(fs);
 
     // Update coordinates to minimum image convention
-    fmr->state->updateCoordinates();
+    //fmr->state->updateCoordinates();
   }
 }
 
