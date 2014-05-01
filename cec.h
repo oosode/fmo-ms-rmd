@@ -19,7 +19,14 @@ class Cec : protected Pointers {
 
    double **r_coc;
    double *qsum_coc;
-   int natom_coc[MAX_STATES]; 
+   int natom_coc[MAX_STATES];
+   double *deltaE;
+   double **koppa;    // Eq. 24 double summation
+   double **upsilon;  // Eq. 25 double summation
+   double **beta;     // Eq. 21 triple summation 
+   double **omega;    // Eq. 22 triple summation
+   double **gamma;    //  
+     
    //int next_pivot_state; // The state index of the next step's pivot state
    //int max_hops;         // Maximum number of hops in search
    //double cut_OH;        // Distance cutoff in state search between O and H atoms
@@ -29,6 +36,7 @@ class Cec : protected Pointers {
    // ** Functions ** //
    void compute_coc();
    void compute();
+   void decompose_force(double *);
    //void state_search();           // The breadth-first search for fragmentation states
    //void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
    //void write_nwchem_inputs(int); // Writes the inputs for NWChem
