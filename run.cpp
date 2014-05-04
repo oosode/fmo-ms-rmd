@@ -171,8 +171,17 @@ void Run::calculate_force()
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
     //
+    double f[3];
+    f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
     fmr->cec->compute_coc();
-    fmr->cec->compute();
+    fmr->cec->compute_cec();
+    fmr->cec->decompose_force(f);
+    if (fmr->master_rank) {
+      printf("Updated Ground state gradient:\n");
+      for (int i=0; i<fmr->atom->natoms; ++i) {
+        printf("%3d %14.8f %14.8f %14.8f\n", i, fmr->atom->force[3*i], fmr->atom->force[3*i+1], fmr->atom->force[3*i+2]);
+      }
+    }
     // Step 8. Update pivot state information, etc. for next step
     fmr->state->updatePivotState();
     // Step 9. Update coordinates of unit cell atoms 

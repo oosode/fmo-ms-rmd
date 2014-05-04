@@ -20,6 +20,8 @@ Cec::Cec(FMR *fmr) : Pointers(fmr)
     qsum_coc   = NULL;
     r_coc      = NULL;
     deltaE     = NULL;
+    koppa      = NULL;
+    upsilon    = NULL;
 
 }
 
@@ -36,7 +38,21 @@ Cec::~Cec()
         delete [] r_coc;
     }
 
-    if (qsum_coc    != NULL) delete [] qsum_coc;
+    if (qsum_coc != NULL) delete [] qsum_coc;
+    if (deltaE != NULL) delete [] deltaE;
+    
+    if (koppa != NULL) {
+	    for (int i=0; i<nstates; ++i) {
+            delete [] koppa[i];
+        }
+        delete [] koppa;
+    }
+    if (upsilon != NULL) {
+	    for (int i=0; i<nstates; ++i) {
+            delete [] upsilon[i];
+        }
+        delete [] upsilon;
+    }
 
 }
 
@@ -72,11 +88,6 @@ void Cec::compute_coc()
     r_coc = new double*[nstates];
     for (int i=0; i<nstates; ++i) {
         r_coc[i] = new double[3];
-    }
-    
-	// ** Initialize r_coc array to zero ** //
-    for (int i=0; i<nstates; ++i)
-    {
         r_coc[i][0] = 0.0;
         r_coc[i][1] = 0.0;
         r_coc[i][2] = 0.0;
@@ -135,12 +146,12 @@ void Cec::compute_coc()
     }
 }
 
-void Cec::compute()
+void Cec::compute_cec()
 {
 
-  double *C2     = fmr->matrix->GSCoeffs;
-  int natoms     = atom->natoms;
-  int nstates    = atom->nstates;
+  double *GSCoeffs = fmr->matrix->GSCoeffs;
+  int natoms       = atom->natoms;
+  int nstates      = atom->nstates;
 
   if (fmr->master_rank) {
 
@@ -154,9 +165,11 @@ void Cec::compute()
     for (int istate=1; istate<nstates; istate++) {
 
       double dr[3];
+      double C2 = GSCoeffs[istate]*GSCoeffs[istate];
+
       VECTOR_SUB(dr,r_coc[istate],ref);
       //VECTOR_PBC(dr);
-      VECTOR_SCALE_ADD(r_cec,dr,C2[istate]);
+      VECTOR_SCALE_ADD(r_cec,dr,C2);
 
     }
     VECTOR_ADD(r_cec,r_cec,ref);
@@ -176,7 +189,7 @@ void Cec::decompose_force(double* force)
     int natoms       = atom->natoms;
     int nstates      = atom->nstates;
 
-    double *GSGradient = fmr->matrix->GSGradient;
+    double *GSGradient = fmr->atom->force;
     double *GSCoeffs   = fmr->matrix->GSCoeffs;
     
     //EVB_Matrix* matrix;
@@ -186,7 +199,7 @@ void Cec::decompose_force(double* force)
     /******************************************************************/
     /*** Calculate derivitive of [qCOC(i)] ****************************/
     /******************************************************************/
-    
+    //printf("Calculate derivitive of [qCOC(i)]\n"); 
     if (fmr->master_rank) {
         for(int istate=0; istate<nstates; ++istate)
         {
@@ -195,7 +208,7 @@ void Cec::decompose_force(double* force)
                 if (atom->reactive[istate*natoms + iatom]) {
 
                     for(int l=0; l<3; l++) {
-                       GSGradient[3*iatom + l] += force[l]*C2*(atom->getCharge(iatom,istate)/qsum_coc[istate]);
+                       GSGradient[3*iatom + l] += force[l]*C2;//*(atom->getCharge(iatom,istate)/qsum_coc[istate]);
                     }      
                 }
             } // loop all the atoms in the coc
@@ -206,7 +219,11 @@ void Cec::decompose_force(double* force)
     /*** Calculate derivitive of [C(i)^2]  ****************************/
     /******************************************************************/
     
-    partial_C_N3(force);
+    //partial_C_N3(force);
+    //printf("Calculate derivitive of [C(i)^2]\n");
+    partial_C_N2(force);
+    
+    MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
 
 }
 
@@ -221,32 +238,33 @@ void Cec::partial_C_N2(double *force)
     
     int natoms       = atom->natoms;
     int nstates      = atom->nstates;
+    int prev_nstates = atom->prev_nstates;
     
-    double *GSGradient = matrix->GSGradient;
-    double *GSCoeffs   = matrix->GSCoeffs;
+    double *GSGradient = fmr->atom->force;
+    //double *GSCoeffs   = matrix->GSCoeffs;
     double **Evecs     = matrix->Evecs;
-    double *Evals      = matrix->Energy;
+    double *Evals      = matrix->Evals;
+    double ***HX       = matrix->HX;
     
     int ground = 0; // convention retained from matrix diagonalization
     double factor;
-
-
-    int nall = atom->nlocal + atom->nghost;
-    EVB_Matrix* matrix = evb_matrix;
-
-    int *parent = cplx->parent_id;
-    double ***diagonal = matrix->f_diagonal;
-    double ***off_diagonal = matrix->f_off_diagonal;
-    double ***extra_coupl = matrix->f_extra_coupling;
-
+   
+    //int nall = atom->nlocal + atom->nghost;
+    //EVB_Matrix* matrix = evb_matrix;
+    
+    //int *parent = cplx->parent_id;
+    //double ***diagonal = matrix->f_diagonal;
+    //double ***off_diagonal = matrix->f_off_diagonal;
+    //double ***extra_coupl = matrix->f_extra_coupling;
+   
     // ** Allocate and assign deltaE array ** //
     if (deltaE != NULL) delete [] deltaE;
     deltaE = new double [nstates];
-    for (int i=0; i<nstates; ++i) deltaE[i] = E[ground]-E[i];
+    for (int i=0; i<nstates; ++i) deltaE[i] = Evals[ground]-Evals[i];
     
     // ** Allocate and assign summation vectors array ** //
     if (koppa != NULL || upsilon != NULL) {
-	    for (int i=0; i<prev_nstates; ++i) {
+        for (int i=0; i<prev_nstates; ++i) {
             delete [] koppa[i];
             delete [] upsilon[i];
         }
@@ -258,99 +276,63 @@ void Cec::partial_C_N2(double *force)
     for (int i=0; i<nstates; ++i) {
         koppa[i]   = new double[3];
         upsilon[i] = new double[3];
-    }
-    
-	// ** Initialize r_coc array to zero ** //
-    for (int i=0; i<nstates; ++i)
-    {
-        r_coc[i][0] = 0.0;
-        r_coc[i][1] = 0.0;
-        r_coc[i][2] = 0.0;
-    }
-    
-    /********** Eq. 24 ***************/
-    
-    for(int j=0; j<nstate; j++)
-    {
-        if(j==ground) continue;
-        
-        for(int i=0; i<nstate; i++)
-        {
-            factor = C[i][j]*C[i][ground];
-            array1[j][0] += 2*force[0]*(factor*r_coc[i][0]);
-            array1[j][1] += 2*force[1]*(factor*r_coc[i][1]);
-            array1[j][2] += 2*force[2]*(factor*r_coc[i][2]);
+        for (int k=0; k<3; ++k) {
+            koppa[i][k]   = 0.0;
+            upsilon[i][k] = 0.0;
         }
     }
-    
-    /********** Eq. 25 ***************/
-    
-    for(int l=0; l<nstate; l++)
-    {
-        for(int j=0; j<nstate; j++)
+    /********** Eq. 24 ***************/
+    if (fmr->master_rank) {
+        
+        for(int j=0; j<nstates; j++)
         {
             if(j==ground) continue;
             
-            factor = C[l][j]/deltaE[j];
-            array2[l][0] += factor*array1[j][0];
-            array2[l][1] += factor*array1[j][1];
-            array2[l][2] += factor*array1[j][2];
+            for(int i=0; i<nstates; i++)
+            {
+                factor = Evecs[i][j]*Evecs[i][ground];
+                koppa[j][0] += 2*force[0]*(factor*r_coc[i][0]);
+                koppa[j][1] += 2*force[1]*(factor*r_coc[i][1]);
+                koppa[j][2] += 2*force[2]*(factor*r_coc[i][2]);
+            }
         }
         
-    }
-    
-    /*********** Eq. 26 ******************/
-    
-    for(int l=0; l<nstate; l++)
-    {
-        double prefactor[3];
-        prefactor[0] = C[l][ground]*array2[l][0];
-        prefactor[1] = C[l][ground]*array2[l][1];
-        prefactor[2] = C[l][ground]*array2[l][2];
+        /********** Eq. 25 ***************/
         
-        for(int i=0; i<nall; i++)
+        for(int l=0; l<nstates; l++)
         {
-            f[i][0] -= (diagonal[l][i][0])*prefactor[0];
-            f[i][1] -= (diagonal[l][i][1])*prefactor[1];
-            f[i][2] -= (diagonal[l][i][2])*prefactor[2];
+            for(int j=0; j<nstates; j++)
+            {
+                if(j==ground) continue;
+                
+                factor = Evecs[l][j]/deltaE[j];
+                upsilon[l][0] += factor*koppa[j][0];
+                upsilon[l][1] += factor*koppa[j][1];
+                upsilon[l][2] += factor*koppa[j][2];
+            }
+            
+        }
+        
+        /*********** Eq. 26 ******************/
+        
+        for (int l=0; l<nstates; l++) {
+            for (int m=0; m<nstates; m++) {
+                
+                double prefactor[3];
+                prefactor[0] = Evecs[m][ground]*upsilon[l][0];
+                prefactor[1] = Evecs[m][ground]*upsilon[l][1];
+                prefactor[2] = Evecs[m][ground]*upsilon[l][2];
+                
+                for (int iatom=0; iatom<natoms; iatom++) {
+                    
+                    for (int x=0; x<3; x++) {
+                        GSGradient[3*iatom + x] -= HX[l][m][3*iatom + x]*prefactor[x];
+                    }
+                }
+            }
         }
     }
-    
-    for(int k=1; k<nstate; k++)
-    {
-        int l = k;
-        int m = parent[k];
-        
-        double prefactor[3];
-        prefactor[0] = C[m][ground]*array2[l][0]+C[l][ground]*array2[m][0];
-        prefactor[1] = C[m][ground]*array2[l][1]+C[l][ground]*array2[m][1];
-        prefactor[2] = C[m][ground]*array2[l][2]+C[l][ground]*array2[m][2];
-        
-        for(int i=0; i<nall; i++)
-        {
-            f[i][0] -= off_diagonal[k-1][i][0]*prefactor[0];
-            f[i][1] -= off_diagonal[k-1][i][1]*prefactor[1];
-            f[i][2] -= off_diagonal[k-1][i][2]*prefactor[2];
-        }
-    }
-    
-    for(int k=0; k<cplx->nextra_coupling; k++)
-    {
-        int l = cplx->extra_i[k];
-        int m = cplx->extra_j[k];
-        
-        double prefactor[3];
-        prefactor[0] = C[m][ground]*array2[l][0]+C[l][ground]*array2[m][0];
-        prefactor[1] = C[m][ground]*array2[l][1]+C[l][ground]*array2[m][1];
-        prefactor[2] = C[m][ground]*array2[l][2]+C[l][ground]*array2[m][2];
-        
-        for(int i=0; i<nall; i++)
-        {
-            f[i][0] -= extra_coupl[k][i][0]*prefactor[0];
-            f[i][1] -= extra_coupl[k][i][1]*prefactor[1];
-            f[i][2] -= extra_coupl[k][i][2]*prefactor[2];
-        }
-    }
+    MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
 
