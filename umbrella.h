@@ -33,17 +33,18 @@ class Umbrella : protected Pointers {
    double **omega;    // Eq. 22 triple summation
 
    /* Potential setting */
-   int umb_typ;             // Umbrella-potential coordinate
-   int di[3];               // Are potential on x, y, z - direction
+   int    umb_typ;          // Umbrella-potential coordinate
+   int    di[3];            // Are potential on x, y, z - direction
    double k[3];             // force constants
+   double e[3];            // decomposed energy
    double ref[3];           // Reference distance
 
    double center[3],f[2][3],dx[3],dx2[3];
    double energy, ff[3];
    double virial[6];
 
-  /* output */
-  int next_out,freq_out;
+   /* output */
+   char   umbFile[256];
      
    //int next_pivot_state; // The state index of the next step's pivot state
    //int max_hops;         // Maximum number of hops in search
@@ -57,7 +58,7 @@ class Umbrella : protected Pointers {
    void decompose_energy(double);
    void partial_C_N2(double *);
 
-   void write_log();
+   void writeStepUmb(int);
 };
 
 }

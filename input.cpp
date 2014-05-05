@@ -6,6 +6,7 @@
 #include "input.h"
 #include "run.h"
 #include "dynamics.h"
+#include "umbrella.h"
 
 #define MAX_LENGTH   256
 #define SMALL_LENGTH 128
@@ -74,6 +75,20 @@ void Input::read_input_file()
 	  fmr->atom->afield = atoi(arg1);
 	  fmr->atom->bfield = atoi(arg2);
           fmr->atom->cfield = atoi(arg3);
+        }
+        else if ( strcmp(arg0, "Umbrella_center") == 0 ) {
+          printf("Harmonic center [angstroms]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+          fmr->umbrella->center[0] = atof(arg1);
+          fmr->umbrella->center[1] = atof(arg2);
+          fmr->umbrella->center[2] = atof(arg3);
+        }
+        else if ( strcmp(arg0, "Umbrella_potential") == 0 ) {
+          printf("Umbrella potential [kcal/mol]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+          fmr->umbrella->k[0] = atof(arg1)*fmr->math->kcal2au;
+          fmr->umbrella->k[1] = atof(arg2)*fmr->math->kcal2au;
+          fmr->umbrella->k[2] = atof(arg3)*fmr->math->kcal2au;
+
+          for(int i=0; i<3; i++) if (fmr->umbrella->k[i]) fmr->umbrella->di[i] = 1;
         }
       }
       else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
