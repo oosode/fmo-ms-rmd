@@ -335,4 +335,49 @@ void Cec::partial_C_N2(double *force)
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
+void Cec::compute()
+{
+    
+    if (fmr->master_rank) {
+        
+        di[0]=di[1]=di[2]=0;
+        center[0]=center[1]=center[2]=0.0;
+        ref[0]=ref[1]=ref[2]=1.0/sqrt(3.0);
+        k[0]=k[1]=k[2]=1.0;
+        
+        energy = 0.0;
+        f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
+        virial[0] = virial[1] = virial[2] = virial[3] = virial[4] = virial[5] = 0.0;
+        
+        dx[0] = dx[1] = dx[2] = 0.0;
+        ff[0] = ff[1] = ff[2] = 0.0;
+        
+        if(coord==COORD_CART)
+        {
+            for(int i=0; i<3; i++) if (di[i]) dx[i] = centetr[i]-r_cec[i];
+            //VECTOR_PBC(dx);
+            for(int i=0; i<3; i++) if (di[i]) dx[i] = dx[i]-ref[i];
+            //VECTOR_PBC(dx);
+            
+            for(int i=0; i<3; i++) if (di[i])
+            {
+                ff[i] = -k[i];
+                f[0][i] = - k[i] * dx[i]; f[1][i] = -f[0][i];
+                dx2[i] = dx[i]*dx[i];
+                energy += 0.5 * k[i] * dx2[i];
+            }
+            
+            for(int i=0; i<3; i++) if (di[i]) dx[i] = x[0][i]-x[1][i];
+            //VECTOR_PBC(dx);
+        }
+        
+        // Virial calculation
+        virial[0] += dx[0]*dx[0]*ff[0];
+        virial[1] += dx[1]*dx[1]*ff[1];
+        virial[2] += dx[2]*dx[2]*ff[2];
+        
+        decompose_force(f[0]);
+        
+    }
+}
 

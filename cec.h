@@ -43,10 +43,11 @@ class Cec : protected Pointers {
    int coord;               // Umbrella-potential coordinate
    int di[3];               // Are potential on x, y, z - direction
    double k[3];             // force constants
-   //double ref[3];           // Reference distance
+   double ref[3];           // Reference distance
 
-   double diff,x[2][3],f[2][3],dx[3],dx2[3];
+   double center[3],f[2][3],dx[3],dx2[3];
    double energy, ff[3];
+   double virial[3];
 
   /* output */
   int next_out,freq_out;
