@@ -8,6 +8,7 @@
 #include "matrix.h"
 #include "dynamics.h"
 #include "cec.h"
+#include "umbrella.h"
 
 #define MAX_LENGTH 1024
 
@@ -171,11 +172,14 @@ void Run::calculate_force()
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
     //
-    double f[3];
-    f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
+    //double f[3];
+    //f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
     fmr->cec->compute_coc();
     fmr->cec->compute_cec();
-    fmr->cec->decompose_force(f);
+    //fmr->cec->compute();
+    fmr->umbrella->compute();
+    //fmr->cec->decompose_energy(
+    //fmr->cec->decompose_force(f);
     if (fmr->master_rank) {
       printf("Updated Ground state gradient:\n");
       for (int i=0; i<fmr->atom->natoms; ++i) {

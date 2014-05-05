@@ -36,6 +36,7 @@ class FMR {
   class State *state;           // Handles state search algorithm and QChem input generation
   class Dynamics *dynamics;     // Handles molecular dynamics
   class Cec *cec;               // handles center of excess charge information
+  class Umbrella *umbrella;     // Handles umbrella sampling of center of excess charge
 
   // ** Variables ** //
   int master_rank;

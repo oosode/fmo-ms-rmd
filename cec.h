@@ -40,14 +40,14 @@ class Cec : protected Pointers {
    double **gamma;    //  
 
    /* Potential setting */
-   int coord;               // Umbrella-potential coordinate
+   int umb_typ;             // Umbrella-potential coordinate
    int di[3];               // Are potential on x, y, z - direction
    double k[3];             // force constants
    double ref[3];           // Reference distance
 
    double center[3],f[2][3],dx[3],dx2[3];
    double energy, ff[3];
-   double virial[3];
+   double virial[6];
 
   /* output */
   int next_out,freq_out;
@@ -61,7 +61,9 @@ class Cec : protected Pointers {
    // ** Functions ** //
    void compute_coc();
    void compute_cec();
+   void compute();
    void decompose_force(double *);
+   void decompose_energy(double);
    void partial_C_N2(double *);
    //void state_search();           // The breadth-first search for fragmentation states
    //void write_qchem_inputs(int);  // Writes the inputs for Q-Chem

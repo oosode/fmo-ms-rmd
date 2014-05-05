@@ -8,6 +8,7 @@
 #include "matrix.h"
 #include "dynamics.h"
 #include "cec.h"
+#include "umbrella.h"
 
 using namespace FMR_NS;
 
@@ -40,6 +41,7 @@ FMR::FMR(int argc, char **argv, MPI_Comm communicator)
   state    = new State(this);
   dynamics = new Dynamics(this);
   cec      = new Cec(this);
+  umbrella = new Umbrella(this);
 
   print_level = 0;
   
@@ -60,6 +62,8 @@ FMR::~FMR()
   if (state    != NULL) delete state; 
   if (dynamics != NULL) delete dynamics;
   if (cec      != NULL) delete cec;
+  if (umbrella != NULL) delete umbrella;
+
   // NOTE: atom destrcutor must come last b/c other destructors need to know it's info in their destructors 
   if (atom     != NULL) delete atom; 
 }

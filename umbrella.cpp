@@ -4,6 +4,7 @@
 #include "atom.h"
 #include "state.h"
 #include "cec.h"
+#include "umbrella.h"
 #include "run.h"
 #include "matrix.h"
 #include <vector>
@@ -14,11 +15,9 @@ using namespace FMR_NS;
 /*-----------------------------------------------------------------
   Constructor
 -----------------------------------------------------------------*/
-Cec::Cec(FMR *fmr) : Pointers(fmr)
+Umbrella::Umbrella(FMR *fmr) : Pointers(fmr)
 {
     // Basic initializations
-    qsum_coc   = NULL;
-    r_coc      = NULL;
     deltaE     = NULL;
     koppa      = NULL;
     upsilon    = NULL;
@@ -30,17 +29,10 @@ Cec::Cec(FMR *fmr) : Pointers(fmr)
 /*-----------------------------------------------------------------
   Destructor
 -----------------------------------------------------------------*/
-Cec::~Cec()
+Umbrella::~Umbrella()
 {
     int nstates = fmr->atom->nstates;
     
-    if (r_coc != NULL) {
-        for (int i=0; i<nstates; ++i)
-            delete [] r_coc[i];
-        delete [] r_coc;
-    }
-
-    if (qsum_coc != NULL) delete [] qsum_coc;
     if (deltaE != NULL) delete [] deltaE;
     
     if (koppa != NULL) {
@@ -58,131 +50,7 @@ Cec::~Cec()
 
 }
 
-/*-----------------------------------------------------------------
-  State search algorithm 
------------------------------------------------------------------*/
-void Cec::compute_coc()
-{
-    
-    Atom *atom	 = fmr->atom;
-    int natoms       = atom->natoms;
-    int nstates      = atom->nstates;
-    int prev_nstates = atom->prev_nstates;
-    
-    // ** Allocate qsum_coc array ** //
-    // If qsum_coc is already allocated from previous step, de-allocate
-    if (qsum_coc != NULL) delete [] qsum_coc;
-    
-	// Allocate qsum_coc array based on number of states
-    qsum_coc = new double [nstates];
-    for (int i=0; i<nstates; ++i) qsum_coc[i] = 0.0;
-    
-    // ** Allocate r_coc array ** //
-    // If r_coc is already allocated from previous step, de-allocate
-	if (r_coc != NULL) {
-	    for (int i=0; i<prev_nstates; ++i) {
-            delete [] r_coc[i];
-        }
-        delete [] r_coc;
-    }
-    
-    // Allocate r_coc array based on number of states for this step
-    r_coc = new double*[nstates];
-    for (int i=0; i<nstates; ++i) {
-        r_coc[i] = new double[3];
-        r_coc[i][0] = 0.0;
-        r_coc[i][1] = 0.0;
-        r_coc[i][2] = 0.0;
-    }
-    
-    if (fmr->master_rank) {
-        
-        double ref[3];
-        /********************************************/
-        /*** Assign COC information  ****************/
-        /********************************************/
-        for (int istate=0; istate<nstates; ++istate) {
-            int atoms_per_ireactive = 0;
-            for (int iatom=0; iatom<natoms; ++iatom) {
-                if (atom->reactive[istate*natoms + iatom]) {
-                    
-                    if (atom->symbol[iatom] == 'O') {
-                        ref[0] = atom->coord[3*iatom];
-                        ref[1] = atom->coord[3*iatom + 1];
-                        ref[2] = atom->coord[3*iatom + 2];
-                    }
-                    atoms_per_ireactive++;
-                    qsum_coc[istate] += atom->getCharge(iatom,istate);
-                    
-                }
-            }
-            
-            //printf("reference state %d: %f %f %f\n",istate,ref[0],ref[1],ref[2]);
-            //natom_coc[istate] = atoms_per_ireactive;
-            for (int iatom=0; iatom<natoms; ++iatom) {
-                if (atom->reactive[istate*natoms + iatom]) {
-                    
-                    double rr[3];
-                    double dr[3];
-                    
-                    rr[0] = atom->coord[3*iatom];
-                    rr[1] = atom->coord[3*iatom + 1];
-                    rr[2] = atom->coord[3*iatom + 2];
-                    
-                    //printf("current position: %f %f %f\n",rr[0],rr[1],rr[2]);
-                    
-                    VECTOR_SUB(dr,rr,ref);
-                    //VECTOR_PBC(dr);
-                    
-                    //printf("charge: %f/%f = %f\n",atom->getCharge(iatom,istate),qsum_coc[istate],atom->getCharge(iatom,istate)/qsum_coc[istate]);
-                    VECTOR_SCALE(dr,atom->getCharge(iatom,istate)/qsum_coc[istate]);
-                    VECTOR_ADD(r_coc[istate],r_coc[istate],dr);
-                    //printf("coc: %f %f %f\n",r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
-                    
-                }
-            }
-            VECTOR_ADD(r_coc[istate],r_coc[istate],ref);
-            printf("COC position for state %2d: %15.10f %15.10f %15.10f\n",istate,r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
-            
-        }
-    }
-}
-
-void Cec::compute_cec()
-{
-
-  double *GSCoeffs = fmr->matrix->GSCoeffs;
-  int natoms       = atom->natoms;
-  int nstates      = atom->nstates;
-
-  if (fmr->master_rank) {
-
-    r_cec[0]=r_cec[1]=r_cec[2]=0.0;
-    
-    double ref[3];
-    ref[0] = r_coc[0][0];
-    ref[1] = r_coc[0][1];
-    ref[2] = r_coc[0][2];
-
-    for (int istate=1; istate<nstates; istate++) {
-
-      double dr[3];
-      double C2 = GSCoeffs[istate]*GSCoeffs[istate];
-
-      VECTOR_SUB(dr,r_coc[istate],ref);
-      //VECTOR_PBC(dr);
-      VECTOR_SCALE_ADD(r_cec,dr,C2);
-
-    }
-    VECTOR_ADD(r_cec,r_cec,ref);
-
-    printf("CEC position:              %15.10f %15.10f %15.10f\n",r_cec[0],r_cec[1],r_cec[2]);
-
-  }
-}
-
-
-void Cec::decompose_force(double* force)
+void Umbrella::decompose_force(double* force)
 {
     
     Atom *atom	     = fmr->atom;
@@ -194,14 +62,9 @@ void Cec::decompose_force(double* force)
     double *GSGradient = fmr->atom->force;
     double *GSCoeffs   = fmr->matrix->GSCoeffs;
     
-    //EVB_Matrix* matrix;
-    //if(evb_engine->ncomplex==1) matrix = (EVB_Matrix*)(evb_engine->full_matrix);
-    //else matrix = (EVB_Matrix*)(evb_engine->all_matrix[cplx->id-1]);
-    
     /******************************************************************/
     /*** Calculate derivitive of [qCOC(i)] ****************************/
     /******************************************************************/
-    //printf("Calculate derivitive of [qCOC(i)]\n"); 
     if (fmr->master_rank) {
         for(int istate=0; istate<nstates; ++istate)
         {
@@ -220,16 +83,13 @@ void Cec::decompose_force(double* force)
     /******************************************************************/
     /*** Calculate derivitive of [C(i)^2]  ****************************/
     /******************************************************************/
-    
-    //partial_C_N3(force);
-    //printf("Calculate derivitive of [C(i)^2]\n");
     partial_C_N2(force);
     
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
 
 }
 
-void Cec::partial_C_N2(double *force)
+void Umbrella::partial_C_N2(double *force)
 {
     /******************************************************************/
     /*** JPCB, 112, 2349 Eq 24-26 *************************************/
@@ -237,6 +97,7 @@ void Cec::partial_C_N2(double *force)
     
     Atom *atom	     = fmr->atom;
     Matrix *matrix   = fmr->matrix;
+    Cec *cec         = fmr->cec;
     
     int natoms       = atom->natoms;
     int nstates      = atom->nstates;
@@ -247,17 +108,11 @@ void Cec::partial_C_N2(double *force)
     double **Evecs     = matrix->Evecs;
     double *Evals      = matrix->Evals;
     double ***HX       = matrix->HX;
+
+    double **r_coc     = cec->r_coc;
     
     int ground = 0; // convention retained from matrix diagonalization
     double factor;
-   
-    //int nall = atom->nlocal + atom->nghost;
-    //EVB_Matrix* matrix = evb_matrix;
-    
-    //int *parent = cplx->parent_id;
-    //double ***diagonal = matrix->f_diagonal;
-    //double ***off_diagonal = matrix->f_off_diagonal;
-    //double ***extra_coupl = matrix->f_extra_coupling;
    
     // ** Allocate and assign deltaE array ** //
     if (deltaE != NULL) delete [] deltaE;
@@ -284,7 +139,6 @@ void Cec::partial_C_N2(double *force)
         }
     }
     
-    printf("decompose_force %f %f %f\n\n",force[0],force[1],force[2]);
     /********** Eq. 24 ***************/
     if (fmr->master_rank) {
         
@@ -339,7 +193,7 @@ void Cec::partial_C_N2(double *force)
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
-void Cec::decompose_energy(double energy)
+void Umbrella::decompose_energy(double energy)
 {
     Atom *atom	     = fmr->atom;
     Matrix *matrix   = fmr->matrix;
@@ -358,18 +212,22 @@ void Cec::decompose_energy(double energy)
     
 }
 
-void Cec::compute()
+void Umbrella::compute()
 {
     Atom *atom	     = fmr->atom;
+    Cec *cec	     = fmr->cec;
+
     int natoms       = atom->natoms;
     int nstates      = atom->nstates;
+
+    double *r_cec    = cec->r_cec;
     
     if (fmr->master_rank) {
         
         di[0]=di[1]=di[2]=1;
         center[0]=center[1]=center[2]=0.0;
         ref[0]=ref[1]=ref[2]=1.0/sqrt(3.0);
-        k[0]=k[1]=k[2]=100.0*fmr->math->kcal2au;
+        k[0]=k[1]=k[2]=1.0*fmr->math->kcal2au;
         
         energy = 0.0;
         f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
@@ -385,7 +243,6 @@ void Cec::compute()
             printf("dx %f %f %f\n",dx[0],dx[1],dx[2]);
             //VECTOR_PBC(dx);
             //for(int i=0; i<3; i++) if (di[i]) dx[i] = dx[i]-ref[i];
-            //printf("dx %f %f %f\n",dx[0],dx[1],dx[2]);
             //VECTOR_PBC(dx);
             
             for(int i=0; i<3; i++) if (di[i])
@@ -409,5 +266,10 @@ void Cec::compute()
         decompose_force(f[0]);
         
     }
+}
+
+void Umbrella::write_log()
+{
+
 }
 
