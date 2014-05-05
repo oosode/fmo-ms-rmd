@@ -172,8 +172,8 @@ void Run::calculate_force()
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
     //
-    //double f[3];
-    //f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
+    double f[3];
+    f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
     fmr->cec->compute_coc();
     fmr->cec->compute_cec();
     //fmr->cec->compute();

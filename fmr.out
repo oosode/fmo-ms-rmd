@@ -1,0 +1,12 @@
+
+----------------------------------------------
+               FMO-MS-RMD
+          Author: Adrian W. Lange
+----------------------------------------------
+FMO-MS-RMD on 8 MPI ranks.
+
+Assuming default file names.
+Reading input file fmr.in
+Error on rank: 0   File: input.cpp   Line: 51   Message: Failure to read input file.
+
+APPLICATION TERMINATED WITH THE EXIT STRING: Hangup (signal 1)
