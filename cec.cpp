@@ -182,7 +182,7 @@ void Cec::compute_cec()
 }
 
 
-void Cec::decompose_force(double* force)
+void Cec::decompose_force2(double* force)
 {
     
     Atom *atom	     = fmr->atom;
@@ -223,13 +223,13 @@ void Cec::decompose_force(double* force)
     
     //partial_C_N3(force);
     //printf("Calculate derivitive of [C(i)^2]\n");
-    partial_C_N2(force);
+    partial_C_N22(force);
     
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
 
 }
 
-void Cec::partial_C_N2(double *force)
+void Cec::partial_C_N22(double *force)
 {
     /******************************************************************/
     /*** JPCB, 112, 2349 Eq 24-26 *************************************/
@@ -339,7 +339,7 @@ void Cec::partial_C_N2(double *force)
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
-void Cec::decompose_energy(double energy)
+void Cec::decompose_energy2(double energy)
 {
     Atom *atom	     = fmr->atom;
     Matrix *matrix   = fmr->matrix;
@@ -358,7 +358,7 @@ void Cec::decompose_energy(double energy)
     
 }
 
-void Cec::compute()
+void Cec::compute2()
 {
     Atom *atom	     = fmr->atom;
     int natoms       = atom->natoms;
@@ -405,8 +405,8 @@ void Cec::compute()
         virial[1] += dx[1]*dx[1]*ff[1];
         virial[2] += dx[2]*dx[2]*ff[2];
         
-        decompose_energy(energy);
-        decompose_force(f[0]);
+        decompose_energy2(energy);
+        decompose_force2(f[0]);
         
     }
 }

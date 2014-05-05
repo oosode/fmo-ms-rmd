@@ -53,11 +53,11 @@ Umbrella::~Umbrella()
 void Umbrella::decompose_force(double* force)
 {
     
-    Atom *atom	     = fmr->atom;
-    Matrix *matrix   = fmr->matrix;
+    Atom *atom	       = fmr->atom;
+    Matrix *matrix     = fmr->matrix;
     
-    int natoms       = atom->natoms;
-    int nstates      = atom->nstates;
+    int natoms         = atom->natoms;
+    int nstates        = atom->nstates;
 
     double *GSGradient = fmr->atom->force;
     double *GSCoeffs   = fmr->matrix->GSCoeffs;
@@ -79,13 +79,12 @@ void Umbrella::decompose_force(double* force)
             } // loop all the atoms in the coc
         } // loop all the coc(s)
     }
-    //MPI_Barrier(fmr->world); 
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
+
     /******************************************************************/
     /*** Calculate derivitive of [C(i)^2]  ****************************/
     /******************************************************************/
-    partial_C_N2(force);
-    
+    partial_C_N2(force);    
 }
 
 void Umbrella::partial_C_N2(double *force)
@@ -94,20 +93,18 @@ void Umbrella::partial_C_N2(double *force)
     /*** JPCB, 112, 2349 Eq 24-26 *************************************/
     /******************************************************************/
     
-    Atom *atom	     = fmr->atom;
-    Matrix *matrix   = fmr->matrix;
-    Cec *cec         = fmr->cec;
+    Atom *atom	       = fmr->atom;
+    Matrix *matrix     = fmr->matrix;
+    Cec *cec           = fmr->cec;
     
-    int natoms       = atom->natoms;
-    int nstates      = atom->nstates;
-    int prev_nstates = atom->prev_nstates;
+    int natoms         = atom->natoms;
+    int nstates        = atom->nstates;
+    int prev_nstates   = atom->prev_nstates;
     
     double *GSGradient = fmr->atom->force;
-    //double *GSCoeffs   = matrix->GSCoeffs;
     double **Evecs     = matrix->Evecs;
     double *Evals      = matrix->Evals;
     double ***HX       = matrix->HX;
-
     double **r_coc     = cec->r_coc;
     
     int ground = 0; // convention retained from matrix diagonalization
@@ -189,29 +186,18 @@ void Umbrella::partial_C_N2(double *force)
             }
         }
     }
-    //MPI_Barrier(fmr->world);
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
 void Umbrella::decompose_energy(double energy)
 {
-    Atom *atom	     = fmr->atom;
-    Matrix *matrix   = fmr->matrix;
+    Matrix *matrix  = fmr->matrix;
     
-    int natoms       = atom->natoms;
-    int nstates      = atom->nstates;
-    
-    if (fmr->master_rank) {
-     
-        fmr->matrix->GSEnergy += energy;
-        
-    }
-    printf("%f\n",fmr->matrix->GSEnergy);
-    //MPI_Barrier(fmr->world);
-    MPI_Bcast(&energy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-    //MPI_Bcast(&GSEnergy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-    printf("energy\n");
-    
+    double GSEnergy = matrix->GSEnergy;  
+  
+    if (fmr->master_rank) GSEnergy += energy;
+            
+    MPI_Bcast(&GSEnergy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
 void Umbrella::compute()
@@ -264,10 +250,12 @@ void Umbrella::compute()
         virial[1] += dx[1]*dx[1]*ff[1];
         virial[2] += dx[2]*dx[2]*ff[2];
         
-        decompose_energy(energy);
-        //decompose_force(f[0]);
-        
     }
+    decompose_energy(energy);
+    decompose_force(f[0]);
+
+    //MPI_Bcast(&fmr->matrix->GSEnergy,  1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    //MPI_Bcast(fmr->atom->force, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
 void Umbrella::write_log()

@@ -178,6 +178,8 @@ void Run::calculate_force()
     fmr->cec->compute_cec();
     //fmr->cec->compute();
     fmr->umbrella->compute();
+    //fmr->umbrella->decompose_energy(0.0);
+    //fmr->umbrella->decompose_force(f); 
     //fmr->cec->decompose_energy(
     //fmr->cec->decompose_force(f);
     if (fmr->master_rank) {

@@ -61,10 +61,10 @@ class Cec : protected Pointers {
    // ** Functions ** //
    void compute_coc();
    void compute_cec();
-   void compute();
-   void decompose_force(double *);
-   void decompose_energy(double);
-   void partial_C_N2(double *);
+   void compute2();
+   void decompose_force2(double *);
+   void decompose_energy2(double);
+   void partial_C_N22(double *);
    //void state_search();           // The breadth-first search for fragmentation states
    //void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
    //void write_nwchem_inputs(int); // Writes the inputs for NWChem
