@@ -229,9 +229,7 @@ void Umbrella::setup()
     int natoms         = atom->natoms;
     int nstates        = atom->nstates;
 
-    if      (strcmp(umb_typ,"spherical") == 0)   umb_coord = COORD_SPHERICAL;
-    else if (strcmp(umb_typ,"cartesian") == 0)   umb_coord = COORD_CARTESIAN;
-    else if (strcmp(umb_typ,"cylindrical") == 0) umb_coord = COORD_CYLINDER; 
+    for (int i=0; i<3; i++) if (k[i]) fmr->umbrella->di[i] = 1;
 
     if (umb_coord==COORD_SPHERICAL) {
         
@@ -301,7 +299,7 @@ void Umbrella::compute()
     }
     
     if (di[0] || di[0] || di[2]) {
-        
+       
       decompose_energy(energy);
       decompose_force(f[0]);
 

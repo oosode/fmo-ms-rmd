@@ -87,8 +87,6 @@ void Input::read_input_file()
           fmr->umbrella->k[0] = atof(arg1)*fmr->math->kcal2au;
           fmr->umbrella->k[1] = atof(arg2)*fmr->math->kcal2au;
           fmr->umbrella->k[2] = atof(arg3)*fmr->math->kcal2au;
-
-          for(int i=0; i<3; i++) if (fmr->umbrella->k[i]) fmr->umbrella->di[i] = 1;
         }
         else if ( strcmp(arg0, "Umbrella_vector") == 0 ) {
           printf("Umbrella vector:               %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
@@ -213,7 +211,10 @@ void Input::read_input_file()
         }
 	else if ( strcmp(arg0, "Umbrella_Type") == 0 ) {
 	  printf("Umbrella type: %s\n", arg1);
-	  sprintf(fmr->umbrella->umb_typ, "%s", arg1);
+          if      (strcmp(arg1, "spherical") == 0)   fmr->umbrella->umb_coord = COORD_SPHERICAL;
+          else if (strcmp(arg1, "cartesian") == 0)   fmr->umbrella->umb_coord = COORD_CARTESIAN;
+          else if (strcmp(arg1, "cylindrical") == 0) fmr->umbrella->umb_coord = COORD_CYLINDRICAL;
+          else    fmr->error(FLERR, "Umbrella sampling option unrecognized.");
 	}
       }
       else if ( sscanf(line, "%s", arg0) == 1 ) {
@@ -277,6 +278,16 @@ void Input::read_input_file()
   MPI_Bcast(&fmr->atom->afield, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->bfield, 1, MPI_INT, MASTER_RANK, fmr->world);
   MPI_Bcast(&fmr->atom->cfield, 1, MPI_INT, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->umb_coord, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->k[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->k[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->k[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);  
+  MPI_Bcast(&fmr->umbrella->center[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->center[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->center[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world); 
+  MPI_Bcast(&fmr->umbrella->ref[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->ref[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+  MPI_Bcast(&fmr->umbrella->ref[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
 
 }
 
