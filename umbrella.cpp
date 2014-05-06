@@ -215,7 +215,7 @@ void Umbrella::compute()
         di[0]=di[1]=di[2]=1;
         center[0]=center[1]=center[2]=0.0;
         ref[0]=ref[1]=ref[2]=1.0/sqrt(3.0);
-        k[0]=k[1]=k[2]=1.0*fmr->math->kcal2au;
+        k[0]=k[1]=k[2]=10.0*fmr->math->kcal2au;
         
         energy = 0.0;
         f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
