@@ -64,6 +64,16 @@ Run::~Run()
 }
 
 /*-----------------------------------------------------------------
+  Setup calculation 
+-----------------------------------------------------------------*/
+void Run::setup()
+{
+  
+  fmr->umbrella->setup(); 
+
+}
+
+/*-----------------------------------------------------------------
   Run calculation: Upper level run command 
 -----------------------------------------------------------------*/
 void Run::run_calculation()
@@ -71,6 +81,9 @@ void Run::run_calculation()
   // ** Start clock ** //
   MPI_Barrier(fmr->world);
   double clock_start = MPI_Wtime();
+
+  // ** Setup the calculation ** //
+  setup();
 
   // ** Do the calculation ** // 
   if (run_type == RUN_ENERGY) {
@@ -82,7 +95,6 @@ void Run::run_calculation()
   else if (run_type == RUN_MOLDYN) {
     calculate_moldyn();
   }
-
 
   // ** Stop clock ** //
   MPI_Barrier(fmr->world);

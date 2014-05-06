@@ -77,7 +77,7 @@ void Input::read_input_file()
           fmr->atom->cfield = atoi(arg3);
         }
         else if ( strcmp(arg0, "Umbrella_center") == 0 ) {
-          printf("Harmonic center [angstroms]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+          printf("Harmonic center [angstroms]:   %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
           fmr->umbrella->center[0] = atof(arg1);
           fmr->umbrella->center[1] = atof(arg2);
           fmr->umbrella->center[2] = atof(arg3);
@@ -89,6 +89,12 @@ void Input::read_input_file()
           fmr->umbrella->k[2] = atof(arg3)*fmr->math->kcal2au;
 
           for(int i=0; i<3; i++) if (fmr->umbrella->k[i]) fmr->umbrella->di[i] = 1;
+        }
+        else if ( strcmp(arg0, "Umbrella_vector") == 0 ) {
+          printf("Umbrella vector:               %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+	  fmr->umbrella->ref[0] = atof(arg1);
+          fmr->umbrella->ref[1] = atof(arg2);
+          fmr->umbrella->ref[2] = atof(arg3);
         }
       }
       else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
@@ -205,6 +211,10 @@ void Input::read_input_file()
           printf("SCF algorithm: %s\n", arg1);
           sprintf(fmr->run->algorithm,"%s", arg1);
         }
+	else if ( strcmp(arg0, "Umbrella_Type") == 0 ) {
+	  printf("Umbrella type: %s\n", arg1);
+	  sprintf(fmr->umbrella->umb_typ, "%s", arg1);
+	}
       }
       else if ( sscanf(line, "%s", arg0) == 1 ) {
         // One argument line

@@ -34,8 +34,12 @@ Umbrella::Umbrella(FMR *fmr) : Pointers(fmr)
     di[0]      = 0;
     di[1]      = 0;
     di[2]      = 0;
+
+    ref[0]     = 0.0;
+    ref[1]     = 0.0;
+    ref[2]     = 0.0;
     
-    umb_typ    = 0;
+    sprintf(umb_typ, "%s", "null");
     
     sprintf(umbFile, "%s", "fmr_umb.log"); // default file name
 
@@ -215,6 +219,35 @@ void Umbrella::decompose_energy(double energy)
     MPI_Bcast(&GSEnergy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
+void Umbrella::setup()
+{
+
+    Atom *atom         = fmr->atom;
+    Cec *cec           = fmr->cec;
+    Dynamics *dynamics = fmr->dynamics;
+
+    int natoms         = atom->natoms;
+    int nstates        = atom->nstates;
+
+    if      (strcmp(umb_typ,"spherical") == 0)   umb_coord = COORD_SPHERICAL;
+    else if (strcmp(umb_typ,"cartesian") == 0)   umb_coord = COORD_CARTESIAN;
+    else if (strcmp(umb_typ,"cylindrical") == 0) umb_coord = COORD_CYLINDER; 
+
+    if (umb_coord==COORD_SPHERICAL) {
+        
+
+    }
+    else if (umb_coord==COORD_CARTESIAN) {
+
+
+    }
+    else if (umb_coord==COORD_CYLINDRICAL) {
+        
+
+    }
+
+}
+
 void Umbrella::compute()
 {
     Atom *atom	       = fmr->atom;
@@ -229,33 +262,31 @@ void Umbrella::compute()
     int iCurrentStep   = dynamics->iCurrentStep;
     
     if (fmr->master_rank) {
-        
-        ref[0]=ref[1]=ref[2]=1.0/sqrt(3.0);
-        e[0]=e[1]=e[2]=0.0;
+
         energy = 0.0;
+        diff   = 0.0;
         
-        f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
+        f[0][0]   = f[0][1]   = f[0][2]   = f[1][0]   = f[1][1]   = f[1][2]   = 0.0;
         virial[0] = virial[1] = virial[2] = virial[3] = virial[4] = virial[5] = 0.0;
         
         dx[0] = dx[1] = dx[2] = 0.0;
         ff[0] = ff[1] = ff[2] = 0.0;
         
-        if(umb_typ==COORD_CART)
+        if (umb_coord==COORD_CARTESIAN)
         {
             for(int i=0; i<3; i++) if (di[i]) dx[i] = center[i]-r_cec[i];
             //VECTOR_PBC(dx);
-            //for(int i=0; i<3; i++) if (di[i]) dx[i] = dx[i]-ref[i];
+            //for(int i=0; i<3; i++) if (di[i]) diff += dx[i]*ref[i];
             //VECTOR_PBC(dx);
             
             for(int i=0; i<3; i++) if (di[i])
             {
-                ff[i]   = -k[i];
-                f[0][i] = - k[i] * dx[i];
-                f[1][i] = -f[0][i];
-                dx2[i]  = dx[i]*dx[i];
-                e[i]    = 0.5 * k[i] * dx2[i];
-                printf("%f energy\n",e[i]);
-                energy += e[i];
+                ff[i]    = -k[i];
+                f[0][i]  = -k[i] * dx[i];
+                f[1][i]  = -f[0][i];
+                dx2[i]   = dx[i] * dx[i];
+                energy  += 0.5 * k[i] * dx2[i];
+                diff    += dx[i] * ref[i]; 
             }
             
             for(int i=0; i<3; i++) if (di[i]) dx[i] = center[i]-r_cec[i];
@@ -302,17 +333,17 @@ void Umbrella::writeStepUmb(int mode)
         }
         
         // Print header
-        if (mode == 0) fprintf(fs, "# %10s %20s %8s %15s %15s %8s %15s %15s %8s %15s %15s\n",
-                                   "StepNumber","Ener[a.u.]",
-                                   "KX[kcal]","DX[ang.]","X2[ang.]",
-                                   "KY[kcal]","DY[ang.]","Y2[ang.]",
-                                   "KZ[kcal]","DZ[ang.]","Z2[ang.]");
+        if (mode == 0) fprintf(fs, "# %10s %15s %15s %15s %15s %15s %15s %15s %15s\n",
+                                   "StepNumber","Ener[kcal]","Diff[ang.]",
+                                   "DX[ang.]","X2[ang.]",
+                                   "DY[ang.]","Y2[ang.]",
+                                   "DZ[ang.]","Z2[ang.]");
         
-        fprintf(fs, "  %10d %20.10f %8.4f %15.10f %15.10f %8.4f %15.10f %15.10f %8.4f %15.10f %15.10f\n",
-                mode, energy,
-                k[0]*fmr->math->au2kcal,dx[0],r_cec[0],
-                k[1]*fmr->math->au2kcal,dx[1],r_cec[1],
-                k[2]*fmr->math->au2kcal,dx[2],r_cec[2]);
+        fprintf(fs, "  %10d %15.10f %15.10f %15.10f %15.10f %15.10f %15.10f %15.10f %15.10f\n",
+                mode, energy*fmr->math->au2kcal, diff,
+                dx[0],r_cec[0],
+                dx[1],r_cec[1],
+                dx[2],r_cec[2]);
         
         fclose(fs);
     }
