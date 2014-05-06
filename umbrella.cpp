@@ -287,7 +287,6 @@ void Umbrella::writeStepUmb(int mode)
     Matrix *matrix     = fmr->matrix;
     Cec *cec           = fmr->cec;
         
-    double GSEnergy = matrix->GSEnergy;
     double *r_cec     = cec->r_cec;
     
     if (fmr->master_rank) {
@@ -303,17 +302,17 @@ void Umbrella::writeStepUmb(int mode)
         }
         
         // Print header
-        if (mode == 0) fprintf(fs, "# %10s %20s %10s %8s %10s %10s %10s %10s %8s %10s %10s %10s %10s %8s %10s %10s %10s\n",
+        if (mode == 0) fprintf(fs, "# %10s %20s %8s %15s %15s %8s %15s %15s %8s %15s %15s\n",
                                    "StepNumber","Ener[a.u.]",
-                                   "EX[a.u]","KX[kcal]","DX[a.u.]","X1[a.u.]","X2[a.u.]",
-                                   "EY[a.u]","KY[kcal]","DY[a.u.]","Y1[a.u.]","Y2[a.u.]",
-                                   "EZ[a.u]","KZ[kcal]","DZ[a.u.]","Z1[a.u.]","Z2[a.u.]");
+                                   "KX[kcal]","DX[ang.]","X2[ang.]",
+                                   "KY[kcal]","DY[ang.]","Y2[ang.]",
+                                   "KZ[kcal]","DZ[ang.]","Z2[ang.]");
         
-        fprintf(fs, "  %10d %20.10f %10.5f %8.4f %10.5f %10.5f %10.5f %10.5f %8.4f %10.5f %10.5f %10.5f %10.5f %8.4f %10.5f %10.5f %10.5f\n",
-                mode, GSEnergy, 
-                e[0],k[0]*fmr->math->au2kcal,dx[0],center[0],r_cec[0],
-                e[1],k[1]*fmr->math->au2kcal,dx[1],center[1],r_cec[1],
-                e[2],k[2]*fmr->math->au2kcal,dx[2],center[2],r_cec[2]);
+        fprintf(fs, "  %10d %20.10f %8.4f %15.10f %15.10f %8.4f %15.10f %15.10f %8.4f %15.10f %15.10f\n",
+                mode, energy,
+                k[0]*fmr->math->au2kcal,dx[0],r_cec[0],
+                k[1]*fmr->math->au2kcal,dx[1],r_cec[1],
+                k[2]*fmr->math->au2kcal,dx[2],r_cec[2]);
         
         fclose(fs);
     }
