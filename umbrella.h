@@ -60,6 +60,8 @@ class Umbrella : protected Pointers {
    void decompose_force(double *);
    void decompose_energy(double);
    void partial_C_N2(double *);
+   void partial_C_N3(double *);
+   void partial_C_N4(double *);
 
    void writeStepUmb(int);
 };

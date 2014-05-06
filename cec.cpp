@@ -93,7 +93,7 @@ void Cec::compute_coc()
                         ref[2] = atom->coord[3*iatom + 2];
                     }
                     atoms_per_ireactive++;
-                    qsum_coc[istate] += atom->getCharge(iatom,istate);
+                    qsum_coc[istate] += fabs(atom->getCharge(iatom,istate));
                     
                 }
             }
@@ -116,7 +116,7 @@ void Cec::compute_coc()
                     //VECTOR_PBC(dr);
                     
                     //printf("charge: %f/%f = %f\n",atom->getCharge(iatom,istate),qsum_coc[istate],atom->getCharge(iatom,istate)/qsum_coc[istate]);
-                    VECTOR_SCALE(dr,atom->getCharge(iatom,istate)/qsum_coc[istate]);
+                    VECTOR_SCALE(dr,fabs(atom->getCharge(iatom,istate))/qsum_coc[istate]);
                     VECTOR_ADD(r_coc[istate],r_coc[istate],dr);
                     //printf("coc: %f %f %f\n",r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
                     

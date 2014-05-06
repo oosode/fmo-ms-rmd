@@ -22,6 +22,8 @@ Umbrella::Umbrella(FMR *fmr) : Pointers(fmr)
     deltaE     = NULL;
     koppa      = NULL;
     upsilon    = NULL;
+    beta       = NULL;
+    omega      = NULL;
     
     k[0]       = 0.0;
     k[1]       = 0.0;
@@ -39,8 +41,9 @@ Umbrella::Umbrella(FMR *fmr) : Pointers(fmr)
     ref[1]     = 0.0;
     ref[2]     = 0.0;
     
-    sprintf(umb_typ, "%s", "null");
+    umb_coord  = 0;
     
+    sprintf(umb_typ, "%s", "null");
     sprintf(umbFile, "%s", "fmr_umb.log"); // default file name
 
 }
@@ -66,6 +69,19 @@ Umbrella::~Umbrella()
         }
         delete [] upsilon;
     }
+    if (omega != NULL) {
+	    for (int i=0; i<nstates; ++i) {
+            delete [] omega[i];
+        }
+        delete [] omega;
+    }
+    if (beta != NULL) {
+	    for (int i=0; i<nstates; ++i) {
+            delete [] beta[i];
+        }
+        delete [] beta;
+    }
+    
 
 }
 
@@ -74,12 +90,15 @@ void Umbrella::decompose_force(double* force)
     
     Atom *atom	       = fmr->atom;
     Matrix *matrix     = fmr->matrix;
+    Cec *cec           = fmr->cec;
     
     int natoms         = atom->natoms;
     int nstates        = atom->nstates;
 
-    double *GSGradient = fmr->atom->force;
-    double *GSCoeffs   = fmr->matrix->GSCoeffs;
+    double *GSGradient = atom->force;
+    double *GSCoeffs   = matrix->GSCoeffs;
+    
+    double *qsum_coc   = cec->qsum_coc;
     
     /******************************************************************/
     /*** Calculate derivitive of [qCOC(i)] ****************************/
@@ -92,7 +111,8 @@ void Umbrella::decompose_force(double* force)
                 if (atom->reactive[istate*natoms + iatom]) {
 
                     for(int l=0; l<3; l++) {
-                       GSGradient[3*iatom + l] += force[l]*C2;//*(atom->getCharge(iatom,istate)/qsum_coc[istate]);
+                       //GSGradient[3*iatom + l] += force[l]*C2;//*(atom->getCharge(iatom,istate)/qsum_coc[istate]);
+                       GSGradient[3*iatom + l] += force[l]*C2*fabs(atom->getCharge(iatom,istate))/qsum_coc[istate];
                     }      
                 }
             } // loop all the atoms in the coc
@@ -103,7 +123,7 @@ void Umbrella::decompose_force(double* force)
     /******************************************************************/
     /*** Calculate derivitive of [C(i)^2]  ****************************/
     /******************************************************************/
-    partial_C_N2(force);    
+    partial_C_N4(force);
 }
 
 void Umbrella::partial_C_N2(double *force)
@@ -208,6 +228,166 @@ void Umbrella::partial_C_N2(double *force)
     MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
 }
 
+void Umbrella::partial_C_N3(double *force)
+{
+    /******************************************************************/
+    /*** JPCB, 112, 2349 Eq 21-23 *************************************/
+    /******************************************************************/
+    
+    Atom *atom	       = fmr->atom;
+    Matrix *matrix     = fmr->matrix;
+    Cec *cec           = fmr->cec;
+    
+    int natoms         = atom->natoms;
+    int nstates        = atom->nstates;
+    int prev_nstates   = atom->prev_nstates;
+    
+    double *GSGradient = fmr->atom->force;
+    double **Evecs     = matrix->Evecs;
+    double *Evals      = matrix->Evals;
+    double ***HX       = matrix->HX;
+    double **r_coc     = cec->r_coc;
+    
+    int ground = 0; // convention retained from matrix diagonalization
+    double factor;
+    
+    // ** Allocate and assign deltaE array ** //
+    if (deltaE != NULL) delete [] deltaE;
+    deltaE = new double [nstates];
+    for (int i=0; i<nstates; ++i) deltaE[i] = Evals[ground]-Evals[i];
+    
+    // ** Allocate and assign summation vectors array ** //
+    if (beta != NULL || omega != NULL) {
+        for (int i=0; i<prev_nstates; ++i) {
+            delete [] beta[i];
+            delete [] omega[i];
+        }
+        delete [] beta;
+        delete [] omega;
+    }
+    beta   = new double*[nstates];
+    omega = new double*[nstates];
+    for (int i=0; i<nstates; ++i) {
+        beta[i]   = new double[3];
+        omega[i] = new double[3];
+        for (int k=0; k<3; ++k) {
+            beta[i][k]   = 0.0;
+            omega[i][k] = 0.0;
+        }
+    }
+    
+    /********** Eq. 21 ***************/
+    if (fmr->master_rank) {
+        
+        for (int j=0; j<nstates; j++)
+        {
+            if (j==ground) continue;
+            
+            for (int l=0; l<nstates; l++)
+            {
+                for (int m=0; m<nstates; m++)
+                {
+                    factor = Evecs[l][j]*Evecs[m][ground];
+                    for (int iatom=0; iatom<natoms; iatom++) {
+                        
+                        beta[j][0] += 2*force[0]*(factor*HX[m][l][3*iatom + 0]);
+                        beta[j][1] += 2*force[1]*(factor*HX[m][l][3*iatom + 1]);
+                        beta[j][2] += 2*force[2]*(factor*HX[m][l][3*iatom + 2]);
+                    }
+                }
+            }
+        }
+        
+        /********** Eq. 22 ***************/
+        
+        for(int i=0; i<nstates; i++)
+        {
+            for(int j=0; j<nstates; j++)
+            {
+                if(j==ground) continue;
+                
+                factor = Evecs[i][j]/deltaE[j];
+                omega[i][0] += factor*beta[j][0];
+                omega[i][1] += factor*beta[j][1];
+                omega[i][2] += factor*beta[j][2];
+            }
+        }
+        
+        /*********** Eq. 23 ******************/
+        
+        for (int i=0; i<nstates; i++)
+        {
+            double prefactor[3];
+            prefactor[0] = Evecs[i][ground]*r_coc[i][0]*omega[i][0];
+            prefactor[1] = Evecs[i][ground]*r_coc[i][1]*omega[i][1];
+            prefactor[2] = Evecs[i][ground]*r_coc[i][2]*omega[i][2];
+            
+            for (int iatom=0; iatom<natoms; iatom++) {
+                
+                for (int x=0; x<3; x++) {
+                    GSGradient[3*iatom + x] -= prefactor[x];
+                }
+            }
+        }
+    }
+    MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
+}
+
+void Umbrella::partial_C_N4(double *force)
+{
+    /******************************************************************/
+    /*** JPCB, 112, 2349 Eq 20 ****************************************/
+    /******************************************************************/
+    
+    Atom *atom	       = fmr->atom;
+    Matrix *matrix     = fmr->matrix;
+    Cec *cec           = fmr->cec;
+    
+    int natoms         = atom->natoms;
+    int nstates        = atom->nstates;
+    
+    double *GSGradient = fmr->atom->force;
+    double **Evecs     = matrix->Evecs;
+    double *Evals      = matrix->Evals;
+    double ***HX       = matrix->HX;
+    double **r_coc     = cec->r_coc;
+    
+    int ground = 0; // convention retained from matrix diagonalization
+    double factor;
+    
+    // ** Allocate and assign deltaE array ** //
+    if (deltaE != NULL) delete [] deltaE;
+    deltaE = new double [nstates];
+    for (int i=0; i<nstates; ++i) deltaE[i] = Evals[ground]-Evals[i];
+    
+    /********** Eq. 20 ***************/
+    if (fmr->master_rank) {
+        
+        for (int i=0; i<nstates; i++)
+        {
+            for (int j=0; j<nstates; j++)
+            {
+                if (j==ground) continue;
+                
+                for (int l=0; l<nstates; l++)
+                {
+                    for (int m=0; m<nstates; m++)
+                    {
+                        factor = Evecs[m][ground]*Evecs[l][j]*Evecs[i][j]*Evecs[i][ground]/deltaE[j];
+                        for (int iatom=0; iatom<natoms; iatom++) {
+                            
+                            GSGradient[3*iatom + 0] -= 2*force[0]*HX[m][l][3*iatom + 0]*factor*r_coc[i][0];
+                            GSGradient[3*iatom + 1] -= 2*force[1]*HX[m][l][3*iatom + 1]*factor*r_coc[i][1];
+                            GSGradient[3*iatom + 2] -= 2*force[2]*HX[m][l][3*iatom + 2]*factor*r_coc[i][2];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
+}
+
 void Umbrella::decompose_energy(double energy)
 {
     Matrix *matrix  = fmr->matrix;
@@ -228,20 +408,39 @@ void Umbrella::setup()
 
     int natoms         = atom->natoms;
     int nstates        = atom->nstates;
-
-    for (int i=0; i<3; i++) if (k[i]) fmr->umbrella->di[i] = 1;
+    
+    double sum         = 0.0;
 
     if (umb_coord==COORD_SPHERICAL) {
         
+        k[1] = k[0];
+        k[2] = k[0];
+        
+        for (int i=0; i<3; i++) {
+
+            sum   += ref[i];
+            di[i]  = 1;
+            
+        }
+        for (int i=0; i<3; i++) ref[i] /= sum;
 
     }
     else if (umb_coord==COORD_CARTESIAN) {
+        
+        for (int i=0; i<3; i++) {
+            
+            sum += ref[i];
+            if (k[i]) di[i] = 1;
+            
+        }
+        for (int i=0; i<3; i++) ref[i] /= sum;
 
 
     }
     else if (umb_coord==COORD_CYLINDRICAL) {
         
-
+        for (int i=0; i<3; i++) sum += ref[i];
+        for (int i=0; i<3; i++) ref[i] /= sum;
     }
 
 }
@@ -274,10 +473,8 @@ void Umbrella::compute()
         {
             for(int i=0; i<3; i++) if (di[i]) dx[i] = center[i]-r_cec[i];
             //VECTOR_PBC(dx);
-            //for(int i=0; i<3; i++) if (di[i]) diff += dx[i]*ref[i];
-            //VECTOR_PBC(dx);
             
-            for(int i=0; i<3; i++) if (di[i])
+            for (int i=0; i<3; i++) if (di[i])
             {
                 ff[i]    = -k[i];
                 f[0][i]  = -k[i] * dx[i];
@@ -286,9 +483,6 @@ void Umbrella::compute()
                 energy  += 0.5 * k[i] * dx2[i];
                 diff    += dx[i] * ref[i]; 
             }
-            
-            for(int i=0; i<3; i++) if (di[i]) dx[i] = center[i]-r_cec[i];
-            //VECTOR_PBC(dx);
         }
         
         // Virial calculation
