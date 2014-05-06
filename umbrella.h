@@ -13,10 +13,10 @@ namespace FMR_NS {
 #define GTP_CG     4
 #define GTP_CECV2  5
 
-#define COORD_CART      0
-#define COORD_SPHERICAL 1
-#define COORD_CYLINDER  2
-#define COORD_PT        3
+#define COORD_CARTESIAN    0
+#define COORD_SPHERICAL    1
+#define COORD_CYLINDRICAL  2
+#define COORD_PT           3
 
 class Umbrella : protected Pointers {
  public:
@@ -33,17 +33,20 @@ class Umbrella : protected Pointers {
    double **omega;    // Eq. 22 triple summation
 
    /* Potential setting */
-   int umb_typ;             // Umbrella-potential coordinate
-   int di[3];               // Are potential on x, y, z - direction
+   char   umb_typ[256];     // Umbrella potential coordinate name
+   int    umb_coord;        // Umbrella potential coordinate index
+   int    di[3];            // Are potential on x, y, z - direction
    double k[3];             // force constants
-   double ref[3];           // Reference distance
+   double ref[3];           // Reference vector
 
    double center[3],f[2][3],dx[3],dx2[3];
    double energy, ff[3];
    double virial[6];
 
-  /* output */
-  int next_out,freq_out;
+   double diff;             // displacement along umb vector
+
+   /* output */
+   char   umbFile[256];
      
    //int next_pivot_state; // The state index of the next step's pivot state
    //int max_hops;         // Maximum number of hops in search
@@ -52,12 +55,13 @@ class Umbrella : protected Pointers {
    //int flag_state_number_change; // Flag to indicate a change in the number of states b/w steps
 
    // ** Functions ** //
+   void setup();
    void compute();
    void decompose_force(double *);
    void decompose_energy(double);
    void partial_C_N2(double *);
 
-   void write_log();
+   void writeStepUmb(int);
 };
 
 }

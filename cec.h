@@ -27,52 +27,16 @@ class Cec : protected Pointers {
 
    // ** Variables ** //
    double r_cec[3];
-   //double r_coc[MAX_STATES][3];        
-
    double **r_coc;
    double *qsum_coc;
    int natom_coc[MAX_STATES];
-   double *deltaE;
-   double **koppa;    // Eq. 24 double summation
-   double **upsilon;  // Eq. 25 double summation
-   double **beta;     // Eq. 21 triple summation 
-   double **omega;    // Eq. 22 triple summation
-   double **gamma;    //  
 
-   /* Potential setting */
-   int umb_typ;             // Umbrella-potential coordinate
-   int di[3];               // Are potential on x, y, z - direction
-   double k[3];             // force constants
-   double ref[3];           // Reference distance
 
-   double center[3],f[2][3],dx[3],dx2[3];
-   double energy, ff[3];
-   double virial[6];
-
-  /* output */
-  int next_out,freq_out;
-     
-   //int next_pivot_state; // The state index of the next step's pivot state
-   //int max_hops;         // Maximum number of hops in search
-   //double cut_OH;        // Distance cutoff in state search between O and H atoms
-   //int flag_read_MOs;    // Flag to indicate if it is safe to read MO coefficients from file from previous step
-   //int flag_state_number_change; // Flag to indicate a change in the number of states b/w steps
 
    // ** Functions ** //
    void compute_coc();
    void compute_cec();
-   void compute2();
-   void decompose_force2(double *);
-   void decompose_energy2(double);
-   void partial_C_N22(double *);
-   //void state_search();           // The breadth-first search for fragmentation states
-   //void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
-   //void write_nwchem_inputs(int); // Writes the inputs for NWChem
-   //void write_nwchem_inputs_cutoff(int);
-   //void write_gamess_inputs(int); // Writes the inputs for Gamess
-   
-   //void updatePivotState();       // Update pivot state information *after* matrix diagonalization
-   //void updateCoordinates();      // Update geometry coordinates of atoms in unit cell.
+
 };
 
 }
