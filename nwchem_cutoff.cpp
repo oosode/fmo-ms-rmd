@@ -130,21 +130,28 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                             d=sqrt(d2);
                             
                             if (d <= run->cut_dimer) {
-                                
+
                                 // include dimer in queue list
-                                run->dimer_queue[idx] = 1;
+                                //run->dimer_queue[idx] = 1;
                                 statedimers++;
                                 
                                 // include j monomer in queue list
                                 idxj=atom->getFragPosition(0,x,y,z,jfrag);
                                 idxi=atom->getFragPosition(0,0,0,0,ifrag);
-                                run->monomer_queue[idxj] = 1;
-                                statemonomers++;
+                                //run->monomer_queue[idxj] = 1;
+
+				if (x != 0 || y != 0 || z != 0) statemonomers++;
+				
+				for (int state=0; state<nstates; ++state) {
+					run->dimer_queue[state*run->n_dimers_tmp/nstates + idx] = 1;
+					run->monomer_queue[state*run->n_monomers_tmp/nstates + idxj] = 1;
+				}
                                 
-                                printf("dimer index %4d ",idx);
-                                printf("i: %3d %3d %3d %4d index %3d ",0,0,0,ifrag,idxi);
-                                printf("j: %3d %3d %3d %4d index %3d\n",x,y,z,jfrag,idxj);
-                                printf("\n");
+
+                                //printf("dimer index %4d ",idx);
+                                //printf("i: %3d %3d %3d %4d index %3d ",0,0,0,ifrag,idxi);
+                                //printf("j: %3d %3d %3d %4d index %3d\n",x,y,z,jfrag,idxj);
+                                //printf("\n");
                                 
                             }
                             ++idx;

@@ -123,7 +123,8 @@ void Umbrella::decompose_force(double* force)
     /******************************************************************/
     /*** Calculate derivitive of [C(i)^2]  ****************************/
     /******************************************************************/
-    partial_C_N4(force);
+    //partial_C_N4(force);
+    partial_C_N2(force);
 }
 
 void Umbrella::partial_C_N2(double *force)
