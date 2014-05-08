@@ -146,7 +146,46 @@ class Atom : protected Pointers {
      int pos = istate*ra*rb*rc*nfragments + ar*rb*rc*nfragments + br*rc*nfragments + cr*nfragments + ifrag;
 
      return pos;
+   }
+   int getMonomerPosition(int istate, int icella, int icellb, int icellc, int ifrag) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     int ar = icella + na;
+     int br = icellb + nb;
+     int cr = icellc + nc;
+
+     int pos = istate*ra*rb*rc*nfragments + ar*rb*rc*nfragments + br*rc*nfragments + cr*nfragments + ifrag;
+
+     return pos;
    }	
+   int getDimerPosition(int istate, int icella, int icellb, int icellc, int ifrag, int jfrag) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     //int nf0 = (nfragments * (nfragments-1)) / 2;
+     int nf2 = nfragments * nfragments;
+
+     //int ndimers = nf2 * (ra*rb*rc-1) + nf0;
+     
+     int ar = icella + na;
+     int br = icellb + nb;
+     int cr = icellc + nc;
+
+     int mid = (na*rb*rc - 1) + (nb*rc - 1) + (nc - 1);
+     int tmp = (icella + na - 1)*rb*rc + (icellb + nb - 1)*rc + (icellc + nc - 1);
+
+     int shift = nfragments*(nfragments - 1);
+
+     if      (tmp<mid)  return istate*ra*rb*rc*nf2 + ar*rb*rc*nf2 + br*rc*nf2 + cr*nf2 + ifrag*nfragments + jfrag;
+     else if (tmp==mid) return istate*ra*rb*rc*nf2 + ar*rb*rc*nf2 + br*rc*nf2 + cr*nf2 + (ifrag + 1)*(nfragments - ifrag/2) + jfrag - ifrag - 1;
+     else               return istate*ra*rb*rc*nf2 + ar*rb*rc*nf2 + br*rc*nf2 + cr*nf2 + ifrag*nfragments + jfrag - shift;
+
+   }
    double getCharge(int iatom, int istate) {
      double mmq = 0.0;
      if (symbol[iatom] == 'H') {

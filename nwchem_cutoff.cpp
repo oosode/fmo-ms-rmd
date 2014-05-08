@@ -227,7 +227,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                 for (int z=-xc; z<=xc; ++z) {
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-    
+   			
+			midx=atom->getMonomerPosition(istate,x,y,z,ifrag);
                         if (run->monomer_queue[midx] == 1) {
 
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
@@ -463,6 +464,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
+			    didx=atom->getDimerPosition(istate,x,y,z,ifrag,jfrag); 
                             if (run->dimer_queue[didx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
@@ -880,7 +882,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                     //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                        
+                       
+			midx=atom->getMonomerPosition(istate,x,y,z,ifrag); 
                         if (run->monomer_queue[midx] == 1) {
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
                                 
@@ -1117,7 +1120,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                         for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
-                            
+                           
+   			    didx=atom->getDimerPosition(istate,x,y,z,ifrag,jfrag); 
                             if (dimer_queue[didx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
