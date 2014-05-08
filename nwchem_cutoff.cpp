@@ -60,8 +60,11 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     
     //run->n_monomers = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers and monomers, for now
-    run->n_monomers_tmp = nstates * nfragments * na*nb*nc;
-    run->n_dimers_tmp = nstates * (nf2 * (na*nb*nc-1) + (nfragments * (nfragments-1)) / 2);
+    int nmonomers = nfragments * na*nb*nc;
+    int ndimers = (nf2 * (na*nb*nc-1) + (nfragments * (nfragments-1)) / 2);
+
+    run->n_monomers_tmp = nstates * nmonomers;
+    run->n_dimers_tmp = nstates * ndimers;
     run->n_dimers_sq = nstates * nf2 *na*nb*nc; // inclues self
 
     // initialize monomer queue list
@@ -143,8 +146,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
 				if (x != 0 || y != 0 || z != 0) statemonomers++;
 				
 				for (int state=0; state<nstates; ++state) {
-					run->dimer_queue[state*run->n_dimers_tmp/nstates + idx] = 1;
-					run->monomer_queue[state*run->n_monomers_tmp/nstates + idxj] = 1;
+					run->dimer_queue[state*ndimers + idx] = 1;
+					run->monomer_queue[state*nmonomers + idxj] = 1;
 				}
                                 
 
