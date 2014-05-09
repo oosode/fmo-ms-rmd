@@ -183,7 +183,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
         ifrom_dim = my_rank*div + rem;
         ito_dim   = ifrom_dim + div;
     }
-    
+    printf("%3d %3d %2d\n",ifrom_dim,ito_dim,my_rank);
+ 
     int index_mono = 0;
     int index_dim  = 0;
     
@@ -454,7 +455,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     for (int ifrag=0; ifrag<nfragments; ++ifrag){
                         for (int jfrag=0; jfrag<nfragments; ++jfrag){
                             
-                            if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+                            //if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
                 
@@ -715,6 +716,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                                     
                                     
                                     fclose(fs);
+     
                                 }
                             }
                             ++index_dim; 
@@ -873,10 +875,13 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                        
-			midx=atom->getMonomerIndex(istate,x,y,z,ifrag); 
-                        if (run->monomer_queue[midx] == 1) {
+			//midx=atom->getMonomerIndex(istate,x,y,z,ifrag); 
+                        //if (run->monomer_queue[midx] == 1) {
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-                                
+
+                        midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
+                        if (run->monomer_queue[midx] == 1) {
+                        
                                 char jobname[256];
                                 char filename[256];
                                 char inum[16];
@@ -1085,12 +1090,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     }
                                     fclose(fs);
                                 }
-                                //printf("Rank %d: efield\n", my_rank);
                                 chdir("..");
                             }
-                            ++index_mono;
                         }
-                        ++midx;
+			++index_mono;
                     }
                 }
             }
@@ -1109,12 +1112,15 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                         for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                             
-                            if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+                            //if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                            
-   			    didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag); 
-                            if (dimer_queue[didx] == 1) {
+   			    //didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag); 
+                            //if (dimer_queue[didx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
+
+                            didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
+                            if (dimer_queue[didx] == 1) {
                                     
                                     char jobname[256];
                                     char filename[256];
@@ -1363,10 +1369,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     }
                                     chdir("../");
                                 }
-                                ++index_dim;
                                 
                             } // close loop over dimer queue
-                            ++didx;
+                            ++index_dim;
                         } // close loop over fragment j
                     } // close loop over fragment i
                     
