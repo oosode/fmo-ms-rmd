@@ -220,11 +220,12 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
    			
-			midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
+                            if (ifrom_mono <= index_mono && index_mono < ito_mono) {
+                            
+                        midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                         if (run->monomer_queue[midx] == 1) {
 
-                            if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-                                
+    
                                 // Get name of file to open
                                 char jobname[256];
                                 char filename[256];
@@ -437,9 +438,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                                 
                                 fclose(fs);
                             }
-                            ++index_mono;
                         }
-                        ++midx;
+			++index_mono;
                     } // close loop over fragments for monomers
                     
                 }
@@ -456,18 +456,18 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
-			    didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag); 
-                            if (run->dimer_queue[didx] == 1) {
-                                
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
-                                    
+                
+                            didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
+                            if (run->dimer_queue[didx] == 1) {
+                    
                                     // Get name of file to open
                                     char jobname[256];
                                     char filename[256];
                                     
                                     // Get name of job
                                     sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-                                    printf("jobname %s %4d\n",jobname,didx);
+                                    printf("jobname %s %4d %2d\n",jobname,didx,my_rank);
                                     
                                     // Make the job directory...
                                     //sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
@@ -716,10 +716,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                                     
                                     fclose(fs);
                                 }
-                                ++index_dim;
                             }
-                            ++didx;
-                            
+                            ++index_dim; 
                         }
                     } // close loop over fragments for dimers
                     
@@ -1122,6 +1120,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     char filename[256];
                                     
                                     sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+				    printf("jobname %s %4d %2d\n",jobname,didx,my_rank);
                                     sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
                                     
                                     // change directory
