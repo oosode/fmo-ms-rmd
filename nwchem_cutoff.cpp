@@ -73,16 +73,16 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     
     // include zeroth cell monomers in queue list
     for (int istate=0; istate<nstates; ++istate) {
-        pos=atom->getFragPosition(istate,0,0,0,0);
+        pos=atom->getMonomerIndex(istate,0,0,0,0);
         for (int ifrag=0; ifrag<nfragments; ++ifrag) run->monomer_queue[pos+ifrag] = 1;
     }
 
     // initialize dimer queue lisi
-    if (run->dimer_queue == NULL)   run->dimer_queue = new int [run->n_dimers_tmp];
-    for (int i=0; i<run->n_dimers_tmp; ++i) run->dimer_queue[i] = 0;
+    if (run->dimer_queue == NULL)   run->dimer_queue = new int [run->n_dimers_sq];
+    for (int i=0; i<run->n_dimers_sq; ++i) run->dimer_queue[i] = 0;
     
     // search for nearest dimers
-    if (fmr->master_rank) {
+    //if (fmr->master_rank) {
         
         for (int x=-xa; x<=xa; ++x) {
             for (int y=-xb; y<=xb; ++y) {
@@ -135,44 +135,36 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                             if (d <= run->cut_dimer) {
 
                                 // include dimer in queue list
-                                //run->dimer_queue[idx] = 1;
                                 statedimers++;
-                                
+                                idx =atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
+ 
                                 // include j monomer in queue list
-                                idxj=atom->getFragPosition(0,x,y,z,jfrag);
-                                idxi=atom->getFragPosition(0,0,0,0,ifrag);
-                                //run->monomer_queue[idxj] = 1;
-
 				if (x != 0 || y != 0 || z != 0) statemonomers++;
-				
-				for (int state=0; state<nstates; ++state) {
-					run->dimer_queue[state*ndimers + idx] = 1;
-					run->monomer_queue[state*nmonomers + idxj] = 1;
-				}
-                                
+                                idxj=atom->getMonomerIndex(0,x,y,z,jfrag);
+                                idxi=atom->getMonomerIndex(0,0,0,0,ifrag);
 
-                                //printf("dimer index %4d ",idx);
-                                //printf("i: %3d %3d %3d %4d index %3d ",0,0,0,ifrag,idxi);
-                                //printf("j: %3d %3d %3d %4d index %3d\n",x,y,z,jfrag,idxj);
-                                //printf("\n");
-                                
+				for (int state=0; state<nstates; ++state) {
+					//printf("didx %d && %d from getDiemr\n",state*nf2 *na*nb*nc+ idx,atom->getDimerIndex(state,x,y,z,ifrag,jfrag));
+					run->dimer_queue[state*nf2*na*nb*nc + idx] = 1;
+					run->monomer_queue[state*nfragments*na*nb*nc + idxj] = 1;
+				}
                             }
-                            ++idx;
                             
                         }
                     }
                 }
             }
         }
-    }
+    //}
+    //MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
     
     // Assuming all states have equal number of dimers and monomers, for now
     run->n_monomers = nstates * statemonomers; 
     run->n_dimers   = nstates * statedimers;
 
     // ** Determine load balance ** //
-    int div = run->n_monomers / fmr->world_size;
-    int rem = run->n_monomers % fmr->world_size;
+    int div = run->n_monomers_tmp / fmr->world_size;
+    int rem = run->n_monomers_tmp % fmr->world_size;
     int ifrom_mono, ito_mono;
     if (my_rank < rem) {
         ifrom_mono = my_rank*div + my_rank;
@@ -181,8 +173,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
         ifrom_mono = my_rank*div + rem;
         ito_mono   = ifrom_mono + div;
     }
-    div = run->n_dimers / fmr->world_size;
-    rem = run->n_dimers % fmr->world_size;
+    div = run->n_dimers_sq / fmr->world_size;
+    rem = run->n_dimers_sq % fmr->world_size;
     int ifrom_dim, ito_dim;
     if (my_rank < rem) {
         ifrom_dim = my_rank*div + my_rank;
@@ -228,7 +220,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
    			
-			midx=atom->getMonomerPosition(istate,x,y,z,ifrag);
+			midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                         if (run->monomer_queue[midx] == 1) {
 
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
@@ -464,7 +456,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
-			    didx=atom->getDimerPosition(istate,x,y,z,ifrag,jfrag); 
+			    didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag); 
                             if (run->dimer_queue[didx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
@@ -828,8 +820,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     }
     
     // ** Determine load balance ** //
-    int div = n_monomers / fmr->world_size;
-    int rem = n_monomers % fmr->world_size;
+    int div = n_monomers_tmp / fmr->world_size;
+    int rem = n_monomers_tmp % fmr->world_size;
     int ifrom_mono, ito_mono;
     if (my_rank < rem) {
         ifrom_mono = my_rank*div + my_rank;
@@ -838,8 +830,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         ifrom_mono = my_rank*div + rem;
         ito_mono   = ifrom_mono + div;
     }
-    div = n_dimers / fmr->world_size;
-    rem = n_dimers % fmr->world_size;
+    div = n_dimers_sq / fmr->world_size;
+    rem = n_dimers_sq % fmr->world_size;
     int ifrom_dim, ito_dim;
     if (my_rank < rem) {
         ifrom_dim = my_rank*div + my_rank;
@@ -883,7 +875,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                     
                     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                        
-			midx=atom->getMonomerPosition(istate,x,y,z,ifrag); 
+			midx=atom->getMonomerIndex(istate,x,y,z,ifrag); 
                         if (run->monomer_queue[midx] == 1) {
                             if (ifrom_mono <= index_mono && index_mono < ito_mono) {
                                 
@@ -1121,7 +1113,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                            
-   			    didx=atom->getDimerPosition(istate,x,y,z,ifrag,jfrag); 
+   			    didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag); 
                             if (dimer_queue[didx] == 1) {
                                 
                                 if (ifrom_dim <= index_dim && index_dim < ito_dim) {
