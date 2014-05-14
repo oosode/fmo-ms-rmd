@@ -152,12 +152,12 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
 				int xa,ya,za,ifraga;
 				int xb,yb,zb,ifragb;
 				int xd,yd,zd,ifragd,jfragd;
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",x,y,z,ifrag,jfrag);
+				printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",x,y,z,ifrag,jfrag);
 				atom->getDimerIndices(idx,istate,xd,yd,zd,ifragd,jfragd);
 				atom->getMonomerIndices(idxi,istate,xa,ya,za,ifraga);
 				atom->getMonomerIndices(idxj,istate,xb,yb,zb,ifragb);
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",xb,yb,zb,ifraga,ifragb);
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n\n",xd,yd,zd,ifragd,jfragd);
+				printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",xb,yb,zb,ifraga,ifragb);
+				printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n\n",xd,yd,zd,ifragd,jfragd);
 				//printf("istate: %4d x: %3d y:%3d z: %3d ifrag:%3d\n\n",0,xa,ya,za,ifraga);	
                             }
                             
@@ -167,6 +167,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             }
         }
     }
+    exit(0);
     //MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
     
     // Assuming all states have equal number of dimers and monomers, for now

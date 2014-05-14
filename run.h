@@ -53,6 +53,9 @@ class Run : protected Pointers {
    double *monomer_gradients; // FMO monomer gradients
    double *dimer_gradients;   // FMO dimer gradients
 
+   int *monomer_list;
+   int *dimer_list;
+
    // ** Functions ** //
    void run_calculation();     // General run calculation
    void setup();               // Setup calculation ... umbrella,

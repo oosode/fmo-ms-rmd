@@ -68,114 +68,112 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     run->n_dimers_sq = nstates * nf2 *na*nb*nc; // inclues self
 
     // initialize monomer queue list
-    if (run->monomer_queue == NULL) run->monomer_queue = new int [run->n_monomers_tmp];    
-    for (int i=0; i<run->n_monomers_tmp; ++i) run->monomer_queue[i] = 0;
-    
+    run->monomer_list = new int [run->n_monomers_tmp];                                 
+    for (int i=0; i<run->n_monomers_tmp; ++i) run->monomer_list[i] = -1;
+
     // include zeroth cell monomers in queue list
     for (int istate=0; istate<nstates; ++istate) {
         pos=atom->getMonomerIndex(istate,0,0,0,0);
-        for (int ifrag=0; ifrag<nfragments; ++ifrag) run->monomer_queue[pos+ifrag] = 1;
+        for (int ifrag=0; ifrag<nfragments; ++ifrag) run->monomer_list[istate*nmonomers + ifrag] = pos;
     }
 
-    // initialize dimer queue lisi
-    if (run->dimer_queue == NULL)   run->dimer_queue = new int [run->n_dimers_sq];
-    for (int i=0; i<run->n_dimers_sq; ++i) run->dimer_queue[i] = 0;
-    
-    // search for nearest dimers
-    if (fmr->master_rank) {
-        
-        for (int x=-xa; x<=xa; ++x) {
-            for (int y=-xb; y<=xb; ++y) {
-                for (int z=-xc; z<=xc; ++z) {
-                    
-                    for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                        
-                        // center of mass of i fragment
-                        comi[0] = comi[1] = comi[2] = massi = 0.0;
-                        for (int i=0; i<natoms; ++i) {
-                            if (atom->fragment[i] == ifrag) {
-                                comi[0] += atom->mass[i] * atom->coord[3*i];
-                                comi[1] += atom->mass[i] * atom->coord[3*i+1];
-                                comi[2] += atom->mass[i] * atom->coord[3*i+2];
-                                massi += atom->mass[i];
-                            }
-                        }
-                        comi[0] /= massi;
-                        comi[1] /= massi;
-                        comi[2] /= massi;
-                        
-                        //printf("for dimers\n");
-                        for (int jfrag=0; jfrag<nfragments; ++jfrag) {
-                            
-                            if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
-                            
-                            // center of mass of j fragment
-                            comj[0] = comj[1] = comj[2] = massj = 0.0;
-                            for (int j=0; j<natoms; ++j) {
-                                if (atom->fragment[j] == jfrag) {
-                                    comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
-                                    comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
-                                    comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
-                                    massj += atom->mass[j];
-                                }
-                            }
-                            comj[0] /= massj;
-                            comj[1] /= massj;
-                            comj[2] /= massj;
-                            
-                            // distance between comi and comj
-                            d2 = 0;
-                            for (int l=0; l<3; ++l) {
-                                tmp = comj[l]-comi[l];
-                                d2 += tmp*tmp;
-                            }
-                            
-                            d=sqrt(d2);
-                            
-                            if (d <= run->cut_dimer) {
+    // initialize dimer queue list
+    run->dimer_list = new int [run->n_dimers_sq];
+    for (int i=0; i<run->n_dimers_sq; ++i) run->dimer_list[i] = -1;
 
-                                // include dimer in queue list
-                                statedimers++;
-                                idx =atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
  
-                                // include j monomer in queue list
-				if (x != 0 || y != 0 || z != 0) statemonomers++;
-                                idxj=atom->getMonomerIndex(0,x,y,z,jfrag);
-                                idxi=atom->getMonomerIndex(0,0,0,0,ifrag);
-
-				for (int state=0; state<nstates; ++state) {
-					//printf("didx %d && %d from getDiemr\n",state*nf2 *na*nb*nc+ idx,atom->getDimerIndex(state,x,y,z,ifrag,jfrag));
-					run->dimer_queue[state*nf2*na*nb*nc + idx] = 1;
-					run->monomer_queue[state*nfragments*na*nb*nc + idxj] = 1;
-				}
-				int istate = 0;
-				int xa,ya,za,ifraga;
-				int xb,yb,zb,ifragb;
-				int xd,yd,zd,ifragd,jfragd;
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",x,y,z,ifrag,jfrag);
-				atom->getDimerIndices(idx,istate,xd,yd,zd,ifragd,jfragd);
-				atom->getMonomerIndices(idxi,istate,xa,ya,za,ifraga);
-				atom->getMonomerIndices(idxj,istate,xb,yb,zb,ifragb);
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n",xb,yb,zb,ifraga,ifragb);
-				//printf("x:%2d y:%2d z:%2d ifrag:%2d jfrag:%2d\n\n",xd,yd,zd,ifragd,jfragd);
-				//printf("istate: %4d x: %3d y:%3d z: %3d ifrag:%3d\n\n",0,xa,ya,za,ifraga);	
-                            }
-                            
+    // search for nearest dimers        
+    for (int x=-xa; x<=xa; ++x) {
+        for (int y=-xb; y<=xb; ++y) {
+            for (int z=-xc; z<=xc; ++z) {
+                
+                for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+                    
+                    // center of mass of i fragment
+                    comi[0] = comi[1] = comi[2] = massi = 0.0;
+                    for (int i=0; i<natoms; ++i) {
+                        if (atom->fragment[i] == ifrag) {
+                            comi[0] += atom->mass[i] * atom->coord[3*i];
+                            comi[1] += atom->mass[i] * atom->coord[3*i+1];
+                            comi[2] += atom->mass[i] * atom->coord[3*i+2];
+                            massi += atom->mass[i];
                         }
+                    }
+                    comi[0] /= massi;
+                    comi[1] /= massi;
+                    comi[2] /= massi;
+                    
+                    //printf("for dimers\n");
+                    for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+                        
+                        if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+                        
+                        // center of mass of j fragment
+                        comj[0] = comj[1] = comj[2] = massj = 0.0;
+                        for (int j=0; j<natoms; ++j) {
+                            if (atom->fragment[j] == jfrag) {
+                                comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
+                                comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
+                                comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
+                                massj += atom->mass[j];
+                            }
+                        }
+                        comj[0] /= massj;
+                        comj[1] /= massj;
+                        comj[2] /= massj;
+                        
+                        // distance between comi and comj
+                        d2 = 0;
+                        for (int l=0; l<3; ++l) {
+                            tmp = comj[l]-comi[l];
+                            d2 += tmp*tmp;
+                        }
+                        
+                        d=sqrt(d2);
+                        
+                        if (d <= run->cut_dimer) {
+                            
+                            // include dimer in queue list
+                            //idxj=atom->getMonomerIndex(0,x,y,z,jfrag);
+                            //idxi=atom->getMonomerIndex(0,0,0,0,ifrag);
+                            //idx=atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
+                            
+                            statedimers++;
+                            idx =atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
+                            for (int state=0; state<nstates; ++state) {
+                                run->dimer_list[state*nf2*na*nb*nc + statedimers] = idx;
+			    }
+
+                            // include j monomer in queue list
+                            if (x != 0 || y != 0 || z != 0) {
+				for (int state=0; state<nstates; ++state) {
+	  			    idxj=atom->getMonomerIndex(0,x,y,z,jfrag);
+				    statemonomers++;
+				    run->monomer_list[state*nfragments*na*nb*nc + statemonomers] = idxj;
+				}
+			    }
+                            //idxj=atom->getMonomerIndex(0,x,y,z,jfrag);
+                            //idxi=atom->getMonomerIndex(0,0,0,0,ifrag);
+                            
+                            //for (int state=0; state<nstates; ++state) {
+                            //    run->dimer_list[state*nf2*na*nb*nc + statedimers] = idx;
+                            //    run->monomer_list[state*nfragments*na*nb*nc + statemonomers] = idxj;
+                            //}
+                        }
+                        
                     }
                 }
             }
         }
     }
-    //MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world); 
     
     // Assuming all states have equal number of dimers and monomers, for now
     run->n_monomers = nstates * statemonomers; 
     run->n_dimers   = nstates * statedimers;
 
     // ** Determine load balance ** //
-    int div = run->n_monomers_tmp / fmr->world_size;
-    int rem = run->n_monomers_tmp % fmr->world_size;
+    int div = run->n_monomers / fmr->world_size;
+    int rem = run->n_monomers % fmr->world_size;
     int ifrom_mono, ito_mono;
     if (my_rank < rem) {
         ifrom_mono = my_rank*div + my_rank;
@@ -184,8 +182,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
         ifrom_mono = my_rank*div + rem;
         ito_mono   = ifrom_mono + div;
     }
-    div = run->n_dimers_sq / fmr->world_size;
-    rem = run->n_dimers_sq % fmr->world_size;
+    div = run->n_dimers / fmr->world_size;
+    rem = run->n_dimers % fmr->world_size;
     int ifrom_dim, ito_dim;
     if (my_rank < rem) {
         ifrom_dim = my_rank*div + my_rank;
@@ -199,546 +197,538 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     int index_mono = 0;
     int index_dim  = 0;
     
-    // ***** Loop over states ***** //
-    for (int istate=0; istate<nstates; ++istate) {
+    // ***** Loop through monomers ***** //
+    for (int imon=0; imon<nmonomers; imon++) {
         
-        // Determine the charged reactive fragment for this state
-        int chgfrag = 0;
-        for (int i=0; i<natoms; ++i) {
-            if (atom->reactive[istate*natoms + i]) {
-                chgfrag = atom->fragment[istate*natoms + i];
-                break;
-            }
-        }
+        if (run->monomer_list[imon] == -1) continue;
         
-        // Put files in directory for organization
-        char state_directory[256];
-        char snum[16];
-        char make_directory[256];
-        int midx = 0;
-        int didx = 0;
-        
-        sprintf(snum, "%02d", istate);
-        sprintf(state_directory, "state_%02d", istate);
-        // Make the directory...
-        sprintf(make_directory, "mkdir -p %s", state_directory);
-        int ierr = system(make_directory);
-        
-        
-        // *** Monomers *** //
-        for (int x=-xa; x<=xa; ++x) {
-            for (int y=-xb; y<=xb; ++y) {
-                for (int z=-xc; z<=xc; ++z) {
-                    
-                    for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-   			
-                            if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-                            
-                        midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
-                        if (run->monomer_queue[midx] == 1) {
-
-    
-                                // Get name of file to open
-                                char jobname[256];
-                                char filename[256];
-                                
-                                // Get name of job
-                                sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
-                                
-                                // Make the job directory...
-                                //sprintf(make_directory, "mkdir -p %s", state_directory);
-                                //ierr = system(make_directory);
-                                //sprintf(make_directory, "cp -p %s %s/%s", run->exec,state_directory,jobname);
-                                //ierr = system(make_directory);
-                                
-                                sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
-                                
-                                FILE *fs = fopen(filename, "w");
-                                if (fs == NULL) {
-                                    char tmpstr[256];
-                                    sprintf(tmpstr, "Failure to write NWChem input for file %s", filename);
-                                    fmr->error(FLERR, tmpstr);
-                                }
-                                
-                                // Comment for labeling
-                                fprintf(fs, "start grad_%s\n", jobname);
-                                fprintf(fs, "title \"State %d Monomer %d Cell %d %d %d\"\n\n", istate, ifrag, x+xa, y+xb, z+xc);
-                                
-                                // geometry section
-                                fprintf(fs, "geometry nocenter noautoz units angstrom\n");
-                                fprintf(fs, "symmetry c1\n");
-                                for (int iatom=0; iatom<natoms; ++iatom) {
-                                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                                        fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                                                atom->symbol[iatom],
-                                                atom->coord[3*iatom] + x*cellA,
-                                                atom->coord[3*iatom+1] + y*cellB,
-                                                atom->coord[3*iatom+2] + z*cellC
-                                                );
-                                    }
-                                }
-                                fprintf(fs, "end\n\n");
-                                
-                                // bq section
-                                fprintf(fs, "bq units angstrom\n");
-                                for (int x0=-afield; x0<=afield; ++x0) {
-                                    for (int y0=-bfield; y0<=bfield; ++y0) {
-                                        for (int z0=-cfield; z0<=cfield; ++z0) {
-                                            
-                                            for (int iatom=0; iatom<natoms; ++iatom) {
-                                                if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
-                                                    double mmq = atom->getCharge(iatom, istate);
-                                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                                            atom->coord[3*iatom] + x0*cellA,
-                                                            atom->coord[3*iatom+1] + y0*cellB,
-                                                            atom->coord[3*iatom+2] + z0*cellC,
-                                                            mmq
-                                                            );
-                                                }
-                                            }
-                                            
-                                        }
-                                    }
-                                }
-                                fprintf(fs, "end\n\n");
-                                
-                                // scf section
-                                fprintf(fs, "scf\n");
-                                fprintf(fs, "print low\n");
-                                fprintf(fs, "singlet\n");
-                                fprintf(fs, "direct\n");
-                                fprintf(fs, "thresh 1e-6\n");
-                                fprintf(fs, "sym off\n");
-                                //if (flag_read_MOs)
-                                //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
-                                //else
-                                //  fprintf(fs, "vectors output %s.movecs\n",jobname);
-                                fprintf(fs, "end\n\n");
-                                
-                                if (strcmp(run->correlation,"mp2") == 0) {
-                                    fprintf(fs, "mp2\n");
-                                    fprintf(fs, "print low\n");
-                                    fprintf(fs, "end\n");
-                                }
-                                
-                                // charge section
-                                if (ifrag == chgfrag) {
-                                    fprintf(fs, "charge 1\n\n");
-                                } else {
-                                    fprintf(fs, "charge 0\n\n");
-                                }
-                                
-                                
-                                // scratch section
-                                char scratch[256];
-                                sprintf(scratch, "%s/%s/", run->scratch_dir,state_directory);
-                                fprintf(fs, "scratch_dir %s\n", scratch);
-                                fprintf(fs, "permanent_dir %s\n\n",scratch);
-                                // Make the scratch directory...
-                                sprintf(make_directory, "mkdir -p %s", scratch);
-                                ierr = system(make_directory);
-                                
-                                
-                                // basis set section
-                                fprintf(fs, "basis\n");
-                                fprintf(fs, "* library %s\n", run->basis);
-                                fprintf(fs, "end\n\n");
-                                
-                                if (python) {
-                                    
-                                    fprintf(fs, "python\n");
-                                    fprintf(fs, "  abc=task_gradient('mp2')\n");
-                                    fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
-                                    fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
-                                    fprintf(fs, "  fener.close()\n");
-                                    fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
-                                    fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                                    fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
-                                    fprintf(fs, "  fgrad.close()\n");
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    fprintf(fs, "task python\n\n");
-                                    
-                                } else {
-                                    
-                                    // task section
-                                    if (jobtype == RUN_ENERGY)
-                                        fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
-                                    else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                        fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
-                                    
-                                }
-                                /*
-                                 *
-                                 */
-                                
-                                // Comment for labeling
-                                fprintf(fs, "\n\nstart field_%s\n", jobname);
-                                fprintf(fs, "print none\n\n");
-                                
-                                // geometry section
-                                fprintf(fs, "geometry nocenter noautoz units angstrom\n");
-                                fprintf(fs, "symmetry c1\n");
-                                for (int iatom=0; iatom<natoms; ++iatom) {
-                                    if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                                        fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                                                atom->symbol[iatom],
-                                                atom->coord[3*iatom] + x*cellA,
-                                                atom->coord[3*iatom+1] + y*cellB,
-                                                atom->coord[3*iatom+2] + z*cellC
-                                                );
-                                    }
-                                }
-                                fprintf(fs, "end\n\n");
-                                
-                                // bq section
-                                fprintf(fs, "bq units angstrom\n");
-                                fprintf(fs, "force %s.nw.field\n", jobname);
-                                for (int x0=-afield; x0<=afield; ++x0) {
-                                    for (int y0=-bfield; y0<=bfield; ++y0) {
-                                        for (int z0=-cfield; z0<=cfield; ++z0) {
-                                            
-                                            for (int iatom=0; iatom<natoms; ++iatom) {
-                                                if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
-                                                    double mmq = atom->getCharge(iatom, istate);
-                                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                                            atom->coord[3*iatom] + x0*cellA,
-                                                            atom->coord[3*iatom+1] + y0*cellB,
-                                                            atom->coord[3*iatom+2] + z0*cellC,
-                                                            mmq
-                                                            );
-                                                }
-                                            }
-                                            
-                                        }
-                                    }
-                                }
-                                fprintf(fs, "end\n\n");
-                                
-                                // scf section
-                                fprintf(fs, "scf\n");
-                                fprintf(fs, "print none\n");
-                                fprintf(fs, "singlet\n");
-                                fprintf(fs, "direct\n");
-                                fprintf(fs, "thresh 1e-6\n");
-                                fprintf(fs, "sym off\n");
-                                //fprintf(fs, "vectors input %s.movecs\n",jobname);
-                                fprintf(fs, "end\n\n");
-                                
-                                // charge section
-                                if (ifrag == chgfrag) {
-                                    fprintf(fs, "charge 1\n\n");
-                                } else {
-                                    fprintf(fs, "charge 0\n\n");
-                                }
-                                
-                                // scratch section
-                                fprintf(fs, "scratch_dir %s\n\n", scratch);
-                                fprintf(fs, "permanent_dir %s\n\n", scratch);
-                                
-                                // basis set section
-                                fprintf(fs, "basis\n");
-                                fprintf(fs, "* library %s\n", run->basis);
-                                fprintf(fs, "end\n\n");
-                                
-                                // task section
-                                if (jobtype == RUN_ENERGY)
-                                    fprintf(fs, "task scf energy\n\n");
-                                else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                    fprintf(fs, "task scf gradient\n\n");
-                                
-                                
-                                fclose(fs);
-                            }
-                        }
-			++index_mono;
-                    } // close loop over fragments for monomers
-                    
+        if (ifrom_mono <= index_mono && index_mono < ito_mono) {
+            
+            int istate;
+            int x,y,z;
+            int ifrag;
+            
+            atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
+            
+            // Determine the charged reactive fragment for this state
+            int chgfrag = 0;
+            for (int i=0; i<natoms; ++i) {
+                if (atom->reactive[istate*natoms + i]) {
+                    chgfrag = atom->fragment[istate*natoms + i];
+                    break;
                 }
             }
-        }
-        
-        // *** Dimers *** //
-        for (int x=-xa; x<=xa; ++x) {
-            for (int y=-xb; y<=xb; ++y) {
-                for (int z=-xc; z<=xc; ++z) {
-                    
-                    for (int ifrag=0; ifrag<nfragments; ++ifrag){
-                        for (int jfrag=0; jfrag<nfragments; ++jfrag){
-                            
-                            //if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
-                            
-                                if (ifrom_dim <= index_dim && index_dim < ito_dim) {
+            
+            // Put files in directory for organization
+            char state_directory[256];
+            char snum[16];
+            char make_directory[256];
+            int midx = 0;
+            int didx = 0;
+            
+            sprintf(snum, "%02d", istate);
+            sprintf(state_directory, "state_%02d", istate);
+            // Make the directory...
+            sprintf(make_directory, "mkdir -p %s", state_directory);
+            int ierr = system(make_directory);
+            
+            // Get name of file to open
+            char jobname[256];
+            char filename[256];
+            
+            // Get name of job
+            sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
+            sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
+            
+            FILE *fs = fopen(filename, "w");
+            if (fs == NULL) {
+                char tmpstr[256];
+                sprintf(tmpstr, "Failure to write NWChem input for file %s", filename);
+                fmr->error(FLERR, tmpstr);
+            }
+            
+            // Comment for labeling
+            fprintf(fs, "start grad_%s\n", jobname);
+            fprintf(fs, "title \"State %d Monomer %d Cell %d %d %d\"\n\n", istate, ifrag, x+xa, y+xb, z+xc);
+            
+            // geometry section
+            fprintf(fs, "geometry nocenter noautoz units angstrom\n");
+            fprintf(fs, "symmetry c1\n");
+            for (int iatom=0; iatom<natoms; ++iatom) {
+                if (atom->fragment[istate*natoms + iatom] == ifrag) {
+                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom],
+                            atom->coord[3*iatom] + x*cellA,
+                            atom->coord[3*iatom+1] + y*cellB,
+                            atom->coord[3*iatom+2] + z*cellC
+                            );
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // bq section
+            fprintf(fs, "bq units angstrom\n");
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+                                double mmq = atom->getCharge(iatom, istate);
+                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                        atom->coord[3*iatom] + x0*cellA,
+                                        atom->coord[3*iatom+1] + y0*cellB,
+                                        atom->coord[3*iatom+2] + z0*cellC,
+                                        mmq
+                                        );
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // scf section
+            fprintf(fs, "scf\n");
+            fprintf(fs, "print low\n");
+            fprintf(fs, "singlet\n");
+            fprintf(fs, "direct\n");
+            fprintf(fs, "thresh 1e-6\n");
+            fprintf(fs, "sym off\n");
+            //if (flag_read_MOs)
+            //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
+            //else
+            //  fprintf(fs, "vectors output %s.movecs\n",jobname);
+            fprintf(fs, "end\n\n");
+            
+            if (strcmp(run->correlation,"mp2") == 0) {
+                fprintf(fs, "mp2\n");
+                fprintf(fs, "print low\n");
+                fprintf(fs, "end\n");
+            }
+            
+            // charge section
+            if (ifrag == chgfrag) {
+                fprintf(fs, "charge 1\n\n");
+            } else {
+                fprintf(fs, "charge 0\n\n");
+            }
+            
+            
+            // scratch section
+            char scratch[256];
+            sprintf(scratch, "%s/%s/", run->scratch_dir,state_directory);
+            fprintf(fs, "scratch_dir %s\n", scratch);
+            fprintf(fs, "permanent_dir %s\n\n",scratch);
+            // Make the scratch directory...
+            sprintf(make_directory, "mkdir -p %s", scratch);
+            ierr = system(make_directory);
+            
+            
+            // basis set section
+            fprintf(fs, "basis\n");
+            fprintf(fs, "* library %s\n", run->basis);
+            fprintf(fs, "end\n\n");
+            
+            if (python) {
                 
-                            didx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
-                            if (run->dimer_queue[didx] == 1) {
-                    
-                                    // Get name of file to open
-                                    char jobname[256];
-                                    char filename[256];
-                                    
-                                    // Get name of job
-                                    sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-                                    printf("jobname %s %4d %2d\n",jobname,didx,my_rank);
-                                    
-                                    // Make the job directory...
-                                    //sprintf(make_directory, "mkdir -p %s/%s", state_directory,jobname);
-                                    //ierr = system(make_directory);
-                                    //sprintf(make_directory, "cp -p %s %s/%s", run->exec,state_directory,jobname);
-                                    //ierr = system(make_directory);
-                                    
-                                    sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-                                    FILE *fs = fopen(filename, "w");
-                                    if (fs == NULL) {
-                                        char tmpstr[256];
-                                        sprintf(tmpstr, "Failure to write NWChem input for file %s", filename);
-                                        fmr->error(FLERR, tmpstr);
-                                    }
-                                    
-                                    // Comment for labeling
-                                    fprintf(fs, "start grad_%s\n", jobname);
-                                    fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
-                                    
-                                    // geometry section
-                                    fprintf(fs, "geometry nocenter noautoz units angstrom\n");
-                                    fprintf(fs, "symmetry c1\n");
-                                    
-                                    int ra = 2*xa+1;
-                                    int rb = 2*xb+1;
-                                    int rc = 2*xc+1;
-                                    int totalatoms = ra*rb*rc*natoms;
-                                    int state_start = istate*totalatoms;
-                                    //int totalatoms = istate*ra*rb*rc*natoms;
-                                    
-                                    for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
-                                        if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                                            fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                                                    atom->symbol[iatom%natoms],
-                                                    atom->coord[3*(iatom%natoms)]   + x*cellA,
-                                                    atom->coord[3*(iatom%natoms)+1] + y*cellB,
-                                                    atom->coord[3*(iatom%natoms)+2] + z*cellC
-                                                    );
-                                            
-                                        }
-                                        else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                                            fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                                                    atom->symbol[iatom%natoms],
-                                                    atom->coord[3*(iatom%natoms)],
-                                                    atom->coord[3*(iatom%natoms)+1],
-                                                    atom->coord[3*(iatom%natoms)+2]
-                                                    );
-                                        }
-                                    }
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    // bq section
-                                    fprintf(fs, "bq units angstrom\n");
-                                    for (int x0=-afield; x0<=afield; ++x0) {
-                                        for (int y0=-bfield; y0<=bfield; ++y0) {
-                                            for (int z0=-cfield; z0<=cfield; ++z0) {
-                                                
-                                                for (int iatom=0; iatom<natoms; ++iatom) {
-                                                    if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
-                                                        if (atom->fragment[istate*natoms + iatom] != jfrag || x0!=x || y0!=y || z0!=z) {
-                                                            double mmq = atom->getCharge(iatom, istate);
-                                                            fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                                                    atom->coord[3*iatom]   + x0*cellA,
-                                                                    atom->coord[3*iatom+1] + y0*cellB,
-                                                                    atom->coord[3*iatom+2] + z0*cellC,
-                                                                    mmq
-                                                                    );
-                                                        }
-                                                    }
-                                                }
-                                                
-                                            }
-                                        }
-                                    }
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    // scf section
-                                    fprintf(fs, "scf\n");
-                                    fprintf(fs, "print low\n");
-                                    fprintf(fs, "singlet\n");
-                                    fprintf(fs, "direct\n");
-                                    fprintf(fs, "thresh 1e-6\n");
-                                    fprintf(fs, "sym off\n");
-                                    //if (flag_read_MOs)
-                                    //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
-                                    //else
-                                    //  fprintf(fs, "vectors output %s.movecs\n",jobname);
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    if (strcmp(run->correlation,"mp2") == 0) {
-                                        fprintf(fs, "mp2\n");
-                                        fprintf(fs, "print low\n");
-                                        fprintf(fs, "end\n");
-                                    }
-                                    
-                                    // charge section
-                                    if (ifrag == chgfrag && jfrag == chgfrag) {
-                                        fprintf(fs, "charge 2\n\n");
-                                    } else if (ifrag == chgfrag || jfrag == chgfrag) {
-                                        fprintf(fs, "charge 1\n\n");
-                                    } else {
-                                        fprintf(fs, "charge 0\n\n");
-                                    }
-                                    
-                                    // scratch section
-                                    char scratch[256];
-                                    sprintf(scratch, "%s/%s/", run->scratch_dir,state_directory);
-                                    fprintf(fs, "scratch_dir %s\n", scratch);
-                                    fprintf(fs, "permanent_dir %s\n\n", scratch);
-                                    
-                                    // Make the scratch directory...
-                                    sprintf(make_directory, "mkdir -p %s", scratch);
-                                    ierr = system(make_directory);
-                                    
-                                    // basis set section
-                                    fprintf(fs, "basis\n");
-                                    fprintf(fs, "* library %s\n", run->basis);
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    if (python) {
-                                        
-                                        fprintf(fs, "python\n");
-                                        fprintf(fs, "  abc=task_gradient('mp2')\n");
-                                        fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
-                                        fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
-                                        fprintf(fs, "  fener.close()\n");
-                                        fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
-                                        fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
-                                        fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
-                                        fprintf(fs, "  fgrad.close()\n");
-                                        fprintf(fs, "end\n\n");
-                                        fprintf(fs, "task python\n\n");
-                                        
-                                    } else {
-                                        
-                                        // task section
-                                        if (jobtype == RUN_ENERGY)
-                                            fprintf(fs, "task %s energy\n\n", run->correlation);
-                                        else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                            fprintf(fs, "task %s gradient\n\n", run->correlation);
-                                        
-                                    }
-                                    /*
-                                     *
-                                     */
-                                    
-                                    
-                                    // Comment for labeling
-                                    fprintf(fs, "start field_%s\n", jobname);
-                                    fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
-                                    fprintf(fs, "print none\n\n");
-                                    
-                                    // geometry section
-                                    fprintf(fs, "geometry nocenter noautoz units angstrom\n");
-                                    fprintf(fs, "symmetry c1\n");
-                                    
-                                    //int ra = 2*xa+1;
-                                    //int rb = 2*xb+1;
-                                    //int rc = 2*xc+1;
-                                    //int totalatoms = ra*rb*rc*natoms;
-                                    //int state_start = istate*totalatoms;
-                                    //int totalatoms = istate*ra*rb*rc*natoms;
-                                    
-                                    for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
-                                        if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                                            fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
-                                                    atom->symbol[iatom%natoms],
-                                                    atom->coord[3*(iatom%natoms)]   + x*cellA,
-                                                    atom->coord[3*(iatom%natoms)+1] + y*cellB,
-                                                    atom->coord[3*(iatom%natoms)+2] + z*cellC
-                                                    );
-                                            
-                                        }
-                                        else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                                            fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
-                                                    atom->symbol[iatom%natoms],
-                                                    atom->coord[3*(iatom%natoms)],
-                                                    atom->coord[3*(iatom%natoms)+1],
-                                                    atom->coord[3*(iatom%natoms)+2]
-                                                    );
-                                        }
-                                    }
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    // bq section
-                                    fprintf(fs, "bq units angstrom\n");
-                                    fprintf(fs, "force %s.nw.field\n", jobname);
-                                    for (int x0=-afield; x0<=afield; ++x0) {
-                                        for (int y0=-bfield; y0<=bfield; ++y0) {
-                                            for (int z0=-cfield; z0<=cfield; ++z0) {
-                                                
-                                                for (int iatom=0; iatom<natoms; ++iatom) {
-                                                    if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
-                                                        if (atom->fragment[istate*natoms + iatom] != jfrag || x0!=x || y0!=y || z0!=z) {
-                                                            double mmq = atom->getCharge(iatom, istate);
-                                                            fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                                                    atom->coord[3*iatom]   + x0*cellA,
-                                                                    atom->coord[3*iatom+1] + y0*cellB,
-                                                                    atom->coord[3*iatom+2] + z0*cellC,
-                                                                    mmq
-                                                                    );
-                                                        }
-                                                    }
-                                                }
-                                                
-                                            }
-                                        }
-                                    }
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    // scf section
-                                    fprintf(fs, "scf\n");
-                                    fprintf(fs, "singlet\n");
-                                    fprintf(fs, "direct\n");
-                                    fprintf(fs, "thresh 1e-6\n");
-                                    fprintf(fs, "sym off\n");
-                                    fprintf(fs, "print none\n");
-                                    //fprintf(fs, "vectors input %s.movecs\n",jobname);
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    // charge section
-                                    if (ifrag == chgfrag && jfrag == chgfrag) {
-                                        fprintf(fs, "charge 2\n\n");
-                                    } else if (ifrag == chgfrag || jfrag == chgfrag) {
-                                        fprintf(fs, "charge 1\n\n");
-                                    } else {
-                                        fprintf(fs, "charge 0\n\n");
-                                    }
-                                    
-                                    // scratch section
-                                    fprintf(fs, "scratch_dir %s\n",scratch);
-                                    fprintf(fs, "permanent_dir %s\n\n",scratch);
-                                    
-                                    // basis set section
-                                    fprintf(fs, "basis\n");
-                                    fprintf(fs, "* library %s\n", run->basis);
-                                    fprintf(fs, "end\n\n");
-                                    
-                                    
-                                    // task section
-                                    if (jobtype == RUN_ENERGY)
-                                        fprintf(fs, "task scf energy\n\n");
-                                    else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
-                                        fprintf(fs, "task scf gradient\n\n");
-                                    
-                                    
-                                    fclose(fs);
-     
-                                }
-                            }
-                            ++index_dim; 
-                        }
-                    } // close loop over fragments for dimers
-                    
+                fprintf(fs, "python\n");
+                fprintf(fs, "  abc=task_gradient('mp2')\n");
+                fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
+                fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
+                fprintf(fs, "  fener.close()\n");
+                fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
+                fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
+                fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                fprintf(fs, "  fgrad.close()\n");
+                fprintf(fs, "end\n\n");
+                
+                fprintf(fs, "task python\n\n");
+                
+            } else {
+                
+                // task section
+                if (jobtype == RUN_ENERGY)
+                    fprintf(fs, "task %s %s\n\n", run->correlation, "energy");
+                else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                    fprintf(fs, "task %s %s\n\n", run->correlation, "gradient");
+                
+            }
+            /*
+             *
+             */
+            
+            // Comment for labeling
+            fprintf(fs, "\n\nstart field_%s\n", jobname);
+            fprintf(fs, "print none\n\n");
+            
+            // geometry section
+            fprintf(fs, "geometry nocenter noautoz units angstrom\n");
+            fprintf(fs, "symmetry c1\n");
+            for (int iatom=0; iatom<natoms; ++iatom) {
+                if (atom->fragment[istate*natoms + iatom] == ifrag) {
+                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom],
+                            atom->coord[3*iatom] + x*cellA,
+                            atom->coord[3*iatom+1] + y*cellB,
+                            atom->coord[3*iatom+2] + z*cellC
+                            );
                 }
             }
+            fprintf(fs, "end\n\n");
+            
+            // bq section
+            fprintf(fs, "bq units angstrom\n");
+            fprintf(fs, "force %s.nw.field\n", jobname);
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+                                double mmq = atom->getCharge(iatom, istate);
+                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                        atom->coord[3*iatom] + x0*cellA,
+                                        atom->coord[3*iatom+1] + y0*cellB,
+                                        atom->coord[3*iatom+2] + z0*cellC,
+                                        mmq
+                                        );
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // scf section
+            fprintf(fs, "scf\n");
+            fprintf(fs, "print none\n");
+            fprintf(fs, "singlet\n");
+            fprintf(fs, "direct\n");
+            fprintf(fs, "thresh 1e-6\n");
+            fprintf(fs, "sym off\n");
+            //fprintf(fs, "vectors input %s.movecs\n",jobname);
+            fprintf(fs, "end\n\n");
+            
+            // charge section
+            if (ifrag == chgfrag) {
+                fprintf(fs, "charge 1\n\n");
+            } else {
+                fprintf(fs, "charge 0\n\n");
+            }
+            
+            // scratch section
+            fprintf(fs, "scratch_dir %s\n\n", scratch);
+            fprintf(fs, "permanent_dir %s\n\n", scratch);
+            
+            // basis set section
+            fprintf(fs, "basis\n");
+            fprintf(fs, "* library %s\n", run->basis);
+            fprintf(fs, "end\n\n");
+            
+            // task section
+            if (jobtype == RUN_ENERGY)
+                fprintf(fs, "task scf energy\n\n");
+            else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                fprintf(fs, "task scf gradient\n\n");
+            
+            
+            fclose(fs);
+            
+            
         }
-    } // close loop over states
+        ++index_mono;
+    }
     
+    // ***** Loop through dimers ***** //
+    for (int idim=0; idim<ndimers; idim++) {
+        
+        if (run->dimer_list[idim] == -1) continue;
+        
+        if (ifrom_dim <= index_dim && index_dim < ito_dim) {
+            
+            int istate;
+            int x,y,z;
+            int ifrag,jfrag;
+            
+            atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
+            
+            // Determine the charged reactive fragment for this state
+            int chgfrag = 0;
+            for (int i=0; i<natoms; ++i) {
+                if (atom->reactive[istate*natoms + i]) {
+                    chgfrag = atom->fragment[istate*natoms + i];
+                    break;
+                }
+            }
+            
+            // Put files in directory for organization
+            char state_directory[256];
+            char snum[16];
+            char make_directory[256];
+            int midx = 0;
+            int didx = 0;
+            
+            sprintf(snum, "%02d", istate);
+            sprintf(state_directory, "state_%02d", istate);
+            // Make the directory...
+            sprintf(make_directory, "mkdir -p %s", state_directory);
+            int ierr = system(make_directory);
+            
+            // Get name of file to open
+            char jobname[256];
+            char filename[256];
+            
+            // Get name of job
+            sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+            printf("jobname %s %4d %2d\n",jobname,didx,my_rank);          
+            sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+            FILE *fs = fopen(filename, "w");
+            if (fs == NULL) {
+                char tmpstr[256];
+                sprintf(tmpstr, "Failure to write NWChem input for file %s", filename);
+                fmr->error(FLERR, tmpstr);
+            }
+            
+            // Comment for labeling
+            fprintf(fs, "start grad_%s\n", jobname);
+            fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+            
+            // geometry section
+            fprintf(fs, "geometry nocenter noautoz units angstrom\n");
+            fprintf(fs, "symmetry c1\n");
+            
+            int ra = 2*xa+1;
+            int rb = 2*xb+1;
+            int rc = 2*xc+1;
+            int totalatoms = ra*rb*rc*natoms;
+            int state_start = istate*totalatoms;
+            //int totalatoms = istate*ra*rb*rc*natoms;
+            
+            for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
+                if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
+                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)]   + x*cellA,
+                            atom->coord[3*(iatom%natoms)+1] + y*cellB,
+                            atom->coord[3*(iatom%natoms)+2] + z*cellC
+                            );
+                    
+                }
+                else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
+                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)],
+                            atom->coord[3*(iatom%natoms)+1],
+                            atom->coord[3*(iatom%natoms)+2]
+                            );
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // bq section
+            fprintf(fs, "bq units angstrom\n");
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
+                                if (atom->fragment[istate*natoms + iatom] != jfrag || x0!=x || y0!=y || z0!=z) {
+                                    double mmq = atom->getCharge(iatom, istate);
+                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                            atom->coord[3*iatom]   + x0*cellA,
+                                            atom->coord[3*iatom+1] + y0*cellB,
+                                            atom->coord[3*iatom+2] + z0*cellC,
+                                            mmq
+                                            );
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // scf section
+            fprintf(fs, "scf\n");
+            fprintf(fs, "print low\n");
+            fprintf(fs, "singlet\n");
+            fprintf(fs, "direct\n");
+            fprintf(fs, "thresh 1e-6\n");
+            fprintf(fs, "sym off\n");
+            //if (flag_read_MOs)
+            //  fprintf(fs, "vectors input %s.movecs output %s.movecs\n",jobname,jobname);
+            //else
+            //  fprintf(fs, "vectors output %s.movecs\n",jobname);
+            fprintf(fs, "end\n\n");
+            
+            if (strcmp(run->correlation,"mp2") == 0) {
+                fprintf(fs, "mp2\n");
+                fprintf(fs, "print low\n");
+                fprintf(fs, "end\n");
+            }
+            
+            // charge section
+            if (ifrag == chgfrag && jfrag == chgfrag) {
+                fprintf(fs, "charge 2\n\n");
+            } else if (ifrag == chgfrag || jfrag == chgfrag) {
+                fprintf(fs, "charge 1\n\n");
+            } else {
+                fprintf(fs, "charge 0\n\n");
+            }
+            
+            // scratch section
+            char scratch[256];
+            sprintf(scratch, "%s/%s/", run->scratch_dir,state_directory);
+            fprintf(fs, "scratch_dir %s\n", scratch);
+            fprintf(fs, "permanent_dir %s\n\n", scratch);
+            
+            // Make the scratch directory...
+            sprintf(make_directory, "mkdir -p %s", scratch);
+            ierr = system(make_directory);
+            
+            // basis set section
+            fprintf(fs, "basis\n");
+            fprintf(fs, "* library %s\n", run->basis);
+            fprintf(fs, "end\n\n");
+            
+            if (python) {
+                
+                fprintf(fs, "python\n");
+                fprintf(fs, "  abc=task_gradient('mp2')\n");
+                fprintf(fs, "  fener=open('%s.nw.energy','w')\n",jobname);
+                fprintf(fs, "  fener.write('%%15.10f'%%(abc[0]))\n");
+                fprintf(fs, "  fener.close()\n");
+                fprintf(fs, "  fgrad=open('%s.nw.gradient','w')\n",jobname);
+                fprintf(fs, "  for i in range(0,len(abc[1]),3):\n");
+                fprintf(fs, "    fgrad.write('%%15.10f %%15.10f %%15.10f\\n'%%(abc[1][i+0],abc[1][i+1],abc[1][i+2]))\n");
+                fprintf(fs, "  fgrad.close()\n");
+                fprintf(fs, "end\n\n");
+                fprintf(fs, "task python\n\n");
+                
+            } else {
+                
+                // task section
+                if (jobtype == RUN_ENERGY)
+                    fprintf(fs, "task %s energy\n\n", run->correlation);
+                else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                    fprintf(fs, "task %s gradient\n\n", run->correlation);
+                
+            }
+            /*
+             *
+             */
+            
+            
+            // Comment for labeling
+            fprintf(fs, "start field_%s\n", jobname);
+            fprintf(fs, "title \"State %d Dimer %d %d Cell %d %d %d\"\n", istate, ifrag, jfrag, x+xa, y+xb, z+xc);
+            fprintf(fs, "print none\n\n");
+            
+            // geometry section
+            fprintf(fs, "geometry nocenter noautoz units angstrom\n");
+            fprintf(fs, "symmetry c1\n");
+            
+            //int ra = 2*xa+1;
+            //int rb = 2*xb+1;
+            //int rc = 2*xc+1;
+            //int totalatoms = ra*rb*rc*natoms;
+            //int state_start = istate*totalatoms;
+            //int totalatoms = istate*ra*rb*rc*natoms;
+            
+            for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
+                if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
+                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)]   + x*cellA,
+                            atom->coord[3*(iatom%natoms)+1] + y*cellB,
+                            atom->coord[3*(iatom%natoms)+2] + z*cellC
+                            );
+                    
+                }
+                else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
+                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
+                            atom->symbol[iatom%natoms],
+                            atom->coord[3*(iatom%natoms)],
+                            atom->coord[3*(iatom%natoms)+1],
+                            atom->coord[3*(iatom%natoms)+2]
+                            );
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // bq section
+            fprintf(fs, "bq units angstrom\n");
+            fprintf(fs, "force %s.nw.field\n", jobname);
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0!=0 || y0!=0 || z0!=0) {
+                                if (atom->fragment[istate*natoms + iatom] != jfrag || x0!=x || y0!=y || z0!=z) {
+                                    double mmq = atom->getCharge(iatom, istate);
+                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                            atom->coord[3*iatom]   + x0*cellA,
+                                            atom->coord[3*iatom+1] + y0*cellB,
+                                            atom->coord[3*iatom+2] + z0*cellC,
+                                            mmq
+                                            );
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            fprintf(fs, "end\n\n");
+            
+            // scf section
+            fprintf(fs, "scf\n");
+            fprintf(fs, "singlet\n");
+            fprintf(fs, "direct\n");
+            fprintf(fs, "thresh 1e-6\n");
+            fprintf(fs, "sym off\n");
+            fprintf(fs, "print none\n");
+            //fprintf(fs, "vectors input %s.movecs\n",jobname);
+            fprintf(fs, "end\n\n");
+            
+            // charge section
+            if (ifrag == chgfrag && jfrag == chgfrag) {
+                fprintf(fs, "charge 2\n\n");
+            } else if (ifrag == chgfrag || jfrag == chgfrag) {
+                fprintf(fs, "charge 1\n\n");
+            } else {
+                fprintf(fs, "charge 0\n\n");
+            }
+            
+            // scratch section
+            fprintf(fs, "scratch_dir %s\n",scratch);
+            fprintf(fs, "permanent_dir %s\n\n",scratch);
+            
+            // basis set section
+            fprintf(fs, "basis\n");
+            fprintf(fs, "* library %s\n", run->basis);
+            fprintf(fs, "end\n\n");
+            
+            
+            // task section
+            if (jobtype == RUN_ENERGY)
+                fprintf(fs, "task scf energy\n\n");
+            else if (jobtype == RUN_FORCE || jobtype == RUN_MOLDYN)
+                fprintf(fs, "task scf gradient\n\n");
+            
+            
+            fclose(fs);
+
+        }
+        ++index_dim;
+    }
+
     if (fmr->master_rank) printf("Done writing NWChem inputs.\n");
     
     // Hold up

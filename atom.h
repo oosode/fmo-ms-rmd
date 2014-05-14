@@ -160,6 +160,38 @@ class Atom : protected Pointers {
      return istate*ra*rb*rc*nf2 + ar*rb*rc*nf2 + br*rc*nf2 + cr*nf2 + ifrag*nfragments + jfrag;
 
    }
+   void getMonomerIndices(int imon, int &istate, int &icella, int &icellb, int &icellc, int &ifrag) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     istate =     imon / (ra*rb*rc*nfragments);
+     icella =    (imon % (ra*rb*rc*nfragments)) / (rb*rc*nfragments) - na;
+     icellb =   ((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) / (rc*nfragments) - nb;
+     icellc =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) / (nfragments) - nc;
+     ifrag  =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) % (nfragments);
+
+     return;
+   }
+   void getDimerIndices(int idim, int &istate, int &icella, int &icellb, int &icellc, int &ifrag, int &jfrag) {
+
+     int ra = 2*na+1;
+     int rb = 2*nb+1;
+     int rc = 2*nc+1;
+
+     int nf2 = nfragments * nfragments;
+
+     istate =      idim / (ra*rb*rc*nf2);
+     icella =     (idim % (ra*rb*rc*nf2)) / (rb*rc*nf2) - na;
+     icellb =    ((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) / (rc*nf2) - nb;
+     icellc =   (((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) / (nf2) - nc;
+     ifrag  =  ((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) / nfragments;
+     jfrag  = (((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) % nfragments);
+
+     return;
+   }
+
    double getCharge(int iatom, int istate) {
      double mmq = 0.0;
      if (symbol[iatom] == 'H') {
