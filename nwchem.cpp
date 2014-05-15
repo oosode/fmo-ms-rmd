@@ -863,42 +863,82 @@ void Run::do_nwchem_calculations(int FORCE)
                                 atnum = 0; // index of QM atom for storing gradient
                                 
                                 while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                                    //printf("%s",line);
-                                    if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
-                                        
-                                        fgets(line, MAX_LENGTH, fs);
-                                        fgets(line, MAX_LENGTH, fs);
-                                        fgets(line, MAX_LENGTH, fs);
-                                        
-                                        for (int iatom=0; iatom<natoms; ++iatom) {
+                                    
+                                    if (strcmp(run->correlation,"mp2") == 0) {
+                                        if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
                                             
                                             fgets(line, MAX_LENGTH, fs);
-                                            if (strcmp(line,"\n") == 0) break;
-                                            while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                            fgets(line, MAX_LENGTH, fs);
+                                            fgets(line, MAX_LENGTH, fs);
+                                            
+                                            for (int iatom=0; iatom<natoms; ++iatom) {
+                                                
+                                                fgets(line, MAX_LENGTH, fs);
+                                                if (strcmp(line,"\n") == 0) break;
+                                                while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                                    atnum++;
+                                                }
+                                                
+                                                if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                    //printf("%s %d",line,atnum);
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    
+                                                }
                                                 atnum++;
                                             }
-                                            //printf("%s",line);
-                                            if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
-                                                //printf("%s %d",line,atnum);
+                                            
+                                        } else if ( strstr(line, "Total MP2 energy") ) {
+                                            
+                                            if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                                
                                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
                                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                                 
                                             }
-                                            atnum++;
                                         }
                                         
-                                    } else if ( strstr(line, "Total MP2 energy") ) {
+                                    } else if (strcmp(run->correlation,"scf") == 0) {
                                         
-                                        //printf("%s",line);
-                                        if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                        if ( strstr(line, "RHF ENERGY GRADIENTS") ) {
                                             
-                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                            monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
-                                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                            fgets(line, MAX_LENGTH, fs);
+                                            fgets(line, MAX_LENGTH, fs);
+                                            fgets(line, MAX_LENGTH, fs);
                                             
+                                            for (int iatom=0; iatom<natoms; ++iatom) {
+                                                
+                                                fgets(line, MAX_LENGTH, fs);
+                                                if (strcmp(line,"\n") == 0) break;
+                                                while ( !fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                                                    atnum++;
+                                                }
+                                                
+                                                if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                    //printf("%s %d",line,atnum);
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                    monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    
+                                                }
+                                                atnum++;
+                                            }
+                                            
+                                        } else if ( strstr(line, "Total SCF energy") ) {
+                                            
+                                            if ( sscanf(line, "%s %s %s %s %lf", tmp0, tmp1, tmp2, tmp3, &en) == 5 ) {
+                                                
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag] = en;
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                
+                                            }
                                         }
                                     }
                                 }
@@ -1110,61 +1150,121 @@ void Run::do_nwchem_calculations(int FORCE)
                                     
                                     while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
                                         //printf("%s",line);
-                                        if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
-                                            
-                                            fgets(line, MAX_LENGTH, fs);
-                                            fgets(line, MAX_LENGTH, fs);
-                                            fgets(line, MAX_LENGTH, fs);
-                                            
-                                            for (int iatom=0; iatom<natoms; ++iatom) {
+                                        if (strcmp(run->correlation,"mp2") == 0) {
+                                            if ( strstr(line, "mp2 ENERGY GRADIENTS") ) {
                                                 
                                                 fgets(line, MAX_LENGTH, fs);
-                                                if (strcmp(line,"\n") == 0) break;
+                                                fgets(line, MAX_LENGTH, fs);
+                                                fgets(line, MAX_LENGTH, fs);
                                                 
-                                                while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
-                                                          fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
-                                                    atnum++;
-                                                }
-                                                //printf("%s",line);
-                                                if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                for (int iatom=0; iatom<natoms; ++iatom) {
                                                     
-                                                    //printf(line);
-                                                    if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
-                                                        //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
+                                                    fgets(line, MAX_LENGTH, fs);
+                                                    if (strcmp(line,"\n") == 0) break;
+                                                    
+                                                    while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
+                                                              fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
+                                                        atnum++;
+                                                    }
+                                                    //printf("%s",line);
+                                                    if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
                                                         
-                                                        // store symmetrically for zeroth unit cell
-                                                        if (x==0 && y==0 && z==0) {
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                                        } else {
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                        //printf(line);
+                                                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
+                                                            //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
+                                                            
+                                                            // store symmetrically for zeroth unit cell
+                                                            if (x==0 && y==0 && z==0) {
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                            } else {
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                            }
                                                         }
                                                     }
+                                                    atnum++;
                                                 }
-                                                atnum++;
+                                                
+                                            } else if ( strstr(line, "Total MP2 energy") ) {
+                                                
+                                                //printf("%s",line);
+                                                if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                                    
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    // save symmetrized for zeroth unit cell
+                                                    if (x==0 && y==0 && z==0) {
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                                    } else {
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                    }
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    
+                                                }
                                             }
                                             
-                                        } else if ( strstr(line, "Total MP2 energy") ) {
-                                            
-                                            //printf("%s",line);
-                                            if ( sscanf(line, "%s %s %s %lf", tmp0, tmp1, tmp2, &en) == 4 ) {
+                                        } else if (strcmp(run->correlation,"scf") == 0) {
+                                            if ( strstr(line, "RHF ENERGY GRADIENTS") ) {
                                                 
-                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                                                // save symmetrized for zeroth unit cell
-                                                if (x==0 && y==0 && z==0) {
-                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
-                                                } else {
-                                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                fgets(line, MAX_LENGTH, fs);
+                                                fgets(line, MAX_LENGTH, fs);
+                                                fgets(line, MAX_LENGTH, fs);
+                                                
+                                                for (int iatom=0; iatom<natoms; ++iatom) {
+                                                    
+                                                    fgets(line, MAX_LENGTH, fs);
+                                                    if (strcmp(line,"\n") == 0) break;
+                                                    
+                                                    while ( !(fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0) ||
+                                                              fmr->atom->AtomInFragment(atnum, jfrag, istate, x, y, z)) ) {
+                                                        atnum++;
+                                                    }
+                                                    //printf("%s",line);
+                                                    if ( sscanf(line, "%lf %s %s %s %s %lf %lf %lf", &gw, tmp0, tmp1, tmp2, tmp3, &gx, &gy, &gz) == 8 ) {
+                                                        
+                                                        //printf(line);
+                                                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0)) {
+                                                            //if (fmr->atom->AtomInFragment(atnum, jfrag, istate, 0, 0, 0) || fmr->atom->AtomInFragment(atnum, ifrag, istate, 0, 0, 0)) {
+                                                            
+                                                            // store symmetrically for zeroth unit cell
+                                                            if (x==0 && y==0 && z==0) {
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                            } else {
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                            }
+                                                        }
+                                                    }
+                                                    atnum++;
                                                 }
-                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                                 
+                                            } else if ( strstr(line, "Total SCF energy") ) {
+                                                
+                                                if ( sscanf(line, "%s %s %s %s %lf", tmp0, tmp1, tmp2, tmp3, &en) == 5 ) {
+                                                    
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    // save symmetrized for zeroth unit cell
+                                                    if (x==0 && y==0 && z==0) {
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                                    } else {
+                                                        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                                    }
+                                                    //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                    
+                                                }
                                             }
                                         }
                                         
