@@ -33,7 +33,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
    cut_dimer  = 0.0;
 
    // Electronic structure defaults
-   sprintf(correlation, "%s", "mp2");
+   sprintf(correlation, "%s", "scf");
    sprintf(exchange, "%s", "hf");
    sprintf(basis, "%s", "cc-pVDZ");
    sprintf(algorithm, "%s", "diis");
