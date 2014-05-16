@@ -79,9 +79,9 @@ double Matrix::ComputeCoupling(int I, int J) {
             double dz = xx[3*i+2] - xx[3*j+2];
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
-              double tmp = Sr(dd, 0.0, cut_OH2); 
+              double tmp = Sr(dd, 0.0, cut_OH2);
               //double tmp = cut_OH / sqrt(dd) - 1.0;
-              erepItoJ += tmp*tmp; 
+              erepItoJ += tmp*tmp;
             } 
           }
         }

@@ -103,7 +103,6 @@ void Matrix::buildH() {
   ComputeRepulsions();
   // Add to H diagonal
   for (int i=0; i<nstates; ++i) H[i][i] += Repulsion[i];
-
   // ** Compute the off-diagonal coupling ** //
   ComputeCouplings();
 
@@ -155,6 +154,7 @@ void Matrix::diagonalizeH() {
 
   // ** Set which eigenvalue and eigenvector is the ground state, store ** //
   // Evals is sorted above such that minimum is element 0, Evecs corresponds
+  
   GSEnergy = Evals[0];
   if (GSCoeffs != NULL) delete [] GSCoeffs; 
   GSCoeffs = new double[nstates];
