@@ -71,7 +71,7 @@ void Run::setup()
 {
   printf("Setting up run...\n");
   if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->setup(); 
-  celse if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
+  else if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
 }
 
 void Run::post_force()
@@ -200,9 +200,9 @@ void Run::calculate_force()
         printf("%3d %14.8f %14.8f %14.8f\n", i, fmr->atom->force[3*i], fmr->atom->force[3*i+1], fmr->atom->force[3*i+2]);
       }
     }
-    // Step 8. Update pivot state information, etc. for next step
+    // Step 10. Update pivot state information, etc. for next step
     fmr->state->updatePivotState();
-    // Step 9. Update coordinates of unit cell atoms 
+    // Step 11. Update coordinates of unit cell atoms 
     fmr->state->updateCoordinates();
     
   } else {

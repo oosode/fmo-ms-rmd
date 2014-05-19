@@ -460,6 +460,8 @@ void Umbrella::compute()
     
     int iCurrentStep   = dynamics->iCurrentStep;
     
+    printf("Computing umbrella sampling...\n");
+    
     if (fmr->master_rank) {
 
         energy = 0.0;
