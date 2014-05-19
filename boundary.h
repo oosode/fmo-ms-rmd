@@ -30,7 +30,7 @@ class Boundary : protected Pointers {
    double virial[6];
     
    double diff;             // displacement along umb vector
-
+   double diff2;
 
    // ** Functions ** //
    void setup();

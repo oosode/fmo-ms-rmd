@@ -413,7 +413,7 @@ void Umbrella::setup()
     
     double sum         = 0.0;
 
-    printf("Setting up umbrella sampling...\n");
+    if (fmr->master_rank) printf("Setting up umbrella sampling...\n");
     
     if (umb_coord==COORD_SPHERICAL) {
         
@@ -460,7 +460,7 @@ void Umbrella::compute()
     
     int iCurrentStep   = dynamics->iCurrentStep;
     
-    printf("Computing umbrella sampling...\n");
+    if (fmr->master_rank) printf("Computing umbrella sampling...\n");
     
     if (fmr->master_rank) {
 
