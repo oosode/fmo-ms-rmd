@@ -418,10 +418,8 @@ void Umbrella::setup()
         k[2] = k[0];
         
         for (int i=0; i<3; i++) {
-
             sum   += ref[i];
             di[i]  = 1;
-            
         }
         for (int i=0; i<3; i++) ref[i] /= sum;
 

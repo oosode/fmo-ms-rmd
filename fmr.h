@@ -37,6 +37,7 @@ class FMR {
   class Dynamics *dynamics;     // Handles molecular dynamics
   class Cec *cec;               // handles center of excess charge information
   class Umbrella *umbrella;     // Handles umbrella sampling of center of excess charge
+  class Boundary *boundary;     // Handles boundary conditions spherical and cylindrical
 
   // ** Variables ** //
   int master_rank;

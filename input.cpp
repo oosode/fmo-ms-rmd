@@ -41,254 +41,279 @@ Input::~Input()
 -----------------------------------------------------------------*/
 void Input::read_input_file()
 {
-  // Only the master rank reads the input for FMR here
-  // Specs are broadcast subsequently
-  if (fmr->master_rank) {
-
-    printf("Reading input file %s\n", input_file);
-
-    FILE *fs = fopen(input_file, "r");
-    if (fs == NULL) {
-      fmr->error(FLERR, "Failure to read input file.\n");
-    }
-
-    // Go through each line of input_file until end of file
-    char line[MAX_LENGTH];
-    while ( fgets(line, MAX_LENGTH, fs) != NULL ) { 
-
-      char arg0[SMALL_LENGTH];
-      char arg1[SMALL_LENGTH];
-      char arg2[SMALL_LENGTH];
-      char arg3[SMALL_LENGTH];
-
-      if ( sscanf(line, "%s %s %s %s", arg0,arg1,arg2,arg3) == 4) {
-        // Four argument line
+    // Only the master rank reads the input for FMR here
+    // Specs are broadcast subsequently
+    if (fmr->master_rank) {
         
-        if ( strcmp(arg0, "Periodic") == 0 ) {
-          printf("Periodic bondary conditions: %d %d %d\n", atoi(arg1),atoi(arg2),atoi(arg3));
-          fmr->atom->na = atoi(arg1);
-          fmr->atom->nb = atoi(arg2);
-          fmr->atom->nc = atoi(arg3);
+        printf("Reading input file %s\n", input_file);
+        
+        FILE *fs = fopen(input_file, "r");
+        if (fs == NULL) {
+            fmr->error(FLERR, "Failure to read input file.\n");
         }
-        else if ( strcmp(arg0, "Field") == 0 ) {
-	  printf("Embedding field: %d %d %d\n",atoi(arg1),atoi(arg2),atoi(arg3));
-	  fmr->atom->afield = atoi(arg1);
-	  fmr->atom->bfield = atoi(arg2);
-          fmr->atom->cfield = atoi(arg3);
+        
+        // Go through each line of input_file until end of file
+        char line[MAX_LENGTH];
+        while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+            
+            char arg0[SMALL_LENGTH];
+            char arg1[SMALL_LENGTH];
+            char arg2[SMALL_LENGTH];
+            char arg3[SMALL_LENGTH];
+            
+            if ( sscanf(line, "%s %s %s %s", arg0,arg1,arg2,arg3) == 4) {
+                // Four argument line
+                
+                if ( strcmp(arg0, "Periodic") == 0 ) {
+                    printf("Periodic bondary conditions: %d %d %d\n", atoi(arg1),atoi(arg2),atoi(arg3));
+                    fmr->atom->na = atoi(arg1);
+                    fmr->atom->nb = atoi(arg2);
+                    fmr->atom->nc = atoi(arg3);
+                }
+                else if ( strcmp(arg0, "Field") == 0 ) {
+                    printf("Embedding field: %d %d %d\n",atoi(arg1),atoi(arg2),atoi(arg3));
+                    fmr->atom->afield = atoi(arg1);
+                    fmr->atom->bfield = atoi(arg2);
+                    fmr->atom->cfield = atoi(arg3);
+                }
+                else if ( strcmp(arg0, "Umbrella_center") == 0 ) {
+                    printf("Harmonic center [angstroms]:   %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->umbrella->center[0] = atof(arg1);
+                    fmr->umbrella->center[1] = atof(arg2);
+                    fmr->umbrella->center[2] = atof(arg3);
+                }
+                else if ( strcmp(arg0, "Umbrella_potential") == 0 ) {
+                    printf("Umbrella potential [kcal/mol]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->umbrella->k[0] = atof(arg1)*fmr->math->kcal2au;
+                    fmr->umbrella->k[1] = atof(arg2)*fmr->math->kcal2au;
+                    fmr->umbrella->k[2] = atof(arg3)*fmr->math->kcal2au;
+                }
+                else if ( strcmp(arg0, "Umbrella_vector") == 0 ) {
+                    printf("Umbrella vector:               %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->umbrella->ref[0] = atof(arg1);
+                    fmr->umbrella->ref[1] = atof(arg2);
+                    fmr->umbrella->ref[2] = atof(arg3);
+                }
+                else if ( strcmp(arg0, "Boundary_potential") == 0 ) {
+                    printf("Boundary potential [kcal/mol]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->boundary->k[0] = atof(arg1)*fmr->math->kcal2au;
+                    fmr->boundary->k[1] = atof(arg2)*fmr->math->kcal2au;
+                    fmr->boundary->k[2] = atof(arg3)*fmr->math->kcal2au;
+                }
+                else if ( strcmp(arg0, "Boundary_radius") == 0 ) {
+                    printf("Boundary radius: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->boundary->radius[0] = atof(arg1);
+                    fmr->boundary->radius[1] = atof(arg2);
+                    fmr->boundary->radius[2] = atof(arg3);
+                }
+            }
+            else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
+                // Two argument line
+                
+                if ( strcmp(arg0, "QChem") == 0 ) {
+                    printf("Executable: %s\n", arg1);
+                    sprintf(fmr->run->exec,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Scratch") == 0 ) {
+                    printf("Scratch directory: %s\n", arg1);
+                    sprintf(fmr->run->scratch_dir,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Gamess_version") == 0 ) {
+                    printf("Gamess Version: %s\n", arg1);
+                    sprintf(fmr->run->gamess_version,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Gamess_ncores") == 0 ) {
+                    fmr->run->gamess_ncores = atoi(arg1);
+                }
+                else if ( strcmp(arg0, "Atoms_File") == 0 ) {
+                    printf("Atoms file: %s\n", arg1);
+                    sprintf(atoms_file,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Restart_File") == 0 ) {
+                    printf("Restart file: %s\n", arg1);
+                    sprintf(restart_file,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Run_Type") == 0 ) {
+                    printf("Run type: %s\n", arg1);
+                    if      ( strcmp(arg1, "energy") == 0) fmr->run->run_type = RUN_ENERGY;
+                    else if ( strcmp(arg1, "force" ) == 0) fmr->run->run_type = RUN_FORCE;
+                    else if ( strcmp(arg1, "moldyn") == 0) fmr->run->run_type = RUN_MOLDYN;
+                    
+                    if (fmr->run->run_type < RUN_TYPE_MIN || fmr->run->run_type > RUN_TYPE_MAX)
+                        fmr->error(FLERR, "Selected run type is not understood or does not exist.");
+                }
+                else if ( strcmp(arg0, "Max_Hops") == 0 ) {
+                    fmr->state->max_hops = atoi(arg1);
+                    printf("Max hops: %d\n", fmr->state->max_hops);
+                }
+                else if ( strcmp(arg0, "Dimer_Cut") == 0 ) {
+                    fmr->run->cut_dimer = atof(arg1);
+                    printf("Dimer cutoff: %f\n", fmr->run->cut_dimer);
+                }
+                else if ( strcmp(arg0, "PrintLevel") == 0 ) {
+                    fmr->print_level = atoi(arg1);
+                }
+                // Molecular dynamics options
+                else if ( strcmp(arg0, "nTimeSteps") == 0) {
+                    fmr->dynamics->nTimeSteps = atoi(arg1);
+                }
+                else if ( strcmp(arg0, "timestep") == 0) {
+                    fmr->dynamics->dt = atof(arg1); // Read in as femtoseconds
+                    fmr->dynamics->dt *= fmr->math->fem2au; // Convert to atomic units of time
+                }
+                else if ( strcmp(arg0, "vOption") == 0) {
+                    if      ( strcmp(arg1, "zero")  == 0) fmr->dynamics->vOption = DYNAMICS_ZERO;
+                    else if ( strcmp(arg1, "read")  == 0) fmr->dynamics->vOption = DYNAMICS_READ;
+                    else if ( strcmp(arg1, "rand")  == 0) fmr->dynamics->vOption = DYNAMICS_RAND;
+                    
+                    if (fmr->dynamics->vOption < DYNAMICS_MIN || fmr->dynamics->vOption > DYNAMICS_MAX)
+                        fmr->error(FLERR, "Selected vOption is not understood or does not exist.");
+                }
+                else if ( strcmp(arg0, "Thermostat") == 0) {
+                    if      ( strcmp(arg1, "off")       == 0) fmr->dynamics->iThermostat = THERMOSTAT_OFF;
+                    else if ( strcmp(arg1, "langevin")  == 0) fmr->dynamics->iThermostat = THERMOSTAT_LANGEVIN;
+                    else if ( strcmp(arg1, "berendsen") == 0) fmr->dynamics->iThermostat = THERMOSTAT_BERENDSEN;
+                    else    fmr->error(FLERR, "Thermostat option unrecognized.");
+                }
+                else if ( strcmp(arg0, "tau") == 0) {
+                    fmr->dynamics->tau = atof(arg1); // in femtoseconds
+                    fmr->dynamics->tau *= fmr->math->fem2au; // Convert to a.u.
+                }
+                else if ( strcmp(arg0, "Temperature") == 0) {
+                    fmr->dynamics->targetTemperature = atof(arg1); // in Kelvin
+                }
+                else if ( strcmp(arg0, "vseed") == 0) {
+                    fmr->dynamics->vseed = atoi(arg1);
+                }
+                else if ( strcmp(arg0, "Traj_File") == 0 ) {
+                    printf("Trajectory file: %s\n", arg1);
+                    sprintf(fmr->dynamics->trajFile,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "BB") == 0) {
+                    printf("Using BB param: %f\n", atof(arg1));
+                    fmr->math->BB = atof(arg1);
+                }
+                else if ( strcmp(arg0, "Correlation") == 0 ) {
+                    printf("Correlation method: %s\n", arg1);
+                    sprintf(fmr->run->correlation,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Exchange") == 0 ) {
+                    printf("Exchange method: %s\n", arg1);
+                    sprintf(fmr->run->exchange,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Basis_Set") == 0 ) {
+                    printf("Basis set: %s\n", arg1);
+                    sprintf(fmr->run->basis,"%s",arg1);
+                }
+                else if ( strcmp(arg0, "cellA") == 0 ) {
+                    printf("Cell distance A: %f\n", atof(arg1));
+                    fmr->atom->cellA = atof(arg1);
+                }
+                else if ( strcmp(arg0, "cellB") == 0 ) {
+                    printf("Cell distance B: %f\n", atof(arg1));
+                    fmr->atom->cellB = atof(arg1);
+                }
+                else if ( strcmp(arg0, "cellC") == 0 ) {
+                    printf("Cell distance C: %f\n", atof(arg1));
+                    fmr->atom->cellC = atof(arg1);
+                }
+                else if ( strcmp(arg0, "SCF_algorithm") == 0 ) {
+                    printf("SCF algorithm: %s\n", arg1);
+                    sprintf(fmr->run->algorithm,"%s", arg1);
+                }
+                else if ( strcmp(arg0, "Umbrella_Type") == 0 ) {
+                    printf("Umbrella type: %s\n", arg1);
+                    if      (strcmp(arg1, "spherical") == 0)   fmr->umbrella->umb_coord = COORD_SPHERICAL;
+                    else if (strcmp(arg1, "cartesian") == 0)   fmr->umbrella->umb_coord = COORD_CARTESIAN;
+                    else if (strcmp(arg1, "cylindrical") == 0) fmr->umbrella->umb_coord = COORD_CYLINDRICAL;
+                    else    fmr->error(FLERR, "Umbrella sampling option unrecognized.");
+                }
+                else if ( strcmp(arg0, "Boundary_Type") == 0 ) {
+                    printf("Boundary type: %s\n", arg1);
+                    if      (strcmp(arg1, "spherical") == 0)   fmr->boundary->bound_coord = COORD_SPHERICAL;
+                    else if (strcmp(arg1, "cylindrical") == 0)   fmr->boundary->bound_coord = COORD_CYLINDRICAL;
+                    else    fmr->error(FLERR, "Umbrella sampling option unrecognized.");
+                }
+            }
+            else if ( sscanf(line, "%s", arg0) == 1 ) {
+                // One argument line
+                
+                if ( strcmp(arg0, "FMO_only") == 0 ) {
+                    printf("FMO only calcuation detected.\n");
+                    fmr->run->FMO_only = 1;
+                }
+                else if ( strcmp(arg0, "EnvApprox") == 0 ) {
+                    printf("Environment approximation turned on.\n");
+                    fmr->run->EnvApprox = 1;
+                }
+                else if ( strcmp(arg0, "Restart") == 0 ) {
+                    printf("Will try to restart run from file.\n");
+                    read_restart = 1;
+                    // Set the appropriate velocity option
+                    fmr->dynamics->vOption = DYNAMICS_READ;
+                }
+                
+            }
         }
-        else if ( strcmp(arg0, "Umbrella_center") == 0 ) {
-          printf("Harmonic center [angstroms]:   %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
-          fmr->umbrella->center[0] = atof(arg1);
-          fmr->umbrella->center[1] = atof(arg2);
-          fmr->umbrella->center[2] = atof(arg3);
-        }
-        else if ( strcmp(arg0, "Umbrella_potential") == 0 ) {
-          printf("Umbrella potential [kcal/mol]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
-          fmr->umbrella->k[0] = atof(arg1)*fmr->math->kcal2au;
-          fmr->umbrella->k[1] = atof(arg2)*fmr->math->kcal2au;
-          fmr->umbrella->k[2] = atof(arg3)*fmr->math->kcal2au;
-        }
-        else if ( strcmp(arg0, "Umbrella_vector") == 0 ) {
-          printf("Umbrella vector:               %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
-	  fmr->umbrella->ref[0] = atof(arg1);
-          fmr->umbrella->ref[1] = atof(arg2);
-          fmr->umbrella->ref[2] = atof(arg3);
-        }
-      }
-      else if ( sscanf(line, "%s %s", arg0, arg1) == 2 ) {
-        // Two argument line
-     
-	if ( strcmp(arg0, "QChem") == 0 ) {
-	  printf("Executable: %s\n", arg1);
-	  sprintf(fmr->run->exec,"%s", arg1); 
-	}
-	else if ( strcmp(arg0, "Scratch") == 0 ) {
-	  printf("Scratch directory: %s\n", arg1);
-	  sprintf(fmr->run->scratch_dir,"%s", arg1); 
-	}
-	else if ( strcmp(arg0, "Gamess_version") == 0 ) {
-          printf("Gamess Version: %s\n", arg1);
-          sprintf(fmr->run->gamess_version,"%s", arg1);
-        }
-        else if ( strcmp(arg0, "Gamess_ncores") == 0 ) {
-          fmr->run->gamess_ncores = atoi(arg1);
-        }
-	else if ( strcmp(arg0, "Atoms_File") == 0 ) {
-	  printf("Atoms file: %s\n", arg1);
-	  sprintf(atoms_file,"%s", arg1); 
-	}
-	else if ( strcmp(arg0, "Restart_File") == 0 ) {
-	  printf("Restart file: %s\n", arg1);
-	  sprintf(restart_file,"%s", arg1); 
-	}
-	else if ( strcmp(arg0, "Run_Type") == 0 ) {
-          printf("Run type: %s\n", arg1);
-	  if      ( strcmp(arg1, "energy") == 0) fmr->run->run_type = RUN_ENERGY;
-	  else if ( strcmp(arg1, "force" ) == 0) fmr->run->run_type = RUN_FORCE;
-	  else if ( strcmp(arg1, "moldyn") == 0) fmr->run->run_type = RUN_MOLDYN;
-
-	  if (fmr->run->run_type < RUN_TYPE_MIN || fmr->run->run_type > RUN_TYPE_MAX)
-	    fmr->error(FLERR, "Selected run type is not understood or does not exist.");
-        }
-	else if ( strcmp(arg0, "Max_Hops") == 0 ) {
-          fmr->state->max_hops = atoi(arg1);
-	  printf("Max hops: %d\n", fmr->state->max_hops);
-	}
-        else if ( strcmp(arg0, "Dimer_Cut") == 0 ) {
-          fmr->run->cut_dimer = atof(arg1);
-          printf("Dimer cutoff: %f\n", fmr->run->cut_dimer);
-        }
-	else if ( strcmp(arg0, "PrintLevel") == 0 ) {
-          fmr->print_level = atoi(arg1);
-	}
-        // Molecular dynamics options
-        else if ( strcmp(arg0, "nTimeSteps") == 0) {
-          fmr->dynamics->nTimeSteps = atoi(arg1); 
-        }
-        else if ( strcmp(arg0, "timestep") == 0) {
-          fmr->dynamics->dt = atof(arg1); // Read in as femtoseconds
-          fmr->dynamics->dt *= fmr->math->fem2au; // Convert to atomic units of time 
-        }
-        else if ( strcmp(arg0, "vOption") == 0) {
-	  if      ( strcmp(arg1, "zero")  == 0) fmr->dynamics->vOption = DYNAMICS_ZERO;
-	  else if ( strcmp(arg1, "read")  == 0) fmr->dynamics->vOption = DYNAMICS_READ;
-	  else if ( strcmp(arg1, "rand")  == 0) fmr->dynamics->vOption = DYNAMICS_RAND;
-
-	  if (fmr->dynamics->vOption < DYNAMICS_MIN || fmr->dynamics->vOption > DYNAMICS_MAX)
-	    fmr->error(FLERR, "Selected vOption is not understood or does not exist.");
-        }
-        else if ( strcmp(arg0, "Thermostat") == 0) {
-	  if      ( strcmp(arg1, "off")       == 0) fmr->dynamics->iThermostat = THERMOSTAT_OFF;
-	  else if ( strcmp(arg1, "langevin")  == 0) fmr->dynamics->iThermostat = THERMOSTAT_LANGEVIN;
-	  else if ( strcmp(arg1, "berendsen") == 0) fmr->dynamics->iThermostat = THERMOSTAT_BERENDSEN;
-          else    fmr->error(FLERR, "Thermostat option unrecognized.");
-        }
-        else if ( strcmp(arg0, "tau") == 0) {
-          fmr->dynamics->tau = atof(arg1); // in femtoseconds
-          fmr->dynamics->tau *= fmr->math->fem2au; // Convert to a.u.
-        }
-        else if ( strcmp(arg0, "Temperature") == 0) {
-          fmr->dynamics->targetTemperature = atof(arg1); // in Kelvin 
-        }
-        else if ( strcmp(arg0, "vseed") == 0) {
-          fmr->dynamics->vseed = atoi(arg1); 
-        }
-	else if ( strcmp(arg0, "Traj_File") == 0 ) {
-	  printf("Trajectory file: %s\n", arg1);
-	  sprintf(fmr->dynamics->trajFile,"%s", arg1); 
-	}
-        else if ( strcmp(arg0, "BB") == 0) {
-          printf("Using BB param: %f\n", atof(arg1));
-          fmr->math->BB = atof(arg1);
-        }
-	else if ( strcmp(arg0, "Correlation") == 0 ) {
-	  printf("Correlation method: %s\n", arg1);
-	  sprintf(fmr->run->correlation,"%s", arg1);
- 	}
-	else if ( strcmp(arg0, "Exchange") == 0 ) {
-	  printf("Exchange method: %s\n", arg1);
-	  sprintf(fmr->run->exchange,"%s", arg1);
-	}
-	else if ( strcmp(arg0, "Basis_Set") == 0 ) {
-	  printf("Basis set: %s\n", arg1);
-	  sprintf(fmr->run->basis,"%s",arg1);
-	}
-	else if ( strcmp(arg0, "cellA") == 0 ) {
-	  printf("Cell distance A: %f\n", atof(arg1));
-	  fmr->atom->cellA = atof(arg1);
-	}
-        else if ( strcmp(arg0, "cellB") == 0 ) {
-          printf("Cell distance B: %f\n", atof(arg1));
-          fmr->atom->cellB = atof(arg1);
-        }
-        else if ( strcmp(arg0, "cellC") == 0 ) {
-          printf("Cell distance C: %f\n", atof(arg1));
-          fmr->atom->cellC = atof(arg1);
-        }
-        else if ( strcmp(arg0, "SCF_algorithm") == 0 ) {
-          printf("SCF algorithm: %s\n", arg1);
-          sprintf(fmr->run->algorithm,"%s", arg1);
-        }
-	else if ( strcmp(arg0, "Umbrella_Type") == 0 ) {
-	  printf("Umbrella type: %s\n", arg1);
-          if      (strcmp(arg1, "spherical") == 0)   fmr->umbrella->umb_coord = COORD_SPHERICAL;
-          else if (strcmp(arg1, "cartesian") == 0)   fmr->umbrella->umb_coord = COORD_CARTESIAN;
-          else if (strcmp(arg1, "cylindrical") == 0) fmr->umbrella->umb_coord = COORD_CYLINDRICAL;
-          else    fmr->error(FLERR, "Umbrella sampling option unrecognized.");
-	}
-      }
-      else if ( sscanf(line, "%s", arg0) == 1 ) {
-        // One argument line
-
-	if ( strcmp(arg0, "FMO_only") == 0 ) {
-          printf("FMO only calcuation detected.\n");
-	  fmr->run->FMO_only = 1;
-        }
-	else if ( strcmp(arg0, "EnvApprox") == 0 ) {
-	  printf("Environment approximation turned on.\n");
-          fmr->run->EnvApprox = 1;
-	}
-	else if ( strcmp(arg0, "Restart") == 0 ) {
-	  printf("Will try to restart run from file.\n");
-          read_restart = 1;
-          // Set the appropriate velocity option
-          fmr->dynamics->vOption = DYNAMICS_READ;
-	}
-
-      }
+        
+        fclose(fs);
+        
     }
-
-    fclose(fs);
-
-  }
-  MPI_Barrier(fmr->world);
-
-  // Communicate run specs to all other ranks
-  MPI_Bcast(&fmr->run->run_type, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->exec, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->scratch_dir, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->gamess_version, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->gamess_ncores, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->basis, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->correlation, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->exchange, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->algorithm, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&atoms_file, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->state->max_hops, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->run->cut_dimer, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->print_level, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->nTimeSteps, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->dt, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->vOption, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->targetTemperature, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->vseed, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->trajFile, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->iThermostat, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->dynamics->tau, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&read_restart, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->math->BB, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->cellA, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->cellB, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->cellC, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->na, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->nb, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->nc, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->afield, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->bfield, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->cfield, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->umb_coord, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->k[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->k[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->k[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);  
-  MPI_Bcast(&fmr->umbrella->center[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->center[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->center[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world); 
-  MPI_Bcast(&fmr->umbrella->ref[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->ref[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->umbrella->ref[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-
+    MPI_Barrier(fmr->world);
+    
+    // Communicate run specs to all other ranks
+    MPI_Bcast(&fmr->run->run_type, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->exec, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->scratch_dir, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->gamess_version, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->gamess_ncores, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->basis, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->correlation, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->exchange, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->algorithm, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&atoms_file, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->state->max_hops, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->cut_dimer, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->print_level, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->nTimeSteps, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->dt, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->vOption, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->targetTemperature, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->vseed, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->trajFile, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->iThermostat, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->dynamics->tau, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&read_restart, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->math->BB, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->cellA, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->cellB, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->cellC, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->na, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->nb, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->nc, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->afield, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->bfield, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->cfield, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->umb_coord, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->k[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->k[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->k[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);  
+    MPI_Bcast(&fmr->umbrella->center[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->center[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->center[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world); 
+    MPI_Bcast(&fmr->umbrella->ref[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->ref[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->umbrella->ref[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->bound_coord, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->k[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->k[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->k[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->radius[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->radius[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->radius[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    
 }
 
 
