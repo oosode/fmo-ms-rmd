@@ -9,6 +9,7 @@
 #include "dynamics.h"
 #include "cec.h"
 #include "umbrella.h"
+#include "boundary.h"
 
 #define MAX_LENGTH 1024
 
@@ -68,11 +69,16 @@ Run::~Run()
 -----------------------------------------------------------------*/
 void Run::setup()
 {
- 
-  fmr->umbrella->setup(); 
-
+  printf("Setting up run...\n");
+  if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->setup(); 
+  celse if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
 }
 
+void Run::post_force()
+{
+  if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->compute();
+  else if (fmr->boundary->do_boundary_conditions) fmr->boundary->compute();
+}
 /*-----------------------------------------------------------------
   Run calculation: Upper level run command 
 -----------------------------------------------------------------*/
@@ -183,17 +189,11 @@ void Run::calculate_force()
     fmr->matrix->buildHX();
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
-    //
-    double f[3];
-    f[0]=f[1]=f[2]=5*fmr->math->kcal2au;
-    fmr->cec->compute_coc();
-    fmr->cec->compute_cec();
-    //fmr->cec->compute();
-    fmr->umbrella->compute();
-    //fmr->umbrella->decompose_energy(0.0);
-    //fmr->umbrella->decompose_force(f); 
-    //fmr->cec->decompose_energy(
-    //fmr->cec->decompose_force(f);
+    // Step 8. Compute COCs and CEC
+    fmr->cec->compute_coc(); fmr->cec->compute_cec();
+    // Step 9. Post force computations
+    post_force();
+
     if (fmr->master_rank) {
       printf("Updated Ground state gradient:\n");
       for (int i=0; i<fmr->atom->natoms; ++i) {

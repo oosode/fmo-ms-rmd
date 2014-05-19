@@ -58,7 +58,8 @@ class Run : protected Pointers {
 
    // ** Functions ** //
    void run_calculation();     // General run calculation
-   void setup();               // Setup calculation ... umbrella,
+   void setup();               // Setup calculation ...
+   void post_force();
    void calculate_energy();    // Computes energy only
    void calculate_force();     // Computes energy + force
    void calculate_moldyn();    // Computes molecular dynamics

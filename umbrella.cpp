@@ -42,6 +42,7 @@ Umbrella::Umbrella(FMR *fmr) : Pointers(fmr)
     ref[2]     = 0.0;
     
     umb_coord  = 0;
+    do_umbrella_sampling = 0;
     
     sprintf(umb_typ, "%s", "null");
     sprintf(umbFile, "%s", "fmr_umb.log"); // default file name
@@ -412,6 +413,8 @@ void Umbrella::setup()
     
     double sum         = 0.0;
 
+    printf("Setting up umbrella sampling...\n");
+    
     if (umb_coord==COORD_SPHERICAL) {
         
         k[1] = k[0];

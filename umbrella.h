@@ -33,6 +33,7 @@ class Umbrella : protected Pointers {
    double **omega;    // Eq. 22 triple summation
 
    /* Potential setting */
+   int    do_umbrella_sampling;
    char   umb_typ[256];     // Umbrella potential coordinate name
    int    umb_coord;        // Umbrella potential coordinate index
    int    di[3];            // Are potential on x, y, z - direction
