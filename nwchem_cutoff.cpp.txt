@@ -1721,7 +1721,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                         }
                     }
                 }
-            k}
+            }
         }
         printf("Dimer gradients:\n");
         for (int x=-xa; x<=xa; x++) {
