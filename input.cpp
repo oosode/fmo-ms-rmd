@@ -510,8 +510,6 @@ void Input::read_restart_file()
     }
     fclose(fs);
 
-    // Update coordinates to minimum image convention
-    fmr->state->updateCoordinates();
   }
   MPI_Barrier(fmr->world);
 
@@ -533,8 +531,8 @@ void Input::read_restart_file()
     fmr->atom->environment  = new int [natoms];
     // I don't think the worker ranks need this stuff, so save memory
     // It's specific to the state search, which only master rank does
-    //fmr->atom->available = new int [natoms];
-    //fmr->atom->hop       = new int [natoms*MAX_STATES];
+    fmr->atom->available = new int [natoms];
+    fmr->atom->hop       = new int [natoms*MAX_STATES];
 
     // Initialize fragment array
     for (int k=0; k<natoms*MAX_STATES; ++k) {
@@ -546,9 +544,11 @@ void Input::read_restart_file()
   MPI_Bcast(fmr->atom->veloc, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
 
-
   // Set the atomic masses
   fmr->atom->setAtomMasses();
+
+  // Update coordinates to minimum image convention
+  fmr->state->updateCoordinates();
 
   if(fmr->master_rank) {
     printf("Read in %d atoms with %d fragments.\n", natoms, fmr->atom->nfragments);
