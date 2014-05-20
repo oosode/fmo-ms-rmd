@@ -129,7 +129,7 @@ void Run::calculate_energy()
   // Step 3. Divide up FMO calculation and run in parallel
   //do_qchem_calculations(RUN_ENERGY);
   if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_ENERGY);
-  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations_cutoff(RUN_ENERGY);
+  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_ENERGY);
   else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_ENERGY);
 
   if (!fmr->run->FMO_only) {

@@ -123,7 +123,7 @@ void Cec::compute_coc()
                 }
             }
             VECTOR_ADD(r_coc[istate],r_coc[istate],ref);
-            printf("COC position for state %2d: %15.10f %15.10f %15.10f\n",istate,r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
+	    printf("COC position for state %2d: %15.10f %15.10f %15.10f\n",istate,r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
             
         }
     }

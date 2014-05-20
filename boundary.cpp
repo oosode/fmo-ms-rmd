@@ -47,7 +47,7 @@ void Boundary::setup()
     int natoms         = atom->natoms;
     //int nstates        = atom->nstates;
     
-    printf("Setting up boundary conditions...\n");
+    if (fmr->master_rank)  printf("Setting up boundary conditions...\n");
     
     // center of mass of i fragment
     double mass = 0.0;
@@ -92,7 +92,7 @@ void Boundary::compute()
     int natoms         = atom->natoms;
     int nstates        = atom->nstates;
     
-    printf("Computing boundary conditions...\n");
+    if (fmr->master_rank) printf("Computing boundary conditions...\n");
     
     virial[0] = virial[1] = virial[2] = virial[3] = virial[4] = virial[5] = 0.0;
     
@@ -105,37 +105,34 @@ void Boundary::compute()
             
             double energy = 0.0;
             double sum = 0.0;
+            double distance = 0.0;
             
             for (int i=0; i<3; i++) {
                 di[i] = coord[3*iatom+i]-center[i];
                 sum += di[i];
             }
-            
-            for (int i=0; i<3; i++) {
+            distance = sqrt(di[0]*di[0] + di[1]*di[1] + di[2]*di[2]);
+            if (distance > radius[0]) {
                 
-                di[i] /= sum;
+                diff = distance - radius[0];
+                diff2 = diff*diff;
+                energy = k[0]*diff2;
                 
-                dx[i] = fabs(coord[3*iatom+i]-center[i]);
-                if (dx[i] > radius[i]) {
+                for (int i=0; i<3; i++) {
                     
-                    dx[i] = dx[i] - radius[i];
-                    dx2[i] = dx[i] * dx[i];
-                    energy = k[i] * dx2[i];
-                    f[0][i] = (2 * k[i] * dx[i]) * di[i];
+                    di[i] /= sum;
                     
-                } else {
-                    
-                    f[0][i] = f[1][i] = 0.0;
-                    energy += 0;
+                    f[0][i] = (2 * k[0] * diff) * di[i];
+                    f[1][i] = -f[0][i];
                     
                 }
             }
             
             if (fmr->master_rank) {
                 GSEnergy += energy;
-                GSGradient[3*iatom + 0] += f[0][0];
-                GSGradient[3*iatom + 1] += f[0][1];
-                GSGradient[3*iatom + 2] += f[0][2];
+                GSGradient[3*iatom + 0] -= f[0][0];
+                GSGradient[3*iatom + 1] -= f[0][1];
+                GSGradient[3*iatom + 2] -= f[0][2];
             }
         }
         
