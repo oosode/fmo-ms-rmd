@@ -69,7 +69,8 @@ Run::~Run()
 -----------------------------------------------------------------*/
 void Run::setup()
 {
-  printf("Setting up run...\n");
+  if (fmr->master_rank) printf("Setting up run...\n");
+
   if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->setup(); 
   else if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
 }

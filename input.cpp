@@ -342,117 +342,140 @@ void Input::read_input_file()
 -----------------------------------------------------------------*/
 void Input::read_atoms_file()
 {
-  // Only the master rank reads the atoms file 
-  // Info is broadcast subsequently
-  if (fmr->master_rank) {
-
-    printf("Reading atoms file %s\n", atoms_file);
-
-    FILE *fs = fopen(atoms_file, "r");
-    if (fs == NULL) {
-      fmr->error(FLERR, "Failure to read atoms file.\n");
+    // Only the master rank reads the atoms file
+    // Info is broadcast subsequently
+    if (fmr->master_rank) {
+        
+        printf("Reading atoms file %s\n", atoms_file);
+        
+        FILE *fs = fopen(atoms_file, "r");
+        if (fs == NULL) {
+            fmr->error(FLERR, "Failure to read atoms file.\n");
+        }
+        
+        char line[MAX_LENGTH];
+        int line_index = 0;
+        int atom_index = 0;
+        // Go through each line of until end of file
+        while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+            
+            if (line_index == 0) {
+                // First line syntax:
+                // (# atoms) (# fragments) (index of reactive fragment)
+                sscanf(line, "%d %d %d", &fmr->atom->natoms,
+                       &fmr->atom->nfragments, &fmr->atom->ireactive);
+                
+                int natoms = fmr->atom->natoms;
+                // Based on this data, allocate atom arrays
+                fmr->atom->coord = new double [3*natoms];
+                fmr->atom->force = new double [3*natoms];
+                fmr->atom->veloc = new double [3*natoms];
+                fmr->atom->mass  = new double [natoms];
+                fmr->atom->symbol    = new char [natoms];
+                fmr->atom->fragment  = new int [natoms*MAX_STATES];
+                fmr->atom->reactive  = new int [natoms*MAX_STATES];
+                fmr->atom->available = new int [natoms];
+                fmr->atom->hop       = new int [natoms*MAX_STATES];
+                fmr->atom->environment  = new int [natoms];
+                // Initialize fragment array
+                for (int k=0; k<natoms*MAX_STATES; ++k) {
+                    fmr->atom->fragment[k] = -1;
+                }
+                
+            } else {
+                // Error check
+                if (atom_index > fmr->atom->natoms && atom_index > 0) {
+                    sprintf(line, "Error reading atoms. natoms = %d atom_index = %d",
+                            fmr->atom->natoms, atom_index);
+                    fmr->error(FLERR, line);
+                }
+                // Regular line syntax:
+                // (Atom symbol) (X) (Y) (Z) (Fragment index in state 0, pivot state)
+                // Coordinates are in Angstroms
+                char tmpstr[MAX_LENGTH];
+                sscanf(line, "%s %lf %lf %lf %d",
+                       tmpstr,
+                       &(fmr->atom->coord[3*atom_index]),
+                       &(fmr->atom->coord[3*atom_index+1]),
+                       &(fmr->atom->coord[3*atom_index+2]),
+                       &(fmr->atom->fragment[atom_index])
+                       );
+                // remove whitespace from tmpstr to get the atom symbol character
+                for (int i=0; i<MAX_LENGTH; ++i) {
+                    if (tmpstr[i] != ' ') {
+                        fmr->atom->symbol[atom_index] = tmpstr[i];
+                        break;
+                    }
+                }
+                ++atom_index;
+            }
+            ++line_index;
+        }
+        
+        fclose(fs);
     }
-
-    char line[MAX_LENGTH];
-    int line_index = 0;
-    int atom_index = 0;
-    // Go through each line of until end of file
-    while ( fgets(line, MAX_LENGTH, fs) != NULL ) { 
-
-      if (line_index == 0) {
-        // First line syntax: 
-        // (# atoms) (# fragments) (index of reactive fragment)
-        sscanf(line, "%d %d %d", &fmr->atom->natoms, 
-	       &fmr->atom->nfragments, &fmr->atom->ireactive);
-
-        int natoms = fmr->atom->natoms;
-	// Based on this data, allocate atom arrays
+    MPI_Barrier(fmr->world);
+    
+    
+    // ** Communicate data to other ranks ** //
+    MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
+    int natoms = fmr->atom->natoms;
+    if (!fmr->master_rank) {
+        // Based on broadcast data, allocate atom arrays
         fmr->atom->coord = new double [3*natoms];
         fmr->atom->force = new double [3*natoms];
         fmr->atom->veloc = new double [3*natoms];
         fmr->atom->mass  = new double [natoms];
-	fmr->atom->symbol    = new char [natoms];
-	fmr->atom->fragment  = new int [natoms*MAX_STATES];
-	fmr->atom->reactive  = new int [natoms*MAX_STATES];
-	fmr->atom->available = new int [natoms];
-	fmr->atom->hop       = new int [natoms*MAX_STATES];
+        fmr->atom->symbol    = new char [natoms];
+        fmr->atom->fragment  = new int [natoms*MAX_STATES];
+        fmr->atom->reactive  = new int [natoms*MAX_STATES];
         fmr->atom->environment  = new int [natoms];
+        // I don't think the worker ranks need this stuff, so save memory
+        // It's specific to the state search, which only master rank does
+        //fmr->atom->available = new int [natoms];
+        //fmr->atom->hop       = new int [natoms*MAX_STATES];
+        
         // Initialize fragment array
         for (int k=0; k<natoms*MAX_STATES; ++k) {
-          fmr->atom->fragment[k] = -1;
+            fmr->atom->fragment[k] = -1;
         }
-
-      } else {
-        // Error check
-        if (atom_index > fmr->atom->natoms && atom_index > 0) {
-          sprintf(line, "Error reading atoms. natoms = %d atom_index = %d", 
-                  fmr->atom->natoms, atom_index);
-          fmr->error(FLERR, line); 
-        }
-        // Regular line syntax:
-	// (Atom symbol) (X) (Y) (Z) (Fragment index in state 0, pivot state)
-        // Coordinates are in Angstroms
-        char tmpstr[MAX_LENGTH];
-        sscanf(line, "%s %lf %lf %lf %d", 
-               tmpstr,  
-	       &(fmr->atom->coord[3*atom_index]),
-	       &(fmr->atom->coord[3*atom_index+1]),
-	       &(fmr->atom->coord[3*atom_index+2]),
-	       &(fmr->atom->fragment[atom_index])
-	      );
-        // remove whitespace from tmpstr to get the atom symbol character
-        for (int i=0; i<MAX_LENGTH; ++i) {
-          if (tmpstr[i] != ' ') {
-            fmr->atom->symbol[atom_index] = tmpstr[i];
-            break;
-          }
-        }
-	++atom_index;
-      }
-      ++line_index;
     }
-
-    fclose(fs);
-  }
-  MPI_Barrier(fmr->world);
-
-
-  // ** Communicate data to other ranks ** //
-  MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
-  int natoms = fmr->atom->natoms;
-  if (!fmr->master_rank) {
-    // Based on broadcast data, allocate atom arrays
-    fmr->atom->coord = new double [3*natoms];
-    fmr->atom->force = new double [3*natoms];
-    fmr->atom->veloc = new double [3*natoms];
-    fmr->atom->mass  = new double [natoms];
-    fmr->atom->symbol    = new char [natoms];
-    fmr->atom->fragment  = new int [natoms*MAX_STATES];
-    fmr->atom->reactive  = new int [natoms*MAX_STATES];
-    fmr->atom->environment  = new int [natoms];
-    // I don't think the worker ranks need this stuff, so save memory
-    // It's specific to the state search, which only master rank does
-    //fmr->atom->available = new int [natoms];
-    //fmr->atom->hop       = new int [natoms*MAX_STATES];
-
-    // Initialize fragment array
-    for (int k=0; k<natoms*MAX_STATES; ++k) {
-      fmr->atom->fragment[k] = -1;
+    MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
+    
+    // Set the atomic masses
+    fmr->atom->setAtomMasses();
+  
+    if (fmr->master_rank) {
+        // ** Translate all coordinates to center of mass ** //
+        printf("Translating center of mass to origin.\n");
+        double COM[3];
+        COM[0] = COM[1] = COM[2] = 0.0;
+        for (int i=0; i<natoms; ++i) {
+            COM[0] += fmr->atom->mass[i] * fmr->atom->coord[3*i];
+            COM[1] += fmr->atom->mass[i] * fmr->atom->coord[3*i+1];
+            COM[2] += fmr->atom->mass[i] * fmr->atom->coord[3*i+2];
+        }
+        COM[0] /= fmr->atom->totalMass;
+        COM[1] /= fmr->atom->totalMass;
+        COM[2] /= fmr->atom->totalMass;
+        if (fmr->print_level > 0) {
+            printf("Center of mass before:   %14.8f %14.8f %14.8f\n", COM[0], COM[1], COM[2]);
+        }
+        for (int i=0; i<natoms; ++i) {
+            fmr->atom->coord[3*i]   -= COM[0];
+            fmr->atom->coord[3*i+1] -= COM[1];
+            fmr->atom->coord[3*i+2] -= COM[2];
+        }
     }
-  }
-  MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
-  MPI_Bcast(fmr->atom->coord, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
-  MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
-
-  // Set the atomic masses
-  fmr->atom->setAtomMasses();
-
-  if(fmr->master_rank) {
-    printf("Read in %d atoms with %d fragments.\n", natoms, fmr->atom->nfragments);
-  }
-
+    MPI_Bcast(fmr->atom->coord, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    
+    if(fmr->master_rank) {
+        printf("Read in %d atoms with %d fragments.\n", natoms, fmr->atom->nfragments);
+    }
+    
 }
 
 /*-----------------------------------------------------------------

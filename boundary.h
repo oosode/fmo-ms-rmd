@@ -20,7 +20,7 @@ class Boundary : protected Pointers {
    // ** Variables ** //
    int    do_boundary_conditions; // Do boundary conditions
    int    bound_coord;        // Boundary potential coordinate index
-   int    di[3];              // Are potential on x, y, z - direction
+   double di[3];              // Are potential on x, y, z - direction
    double k[3];               // force constants
    double radius[3];             // Boundary radius in x, y, z - direction
     

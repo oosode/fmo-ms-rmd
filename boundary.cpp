@@ -52,15 +52,14 @@ void Boundary::setup()
     // center of mass of i fragment
     double mass = 0.0;
     for (int i=0; i<natoms; ++i) {
-        center[0] += atom->mass[i] * atom->coord[3*i];
-        center[1] += atom->mass[i] * atom->coord[3*i+1];
-        center[2] += atom->mass[i] * atom->coord[3*i+2];
-        mass += atom->mass[i];
+        center[0] += atom->mass[i]/fmr->math->amu2au * atom->coord[3*i];
+        center[1] += atom->mass[i]/fmr->math->amu2au * atom->coord[3*i+1];
+        center[2] += atom->mass[i]/fmr->math->amu2au * atom->coord[3*i+2];
     }
-    center[0] /= mass;
-    center[1] /= mass;
-    center[2] /= mass;
-    
+    center[0] /= atom->totalMass;
+    center[1] /= atom->totalMass;
+    center[2] /= atom->totalMass;
+
     if (bound_coord==COORD_SPHERICAL) {
         
         k[1] = k[0];
@@ -109,8 +108,8 @@ void Boundary::compute()
             
             for (int i=0; i<3; i++) {
                 di[i] = coord[3*iatom+i]-center[i];
-                sum += di[i];
             }
+		
             distance = sqrt(di[0]*di[0] + di[1]*di[1] + di[2]*di[2]);
             if (distance > radius[0]) {
                 
@@ -120,19 +119,25 @@ void Boundary::compute()
                 
                 for (int i=0; i<3; i++) {
                     
-                    di[i] /= sum;
+                    di[i] /= distance;
                     
                     f[0][i] = (2 * k[0] * diff) * di[i];
                     f[1][i] = -f[0][i];
                     
                 }
-            }
-            
+		if (fmr->master_rank) printf("d: %lf, diff: %lf, %lf %lf %lf\n",distance,diff,di[0],di[1],di[2]);
+            } else {
+
+		energy = 0.0;
+                f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
+	    }
+
             if (fmr->master_rank) {
                 GSEnergy += energy;
-                GSGradient[3*iatom + 0] -= f[0][0];
-                GSGradient[3*iatom + 1] -= f[0][1];
-                GSGradient[3*iatom + 2] -= f[0][2];
+                GSGradient[3*iatom + 0] += f[0][0];
+                GSGradient[3*iatom + 1] += f[0][1];
+                GSGradient[3*iatom + 2] += f[0][2];
+		printf("%2d %lf %lf %lf %lf\n",iatom,energy,f[0][0],f[0][1],f[0][2]);
             }
         }
         
