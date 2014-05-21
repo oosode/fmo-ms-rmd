@@ -72,13 +72,13 @@ void Run::setup()
   if (fmr->master_rank) printf("Setting up run...\n");
 
   if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->setup(); 
-  else if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
+  if (fmr->boundary->do_boundary_conditions) fmr->boundary->setup();
 }
 
 void Run::post_force()
 {
   if (fmr->umbrella->do_umbrella_sampling) fmr->umbrella->compute();
-  else if (fmr->boundary->do_boundary_conditions) fmr->boundary->compute();
+  if (fmr->boundary->do_boundary_conditions) fmr->boundary->compute();
 }
 /*-----------------------------------------------------------------
   Run calculation: Upper level run command 
