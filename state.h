@@ -25,6 +25,7 @@ class State : protected Pointers {
    void write_qchem_inputs(int);  // Writes the inputs for Q-Chem
    void write_nwchem_inputs(int); // Writes the inputs for NWChem
    void write_nwchem_inputs_cutoff(int);
+   void write_nwchem_inputs_cutoff_old(int);
    void write_gamess_inputs(int); // Writes the inputs for Gamess
    
    void updatePivotState();       // Update pivot state information *after* matrix diagonalization

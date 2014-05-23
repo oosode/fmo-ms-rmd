@@ -23,6 +23,7 @@ class Boundary : protected Pointers {
    double di[3];              // Are potential on x, y, z - direction
    double k[3];               // force constants
    double radius[3];             // Boundary radius in x, y, z - direction
+   double vector[3];
     
    double center[3];
    double f[2][3],dx[3],dx2[3];

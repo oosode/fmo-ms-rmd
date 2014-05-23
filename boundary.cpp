@@ -24,7 +24,8 @@ Boundary::Boundary(FMR *fmr) : Pointers(fmr)
     center[0] = center[1] = center[2] = 0.0;
     
     radius[0] = radius[1] = radius[2] = 0.0;
-    
+    vector[0] = vector[1] = vector[2] = 0.0;
+     
     bound_coord  = 0;
     
 }
@@ -125,7 +126,7 @@ void Boundary::compute()
                     f[1][i] = -f[0][i];
                     
                 }
-		if (fmr->master_rank) printf("d: %lf, diff: %lf, %lf %lf %lf\n",distance,diff,di[0],di[1],di[2]);
+//		if (fmr->master_rank) printf("d: %lf, diff: %lf, %lf %lf %lf\n",distance,diff,di[0],di[1],di[2]);
             } else {
 
 		energy = 0.0;
@@ -137,7 +138,7 @@ void Boundary::compute()
                 GSGradient[3*iatom + 0] += f[0][0];
                 GSGradient[3*iatom + 1] += f[0][1];
                 GSGradient[3*iatom + 2] += f[0][2];
-		printf("%2d %lf %lf %lf %lf\n",iatom,energy,f[0][0],f[0][1],f[0][2]);
+//		printf("%2d %lf %lf %lf %lf\n",iatom,energy,f[0][0],f[0][1],f[0][2]);
             }
         }
         

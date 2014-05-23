@@ -181,14 +181,12 @@ class Atom : protected Pointers {
      int rc = 2*nc+1;
 
      int nf2 = nfragments * nfragments;
-
      istate =      idim / (ra*rb*rc*nf2);
      icella =     (idim % (ra*rb*rc*nf2)) / (rb*rc*nf2) - na;
      icellb =    ((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) / (rc*nf2) - nb;
      icellc =   (((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) / (nf2) - nc;
      ifrag  =  ((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) / nfragments;
      jfrag  = (((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) % nfragments);
-
      return;
    }
 

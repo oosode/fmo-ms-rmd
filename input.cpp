@@ -95,17 +95,11 @@ void Input::read_input_file()
                     fmr->umbrella->ref[1] = atof(arg2);
                     fmr->umbrella->ref[2] = atof(arg3);
                 }
-                else if ( strcmp(arg0, "SphericalBC_potential") == 0 ) {
-                    printf("Boundary potential [kcal/mol]: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
-                    fmr->boundary->k[0] = atof(arg1)*fmr->math->kcal2au;
-                    fmr->boundary->k[1] = atof(arg2)*fmr->math->kcal2au;
-                    fmr->boundary->k[2] = atof(arg3)*fmr->math->kcal2au;
-                }
-                else if ( strcmp(arg0, "SphericalBC_radius") == 0 ) {
-                    printf("Boundary radius: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
-                    fmr->boundary->radius[0] = atof(arg1);
-                    fmr->boundary->radius[1] = atof(arg2);
-                    fmr->boundary->radius[2] = atof(arg3);
+                else if ( strcmp(arg0, "CylindricalBC_vector") == 0 ) {
+                    printf("Cylindrical Boundary vector: %f %f %f\n",atof(arg1),atof(arg2),atof(arg3));
+                    fmr->boundary->vector[0] = atof(arg1);
+                    fmr->boundary->vector[1] = atof(arg2);
+                    fmr->boundary->vector[2] = atof(arg3);
                 }
             }
             else if ( sscanf(line, "%s %s %s",arg0, arg1, arg2) == 3 ) {
@@ -252,6 +246,14 @@ void Input::read_input_file()
                     else    fmr->error(FLERR, "Umbrella sampling option unrecognized.");
                     fmr->boundary->do_boundary_conditions = 1;
                 }
+		else if ( strcmp(arg0, "SphericalBC_potential") == 0 ) {
+                    printf("Boundary potential [kcal/mol]: %f\n",atof(arg1));
+                    fmr->boundary->k[0] = atof(arg1)*fmr->math->kcal2au;
+                }
+                else if ( strcmp(arg0, "SphericalBC_radius") == 0 ) {
+                    printf("Boundary radius: %f\n",atof(arg1));
+                    fmr->boundary->radius[0] = atof(arg1);
+                }
             }
             else if ( sscanf(line, "%s", arg0) == 1 ) {
                 // One argument line
@@ -332,6 +334,9 @@ void Input::read_input_file()
     MPI_Bcast(&fmr->boundary->radius[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->boundary->radius[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->boundary->radius[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->vector[0], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->vector[1], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->boundary->vector[2], 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->boundary->do_boundary_conditions, 1, MPI_INT, MASTER_RANK, fmr->world);
     
 }

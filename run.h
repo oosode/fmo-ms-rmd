@@ -67,6 +67,7 @@ class Run : protected Pointers {
    void do_qchem_calculations_env();  // Performs the FMO calculations in parallel, using env approximation
    void do_nwchem_calculations(int);  // Performs all the NWChem calculations in parallel
    void do_nwchem_calculations_cutoff(int);
+   void do_nwchem_calculations_cutoff_old(int);
    void do_nwchem_calculations_env(); // Performs the FMO calculations in parallel, using env approximation
    void do_gamess_calculations(int);  // Performs all the Gamess calculations in parallel
    void do_gamess_calculations_env(); // Performs the FMO calculations in parallel, using env approximation
