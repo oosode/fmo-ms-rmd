@@ -20,7 +20,7 @@ This code is only set up to work for protonated water clusters
 for the moment. 
 
 Also, this code works with a development version of Q-Chem, 
-NWChem6.3 with python module, and Gamess.
+NWChem6.3 with python module, and GAMESS.
 
 
 Sample input script:
@@ -63,7 +63,3 @@ Sample atoms file:
   O  -0.70307821  -0.76977643   2.33717800 2
   H  -1.07741374  -0.27497044   3.05814772 2
   H  -0.55395385  -1.65832267   2.64356545 2
-
-
-
-
