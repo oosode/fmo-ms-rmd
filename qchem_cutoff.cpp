@@ -672,7 +672,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     state_directory,
                     filename
                     );
-            //printf("Rank %d: %s\n", my_rank, command);
+            printf("Rank %d: %s\n", my_rank, command);
             
             // ** The system call ** //
             ierr = system(command);
