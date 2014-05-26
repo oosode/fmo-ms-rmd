@@ -235,6 +235,8 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             char state_directory[256];
             char snum[16];
             char make_directory[256];
+            int midx = 0;
+            int didx = 0;
             
             sprintf(snum, "%02d", istate);
             sprintf(state_directory, "state_%02d", istate);
@@ -243,14 +245,13 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             int ierr = system(make_directory);
             
             // Get name of file to open
+            char jobname[256];
             char filename[256];
-            //if (ifrag >= 100) {
+
+            // Get name of job
+            sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
             sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.in", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
-            //} else if (ifrag >= 10) {
-            //  sprintf(filename, "%s/fmo_st%sm0%d.in", state_directory, snum, ifrag);
-            //} else {
-            //  sprintf(filename, "%s/fmo_st%sm00%d.in", state_directory, snum, ifrag);
-            //}
+
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
                 char tmpstr[256];
@@ -660,7 +661,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             // change directory
             char directory[512];
             sprintf(directory, "%s/", state_directory);
-            chdir(directory);
+            //chdir(directory);
     	
             sprintf(filename, "fmo_st%s_m%s_%s", snum, inum, cname);
             sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out",
@@ -811,7 +812,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             // change directory
             char directory[512];
             sprintf(directory, "%s/", state_directory);
-            chdir(directory);
+            //chdir(directory);
             
             sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
    	        sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out",
