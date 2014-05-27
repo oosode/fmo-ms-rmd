@@ -22,7 +22,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     // Writes a separate input file for all monomers and all dimers
     // Master rank does all the work here
     
-    if (fmr->master_rank) { printf("Writing NWChem inputs.\n"); printf("Read MOs: %d\n", flag_read_MOs); }
+    if (fmr->master_rank) { printf("Writing Q-Chem inputs.\n"); printf("Read MOs: %d\n", flag_read_MOs); }
     
     Run *run       = fmr->run;
     Atom *atom     = fmr->atom;
@@ -290,7 +290,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             fprintf(fs, "skip_charge_self_interact 1\n");
             //fprintf(fs, "gaussian_blur true\n");
             // Read previous step MO coeffs?
-            if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
+            //if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
             fprintf(fs, "$end\n\n");
             
             // $molecule section
@@ -425,7 +425,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             fprintf(fs, "skip_charge_self_interact 1\n");
             //fprintf(fs, "gaussian_blur true\n");
             // Read previous step MO coeffs?
-            if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
+            //if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
             fprintf(fs, "$end\n\n");
             
             // $molecule section
