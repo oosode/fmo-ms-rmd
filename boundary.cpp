@@ -99,8 +99,7 @@ void Boundary::compute()
     dx[0] = dx[1] = dx[2] = 0.0;
     ff[0] = ff[1] = ff[2] = 0.0;
     
-    if (bound_coord==COORD_SPHERICAL)
-    {
+    if (bound_coord==COORD_SPHERICAL) {
         for (int iatom=0; iatom<natoms; ++iatom) {
             
             double energy = 0.0;
@@ -110,7 +109,7 @@ void Boundary::compute()
             for (int i=0; i<3; i++) {
                 di[i] = coord[3*iatom+i]-center[i];
             }
-		
+            
             distance = sqrt(di[0]*di[0] + di[1]*di[1] + di[2]*di[2]);
             if (distance > radius[0]) {
                 
@@ -126,28 +125,40 @@ void Boundary::compute()
                     f[1][i] = -f[0][i];
                     
                 }
-//		if (fmr->master_rank) printf("d: %lf, diff: %lf, %lf %lf %lf\n",distance,diff,di[0],di[1],di[2]);
+                
             } else {
-
-		energy = 0.0;
+                
+                energy = 0.0;
                 f[0][0] = f[0][1] = f[0][2] = f[1][0] = f[1][1] = f[1][2] = 0.0;
-	    }
-
+            }
+            
             if (fmr->master_rank) {
                 GSEnergy += energy;
                 GSGradient[3*iatom + 0] += f[0][0];
                 GSGradient[3*iatom + 1] += f[0][1];
                 GSGradient[3*iatom + 2] += f[0][2];
-//		printf("%2d %lf %lf %lf %lf\n",iatom,energy,f[0][0],f[0][1],f[0][2]);
             }
         }
         
     } else if (bound_coord==COORD_CYLINDRICAL) {
-        
+        for (int iatom=0; iatom<natoms; ++iatom) {
+            
+            double energy = 0.0;
+            double sum = 0.0;
+            double distance = 0.0;
+            
+            
+            if (fmr->master_rank) {
+                GSEnergy += energy;
+                GSGradient[3*iatom + 0] += f[0][0];
+                GSGradient[3*iatom + 1] += f[0][1];
+                GSGradient[3*iatom + 2] += f[0][2];
+            }
+        }
         
     }
     
-	MPI_Bcast(&GSEnergy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
-	MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(&GSEnergy, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
+    MPI_Bcast(GSGradient, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
     
 }
