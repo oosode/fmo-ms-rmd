@@ -88,7 +88,7 @@ void State::write_gamess_inputs(int jobtype)
             
             // contrl section
             fprintf(fs, " $contrl scftyp=rhf runtyp=gradient $end\n");
-	    int tmlm = nfragments * nfragments * 0.5 / 60;
+	    int tmlm = nfragments * nfragments * 0.5 / 6;
 	    if ( tmlm < 1 ) tmlm=1;
             fprintf(fs, " $system timlim=%d $end\n", tmlm);
             

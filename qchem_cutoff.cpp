@@ -967,7 +967,17 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     double FMO_end = MPI_Wtime();
     MPI_Barrier(fmr->world);
     if (fmr->master_rank) {
-        printf("Finished with FMO calculations.\n\n");
+        printf("Finished with FMO calculations.\n");
+        printf("Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
+        //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
+        //    }
+    }
+
+    // Clock
+    MPI_Barrier(fmr->world);
+    double comp_start = MPI_Wtime();
+    if (fmr->master_rank) {
+        printf("Reducing energies and gradients...\n");
     }
     
     // *** Reduce the energies from the parallel NWChem calls *** //
@@ -994,12 +1004,15 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         MPI_Allreduce(dimer_gradients, rbuffer, n_dimers_sq*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
         for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i] = rbuffer[i];
     }
-    MPI_Barrier(fmr->world);
+    //MPI_Barrier(fmr->world);
     
     delete [] rbuffer;
     
     // *** Compute the FMO energies/forces for each state *** //
-    
+   
+    if (fmr->master_rank) {
+        printf("Compiling energies and gradients...\n");
+    } 
     int didx;
     FILE *fs = fopen("fmr_calc.log", "a");
     if (fmr->master_rank) {
@@ -1238,10 +1251,12 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         }
     }
 #endif
-    
+   
+    // Clock
+    MPI_Barrier(fmr->world);
+    double comp_end = MPI_Wtime();
     if (fmr->master_rank) {
-        printf(" Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
-        //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
+        printf("Time for FMO compilation: %.4f seconds\n\n", comp_end - comp_start);
     }
 }
 

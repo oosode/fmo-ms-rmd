@@ -46,6 +46,10 @@ Dynamics::~Dynamics()
 -----------------------------------------------------------------*/
 void Dynamics::init()
 {
+  // ** Start clock ** //
+  MPI_Barrier(fmr->world);
+  double clock_start = MPI_Wtime();
+
   // Note: input.cpp read in various MD run parameters already before this point
   //       Also, this is to be called after a RUN_FORCE calculation is completed
 
@@ -64,6 +68,13 @@ void Dynamics::init()
   // ** Other miscellaneous business ** //
   // Make subsequent SCF calls read from disk, helps to speed a little
   //fmr->state->flag_read_MOs = 1;
+
+  MPI_Barrier(fmr->world);
+  double clock_end = MPI_Wtime();
+  double runtime = clock_end - clock_start;
+  if (fmr->master_rank) {
+    printf("\nDynamics init time: %20.6f seconds on %d ranks\n", runtime, fmr->world_size);
+  }
 }
 
 
