@@ -105,7 +105,7 @@ double Matrix::ComputeCoupling(int I, int J) {
         }
       }
     }
-    // Geometric mean 
+    // Geometric mean
     ecouple = fmr->math->AA * sqrt(erepItoJ * erepJtoI);
   }
 
