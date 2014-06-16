@@ -986,23 +986,28 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     //else       rbuffer = new double [MAX_SIZE];
     if (FORCE) rbuffer = new double [n_dimers_sq*3*natoms];
     else       rbuffer = new double [n_dimers_sq];
+    printf("Initialized rbuffer arrays...\n");
     // Monomers
     for (int i=0; i<n_monomers; ++i) rbuffer[i] = 0.0;
     MPI_Allreduce(monomer_energies, rbuffer, n_monomers, MPI_DOUBLE, MPI_SUM, fmr->world);
     for (int i=0; i<n_monomers; ++i) monomer_energies[i] = rbuffer[i];
+    printf("Reduced monomer energies...\n");
     // Dimers
     for (int i=0; i<n_dimers_sq; ++i) rbuffer[i] = 0.0;
     MPI_Allreduce(dimer_energies, rbuffer, n_dimers_sq, MPI_DOUBLE, MPI_SUM, fmr->world);
     for (int i=0; i<n_dimers_sq; ++i) dimer_energies[i] = rbuffer[i];
+    printf("Reduced dimer energies...\n");
     if (FORCE) {
         // Monomers
         for (int i=0; i<n_monomers*3*natoms; ++i) rbuffer[i] = 0.0;
         MPI_Allreduce(monomer_gradients, rbuffer, n_monomers*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
         for (int i=0; i<n_monomers*3*natoms; ++i) monomer_gradients[i] = rbuffer[i];
+        printf("Reduced monomer gradients...\n");
         // Dimers
         for (int i=0; i<n_dimers_sq*3*natoms; ++i) rbuffer[i] = 0.0;
-        MPI_Allreduce(dimer_gradients, rbuffer, n_dimers_sq*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
-        for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i] = rbuffer[i];
+        MPI_Allreduce(MPI_IN_PLACE, dimer_gradients, n_dimers_sq*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
+        //for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i] = rbuffer[i];
+	printf("Reduced dimer gradients...\n");
     }
     //MPI_Barrier(fmr->world);
     

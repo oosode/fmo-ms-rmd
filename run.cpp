@@ -123,15 +123,29 @@ void Run::calculate_energy()
 
   // Step 2. Write Q-Chem inputs for all FMO calculations
   //fmr->state->write_qchem_inputs(RUN_ENERGY);
-  if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs(RUN_ENERGY);
-  else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_ENERGY);
-  else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_ENERGY);
+  if ( run->cut_dimer <= 0.0 ) {
+    if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs(RUN_ENERGY);
+    else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs(RUN_ENERGY);
+    else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_ENERGY);
+  }
+  else {
+    if      ( strstr(run->exec, "qcprog.exe") != NULL) fmr->state->write_qchem_inputs_cutoff(RUN_ENERGY);
+    else if ( strstr(run->exec, "nwchem") != NULL) fmr->state->write_nwchem_inputs_cutoff(RUN_ENERGY);
+    else if ( strstr(run->exec, "rungms") != NULL) fmr->state->write_gamess_inputs(RUN_ENERGY);
+  }
 
   // Step 3. Divide up FMO calculation and run in parallel
   //do_qchem_calculations(RUN_ENERGY);
-  if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_ENERGY);
-  else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_ENERGY);
-  else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_ENERGY);
+  if ( run->cut_dimer <= 0.0 ) {
+    if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_ENERGY);
+    else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_ENERGY);
+    else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_ENERGY);
+  }
+  else {
+    if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations_cutoff(RUN_ENERGY);
+    else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations_cutoff(RUN_ENERGY);
+    else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_ENERGY);
+  }
 
   if (!fmr->run->FMO_only) {
     // Step 4. Construct model Hamiltonian
