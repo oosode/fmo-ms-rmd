@@ -1469,37 +1469,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     if (fmr->master_rank) {
         printf("Finished with FMO calculations.\n\n");
     }
-/*
-    // *** Reduce the energies from the parallel NWChem calls *** //
-    double *rbuffer;
-    //if (FORCE) rbuffer = new double [MAX_SIZE];
-    //else       rbuffer = new double [MAX_SIZE];
-    if (FORCE) rbuffer = new double [n_dimers_sq*3*natoms];
-    else       rbuffer = new double [n_dimers_sq];
-    // Monomers
-    for (int i=0; i<n_monomers; ++i) rbuffer[i] = 0.0;
-    MPI_Allreduce(monomer_energies, rbuffer, n_monomers, MPI_DOUBLE, MPI_SUM, fmr->world);
-    for (int i=0; i<n_monomers; ++i) monomer_energies[i] = rbuffer[i];
-    // Dimers
-    for (int i=0; i<n_dimers_sq; ++i) rbuffer[i] = 0.0;
-    MPI_Allreduce(dimer_energies, rbuffer, n_dimers_sq, MPI_DOUBLE, MPI_SUM, fmr->world);
-    for (int i=0; i<n_dimers_sq; ++i) dimer_energies[i] = rbuffer[i];
-    if (FORCE) {
-        // Monomers
-        for (int i=0; i<n_monomers*3*natoms; ++i) rbuffer[i] = 0.0;
-        MPI_Allreduce(monomer_gradients, rbuffer, n_monomers*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
-        for (int i=0; i<n_monomers*3*natoms; ++i) monomer_gradients[i] = rbuffer[i];
-        // Dimers
-        for (int i=0; i<n_dimers_sq*3*natoms; ++i) rbuffer[i] = 0.0;
-        MPI_Allreduce(dimer_gradients, rbuffer, n_dimers_sq*3*natoms, MPI_DOUBLE, MPI_SUM, fmr->world);
-        for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i] = rbuffer[i];
-    }
-    MPI_Barrier(fmr->world);
-    
-    delete [] rbuffer;
- */
+
     // *** Compute the FMO energies/forces for each state *** //
-    
     int didx;
     FILE *fs = fopen("fmr_calc.log", "a");
     //if (fmr->master_rank) {
@@ -1556,9 +1527,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                             dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],
                                             monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
                                             monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
-                                            //dimer_energies[nfragments*nfragments*istate + nfragments*ifrag + jfrag],
-                                            //monomer_energies[nfragments*istate + ifrag],
-                                            //monomer_energies[nfragments*istate + jfrag], etmp
                                             );
                                 }
                                 en_fmo2 += etmp*oc;
@@ -1570,7 +1538,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             }
         }
         fmo_energies[istate] = en_fmo1 + en_fmo2;
-
         
         // ** Do forces for this state ** //
         if (FORCE) {
@@ -1590,7 +1557,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     fmo_gradients[3*natoms*istate + 3*i]   += gx;
                                     fmo_gradients[3*natoms*istate + 3*i+1] += gy;
                                     fmo_gradients[3*natoms*istate + 3*i+2] += gz;
-                                    //printf("%f\n", fmo_gradients[3*natoms*istate + 3*i] );
                                 }
                             }
                         }
@@ -1616,23 +1582,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
                                     
                                     for (int i=0; i<natoms; ++i) {
-                                        double tmpx, tmpy, tmpz;
-                                        
-                                        //double dx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
-                                        //double dy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
-                                        //double dz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
                                         
                                         gx = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i];
                                         gy = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1];
                                         gz = dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2];
-                                        
-                                        //double m1x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i];
-                                        //double m1y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+1];
-                                        //double m1z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i+2];
-                                        
-                                        //double m2x = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
-                                        //double m2y = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+1];
-                                        //double m2z = monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i+2];
                                         
                                         gx -= monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(0+xa) + nc*nfragments*(0+xb) + nfragments*(0+xc) + ifrag)*3*natoms + 3*i] +
                                         monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag)*3*natoms + 3*i];
@@ -1644,12 +1597,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                         fmo_gradients[3*natoms*istate + 3*i]   += gx*oc;
                                         fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
                                         fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
-                                        
-                                        //printf("%f\n", fmo_gradients[3*natoms*istate + 3*i] );
-                                        
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dx,m1x,m2x,gx);
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dy,m1y,m2y,gy);
-                                        //fprintf(fs,"%15.10f,%15.10f,%15.10f,%15.10f,\n",dz,m1z,m2z,gz);
                                         
                                     }
                                 }
@@ -1671,17 +1618,17 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     //else       rbuffer = new double [MAX_SIZE];
     if (FORCE) rbuffer = new double [nstates*natoms*3];
     else       rbuffer = new double [nstates];
-    printf("Initialized rbuffer arrays...\n");
+    //printf("Initialized rbuffer arrays...\n");
     
     // FMO energies
     //printf("Reduced FMO energies...\n");
-    for (int i=0; i<nstates; ++i) { rbuffer[i] = 0.0; printf("ener0: %f\n",fmo_energies[i]); }
+    for (int i=0; i<nstates; ++i) rbuffer[i] = 0.0; 
     MPI_Allreduce(fmo_energies, rbuffer, nstates, MPI_DOUBLE, MPI_SUM, fmr->world);
-    for (int i=0; i<nstates; ++i) { fmo_energies[i] = rbuffer[i]; printf("ener: %f\n",fmo_energies[i]); }
+    for (int i=0; i<nstates; ++i) fmo_energies[i] = rbuffer[i];
     
     // FMO gradients
     if (FORCE) {
-        printf("Reduced FMO gradients...\n");
+        //printf("Reduced FMO gradients...\n");
         for (int i=0; i<nstates*natoms*3; ++i) rbuffer[i] = 0.0;
         MPI_Allreduce(fmo_gradients, rbuffer, nstates*natoms*3, MPI_DOUBLE, MPI_SUM, fmr->world);
         for (int i=0; i<nstates*natoms*3; ++i) fmo_gradients[i] = rbuffer[i];
