@@ -1467,13 +1467,21 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     double FMO_end = MPI_Wtime();
     MPI_Barrier(fmr->world);
     if (fmr->master_rank) {
-        printf("Finished with FMO calculations.\n\n");
+        printf("Finished with FMO calculations.\n");
+        printf("Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
     }
 
+    // Clock
+    MPI_Barrier(fmr->world);
+    double comp_start = MPI_Wtime();
+    
     // *** Compute the FMO energies/forces for each state *** //
+   
+    if (fmr->master_rank) {
+        printf("Compiling energies and gradients...\n");
+    }
     int didx;
     FILE *fs = fopen("fmr_calc.log", "a");
-    //if (fmr->master_rank) {
     for (int istate=0; istate<nstates; ++istate) {
         //printf("----- State %4d -----\n", istate);
         if (fmr->print_level > 1) {
@@ -1498,7 +1506,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 }
             }
         }
-
         if (fmr->print_level > 1) {
             fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
         }
@@ -1538,7 +1545,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             }
         }
         fmo_energies[istate] = en_fmo1 + en_fmo2;
-        
+
         // ** Do forces for this state ** //
         if (FORCE) {
             double gx, gy, gz;
@@ -1622,7 +1629,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     
     // FMO energies
     //printf("Reduced FMO energies...\n");
-    for (int i=0; i<nstates; ++i) rbuffer[i] = 0.0; 
+    for (int i=0; i<nstates; ++i) rbuffer[i] = 0.0;
     MPI_Allreduce(fmo_energies, rbuffer, nstates, MPI_DOUBLE, MPI_SUM, fmr->world);
     for (int i=0; i<nstates; ++i) fmo_energies[i] = rbuffer[i];
     
@@ -1711,10 +1718,12 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         }
     }
 #endif
-    
+
+    // Clock
+    MPI_Barrier(fmr->world);
+    double comp_end = MPI_Wtime();
     if (fmr->master_rank) {
-        printf(" Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
-        //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
+        printf("Time for FMO compilation: %.4f seconds\n\n", comp_end - comp_start);
     }
 }
 

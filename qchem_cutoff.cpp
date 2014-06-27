@@ -956,7 +956,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     atnum++;
                 }
                 fclose(fs);
-                
             }
         }
         ++index_dim;
@@ -969,8 +968,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     if (fmr->master_rank) {
         printf("Finished with FMO calculations.\n");
         printf("Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
-        //printf(" Proc %d: Time for FMO: %.4f seconds\n", my_rank, FMO_end - FMO_start);
-        //    }
     }
 
     // Clock
@@ -981,7 +978,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
    
     if (fmr->master_rank) {
         printf("Compiling energies and gradients...\n");
-    } 
+    }
     int didx;
     FILE *fs = fopen("fmr_calc.log", "a");
     for (int istate=0; istate<nstates; ++istate) {
@@ -997,7 +994,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     
                     if (x==0 && y==0 && z==0) {
                         for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                            if (fmr->print_level > 1 ) {
+                            if (fmr->print_level > 1) {
                                 fprintf(fs,"Rank %3d - FRAG I:%4d | %16.10f\n", fmr->my_rank,
                                         ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
                             }
@@ -1009,7 +1006,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             }
         }
         if (fmr->print_level > 1) {
-            fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n", fmr->my_rank);
+            fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
         }
         double en_fmo2 = 0.0;
         
@@ -1037,7 +1034,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                             monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
                                             monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
                                             );
-              
                                 }
                                 en_fmo2 += etmp*oc;
                             }
@@ -1047,7 +1043,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                 }
             }
         }
-        
         fmo_energies[istate] = en_fmo1 + en_fmo2;
 
         // ** Do forces for this state ** //
@@ -1135,7 +1130,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     //printf("Reduced FMO energies...\n");
     for (int i=0; i<nstates; ++i) rbuffer[i] = 0.0;
     MPI_Allreduce(fmo_energies, rbuffer, nstates, MPI_DOUBLE, MPI_SUM, fmr->world);
-    for (int i=0; i<nstates*natoms*3; ++i) fmo_energies[i] = rbuffer[i];
+    for (int i=0; i<nstates; ++i) fmo_energies[i] = rbuffer[i];
     
     // FMO gradients
     if (FORCE) {
