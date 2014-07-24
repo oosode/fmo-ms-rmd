@@ -57,7 +57,11 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     int statemonomers=nfragments*nstates;
     int idx = 0;
     int pos,idxj,idxi;
-    
+   
+/*This is in the new branch
+Distributed
+*/
+ 
     //run->n_monomers = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers and monomers, for now
     int nmonomers = nfragments * na*nb*nc;
