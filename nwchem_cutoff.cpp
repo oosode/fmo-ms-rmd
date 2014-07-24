@@ -819,20 +819,20 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     
     // ** Allocate energies and zero ** //
     if (fmo_energies == NULL)     fmo_energies     = new double [nstates];
-    if (monomer_energies == NULL) monomer_energies = new double [n_monomers];
-    if (dimer_energies == NULL)   dimer_energies   = new double [n_dimers_sq];
+    //if (monomer_energies == NULL) monomer_energies = new double [n_monomers];
+    //if (dimer_energies == NULL)   dimer_energies   = new double [n_dimers_sq];
     for (int i=0; i<nstates; ++i)     fmo_energies[i]     = 0.0;
-    for (int i=0; i<n_monomers; ++i)  monomer_energies[i] = 0.0;
-    for (int i=0; i<n_dimers_sq; ++i) dimer_energies[i]   = 0.0;
+    //for (int i=0; i<n_monomers; ++i)  monomer_energies[i] = 0.0;
+    //for (int i=0; i<n_dimers_sq; ++i) dimer_energies[i]   = 0.0;
     
     if (FORCE) {
         // ** Allocate gradients and zero ** //
         if (fmo_gradients == NULL)     fmo_gradients     = new double[nstates*3*natoms];
-        if (monomer_gradients == NULL) monomer_gradients = new double[n_monomers*3*natoms];
-        if (dimer_gradients == NULL)   dimer_gradients   = new double[n_dimers_sq*3*natoms];
+        //if (monomer_gradients == NULL) monomer_gradients = new double[n_monomers*3*natoms];
+        //if (dimer_gradients == NULL)   dimer_gradients   = new double[n_dimers_sq*3*natoms];
         for (int i=0; i<nstates*3*natoms; ++i)     fmo_gradients[i]     = 0.0;
-        for (int i=0; i<n_monomers*3*natoms; ++i)  monomer_gradients[i] = 0.0;
-        for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i]   = 0.0;
+        //for (int i=0; i<n_monomers*3*natoms; ++i)  monomer_gradients[i] = 0.0;
+        //for (int i=0; i<n_dimers_sq*3*natoms; ++i) dimer_gradients[i]   = 0.0;
     }
     
     // ** Determine load balance ** //
@@ -846,6 +846,18 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         ifrom_mono = my_rank*div + rem;
         ito_mono   = ifrom_mono + div;
     }
+    
+    //
+    //Only allocate monomer energies and gradients as needed
+    int mondistr = ito_mono - ifrom_mono;
+    if (monomer_energies == NULL) monomer_energies = new double [mondistr];
+    for (int i=0; i<mondistr; ++i)  monomer_energies[i] = 0.0;
+    if (FORCE) {
+        if (monomer_gradients == NULL) monomer_gradients = new double[n_monomers*3*natoms];
+        for (int i=0; i<mondistr*3*natoms; ++i)  monomer_gradients[i] = 0.0;
+    }
+    //
+    
     div = n_dimers / fmr->world_size;
     rem = n_dimers % fmr->world_size;
     int ifrom_dim, ito_dim;
@@ -856,6 +868,16 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         ifrom_dim = my_rank*div + rem;
         ito_dim   = ifrom_dim + div;
     }
+    //
+    //Only allocate dimer energies and gradients as needed
+    int dimdistr = ito_dim - ifrom_dim;
+    if (dimer_energies == NULL)   dimer_energies   = new double [dimdistr];
+    for (int i=0; i<dimdistr; ++i) dimer_energies[i]   = 0.0;
+    if (FORCE) {
+        if (dimer_gradients == NULL) dimer_gradients = new double[dimdistr*3*natoms];
+        for (int i=0; i<dimdistr*3*natoms; ++i)  dimer_gradients[i] = 0.0;
+    }
+    //
     
     // Clock
     MPI_Barrier(fmr->world);
