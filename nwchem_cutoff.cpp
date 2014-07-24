@@ -1169,6 +1169,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
             
+            //** new index variable **//
+            int index = index_dim - ifrom_dim;
+            
             int istate;
             int x,y,z;
             int ifrag,jfrag;
@@ -1230,10 +1233,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                         // save symmetrized for zeroth unit cell
                         if (x==0 && y==0 && z==0) {
-                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                            dimer_energies[index] = en;
+                            dimer_energies[index] = en;
                         } else {
-                            dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                            dimer_energies[index] = en;
                         }
                         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                         
@@ -1268,16 +1271,16 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 
                                 // store symmetrically for zeroth unit cell
                                 if (x==0 && y==0 && z==0) {
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                 } else {
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                    dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                    dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                 }
                             }
                         }
@@ -1332,16 +1335,16 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                         
                                         // store symmetrically for zeroth unit cell
                                         if (x==0 && y==0 && z==0) {
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                         } else {
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                         }
                                     }
                                 }
@@ -1356,10 +1359,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                 // save symmetrized for zeroth unit cell
                                 if (x==0 && y==0 && z==0) {
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                    dimer_energies[index] = en;
+                                    dimer_energies[index] = en;
                                 } else {
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                    dimer_energies[index] = en;
                                 }
                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                 
@@ -1391,16 +1394,16 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                         
                                         // store symmetrically for zeroth unit cell
                                         if (x==0 && y==0 && z==0) {
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                         } else {
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                            dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                            dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                                         }
                                     }
                                 }
@@ -1414,10 +1417,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                 // save symmetrized for zeroth unit cell
                                 if (x==0 && y==0 && z==0) {
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag] = en;
+                                    dimer_energies[index] = en;
+                                    dimer_energies[index] = en;
                                 } else {
-                                    dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] = en;
+                                    dimer_energies[index] = en;
                                 }
                                 //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                                 
@@ -1466,16 +1469,16 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             //gz *= -mmq;
                             // store symmetrically for zeroth unit cell
                             if (x==0 && y==0 && z==0) {
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                             } else {
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                             }
                         }
                     }
