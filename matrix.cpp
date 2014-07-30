@@ -217,7 +217,7 @@ void Matrix::buildHX() {
   }
 
 
-  // ** Initialize, put FMO energies into diagonal ** //
+  // ** Initialize, put FMO gradients into diagonal ** //
   for (int I=0; I<nstates; ++I) {
     for (int i=0; i<natoms; ++i) {
       HX[I][I][3*i]   = fmr->run->fmo_gradients[I*3*natoms + 3*i]; 
