@@ -46,6 +46,8 @@ class Run : protected Pointers {
    int n_dimers_sq;           // ((# fragments) * (# fragments) ) * (# states)
    int    *monomer_queue;     // list of monomers to calculate
    int    *dimer_queue;       // list of dimers to calculate
+   int    *monomer_proc;      // list of monomers to calculate for each processor
+   int    *dimer_proc;        // list of dimers to calculate for each processor
    double *fmo_energies;      // FMO energies for each state
    double *monomer_energies;  // FMO monomer energies
    double *dimer_energies;    // FMO dimer energies

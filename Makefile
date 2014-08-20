@@ -7,12 +7,13 @@
 # ** User defined variables **
 # ----------------------------------------------- #
 # MPI C++ compiler
-CPP = mpicxx
+#CPP = mpicxx
+CPP = mpicc-openmpi-mp 
 #CPP = CC
 
 # Debugging flags
-#DEBUG = -g -DFMR_DEBUG
-DEBUG = -g 
+DEBUG = -g -DFMR_DEBUG
+#DEBUG = -g 
 
 # Compiler flags
 CFLAGS = -O3 $(DEBUG) -DMPICH_IGNORE_CXX_SEEK
