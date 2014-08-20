@@ -1217,7 +1217,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         }
     }
 #endif
-   
+
     // Clock
     MPI_Barrier(fmr->world);
     double comp_end = MPI_Wtime();
