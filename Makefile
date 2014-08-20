@@ -7,7 +7,8 @@
 # ** User defined variables **
 # ----------------------------------------------- #
 # MPI C++ compiler
-CPP = mpicxx
+#CPP = mpicxx
+CPP = mpicc-openmpi-mp 
 #CPP = CC
 
 # Debugging flags
