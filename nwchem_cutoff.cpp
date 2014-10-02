@@ -153,7 +153,7 @@ Distributed
                         d=sqrt(d2);
                         
                         if (ifrag==0 and jfrag==1) {
-                            printf("right here %f\n",d);
+                            //printf("right here %f\n",d);
                         }
                         
                         if (d <= run->cut_dimer) {
@@ -163,7 +163,7 @@ Distributed
                             //                            idx =atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
                             for (int state=0; state<nstates; ++state) {
                                 idx=atom->getDimerIndex(state,x,y,z,ifrag,jfrag);
-                                printf("index %d:  ifrag: %d jfrag: %d\n",idx,ifrag,jfrag);
+                                //printf("index %d:  ifrag: %d jfrag: %d\n",idx,ifrag,jfrag);
                                 run->dimer_list[statedimers] = idx;
                                 run->dimer_queue[idx] = 1;
                                 statedimers++;
@@ -483,15 +483,17 @@ Distributed
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
             
             run->dimer_proc[index_dim-ifrom_dim]=idim;
-            printf("rank: %d idim: %3d\n",fmr->my_rank,idim);
+            //printf("rank: %d idim: %3d\n",fmr->my_rank,idim);
             
             int istate;
             int x,y,z;
             int ifrag,jfrag;
             
             atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
-            
-            printf("%d %d %d %d %d\n", ifrag, jfrag, x+xa, y+xb, z+xc);
+	    //atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag); 
+
+            //printf("testing:%2d rank:%d state:%d ifrag:%d jfrag;%d x:%d y:%d z:%d\n", idim, fmr->my_rank,istate, ifrag, jfrag, x, y, z);
+            //
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
             for (int i=0; i<natoms; ++i) {
@@ -520,7 +522,7 @@ Distributed
             
             // Get name of job
             sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-            printf(" %s %s %03d %03d %d %d %d\n",jobname,snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+            //printf(" %s %s %03d %03d %d %d %d\n",jobname,snum, ifrag, jfrag, x+xa, y+xb, z+xc);
             sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
@@ -1183,8 +1185,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     
     // ***** Loop through dimers ***** //
     for (int idim=0; idim<n_dimers_sq; idim++) {
-        
-        if (run->dimer_list[idim] == -1) continue;
+       
+        if (run->dimer_queue[idim] == 0) continue; 
+        //if (run->dimer_list[idim] == -1) continue;
         
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
             
@@ -1195,7 +1198,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             int x,y,z;
             int ifrag,jfrag;
             
-            atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
+            //atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
+	    atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
+
+            //printf("testing2:%2d rank:%d state:%d ifrag:%d jfrag;%d x:%d y:%d z:%d\n", idim, fmr->my_rank,istate, ifrag, jfrag, x, y, z);
             
             char state_directory[256];
             char snum[16];
@@ -1577,7 +1583,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 }
             }
         }
-    
+        //printf("state:%d mon_en:%lf\n",istate,en_fmo1); 
     
         if (fmr->print_level > 1) {
             fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
@@ -1599,7 +1605,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             
                               if (dimer_queue[idx] == 1) {
                                   
-                                  printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
+                                  //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
                                     
                                 //overcount for unit cell
                                 double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
@@ -1608,7 +1614,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 den = men1 = men2 = 0.0;
                                   
                                 for (int i=0; i<ddiv+1; i++) {
-                                    if (dimer_proc[i]==idx) { den = dimer_energies[i]; break; }
+                                    if (dimer_proc[i]==idx) { den = dimer_energies[i]; 
+					//printf("ddiv:%d state:%d rank:%d  didx:%4d  idxi:%4d  idxj:%4d en:%f\n",i,istate,fmr->my_rank,idx,idxi,idxj,den);
+					break; }
                                 }
                                 for (int i=0; i<mdiv+1; i++) {
                                     if (monomer_proc[i] == idxi) men1 = monomer_energies[i];
@@ -1619,7 +1627,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 double etmp = den - men1 - men2;
 
                                 if (fmr->print_level > 1) {
-                                    fprintf(fs,"Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", fmr->my_rank, ifrag, jfrag,x,y,z,
+                                    fprintf(fs,"Didx:%2d  idxi:%2d  idxj:%2d  State:%d Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", idx, idxi, idxj,istate, fmr->my_rank, ifrag, jfrag,x,y,z,
                                             den, men1, men2, etmp);
                                 }
                                   
@@ -1633,7 +1641,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             }
         }
         fmo_energies[istate] = en_fmo1 + en_fmo2;
-        printf("rank %d FMO ener BUGBUG: %f\n",fmr->my_rank,fmo_energies[istate]);
+        //printf("state: %d FMO ener BUGBUG: %f\n",istate,fmo_energies[istate]);
 
         // ** Do forces for this state ** //
         if (FORCE) {
@@ -1649,7 +1657,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             for (int ifrag=0; ifrag<nfragments; ++ifrag) {
                                 
                                 midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
-                                printf("midx:%d\n",midx);
+                                //printf("midx:%d\n",midx);
                                 //if (monomer_queue[midx] == 1) {
                                     
                                     gx = gy = gz = 0.0;
@@ -1693,7 +1701,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             
                                 if (dimer_queue[idx] == 1) {
                                     
-                                        printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
+                                        //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
                                     
                                         //overcount for unit cell
                                         double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
