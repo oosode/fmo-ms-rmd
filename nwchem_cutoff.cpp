@@ -262,7 +262,8 @@ Distributed
             sprintf(snum, "%02d", istate);
             sprintf(state_directory, "state_%02d", istate);
             // Make the directory...
-            sprintf(make_directory, "mkdir -p %s", state_directory);
+//            sprintf(make_directory, "mkdir -p %s", state_directory);
+            sprintf(make_directory, "mkdir -p %s/%s", run->scratch_dir,state_directory);
             int ierr = system(make_directory);
             
             // Get name of file to open
@@ -271,7 +272,7 @@ Distributed
             
             // Get name of job
             sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
-            sprintf(filename, "%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, x+xa, y+xb, z+xc);
+            sprintf(filename, "%s/%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", run->scratch_dir,state_directory, snum, ifrag, x+xa, y+xb, z+xc);
             
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
@@ -513,7 +514,8 @@ Distributed
             sprintf(snum, "%02d", istate);
             sprintf(state_directory, "state_%02d", istate);
             // Make the directory...
-            sprintf(make_directory, "mkdir -p %s", state_directory);
+//            sprintf(make_directory, "mkdir -p %s", state_directory);
+            sprintf(make_directory, "mkdir -p %s/%s", run->scratch_dir,state_directory);
             int ierr = system(make_directory);
             
             // Get name of file to open
@@ -523,7 +525,7 @@ Distributed
             // Get name of job
             sprintf(jobname, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
             //printf(" %s %s %03d %03d %d %d %d\n",jobname,snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-            sprintf(filename, "%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
+            sprintf(filename, "%s/%s/fmo_st%s_d%03d-%03d_cell.%d.%d.%d.nw", run->scratch_dir, state_directory, snum, ifrag, jfrag, x+xa, y+xb, z+xc);
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
                 char tmpstr[256];
@@ -948,7 +950,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             
             // change directory
             char directory[512];
-            sprintf(directory, "%s/", state_directory);
+//            sprintf(directory, "%s/", state_directory);
+            sprintf(directory, "%s/%s/", scratch_dir,state_directory);
             chdir(directory);
             
             //printf("%s %2d\n",jobname,fmr->my_rank);
@@ -1217,6 +1220,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             // change directory
             char directory[512];
             sprintf(directory, "%s/", state_directory);
+	    sprintf(directory, "%s/%s/", scratch_dir,state_directory);
             chdir(directory);
             
             //printf("%s %2d %4d %4d\n",jobname,fmr->my_rank,index_dim,idim);
@@ -1530,7 +1534,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     // Clock
     MPI_Barrier(fmr->world);
     double comp_start = MPI_Wtime();
-    
+   
+    chdir(fmr->home_dir);
+ 
     // *** Compute the FMO energies/forces for each state *** //
    
     if (fmr->master_rank) {

@@ -8,6 +8,7 @@
 #include "dynamics.h"
 #include "umbrella.h"
 #include "boundary.h"
+#include <unistd.h>
 
 #define MAX_LENGTH   256
 #define SMALL_LENGTH 128

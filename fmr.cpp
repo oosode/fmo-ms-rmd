@@ -10,6 +10,7 @@
 #include "cec.h"
 #include "umbrella.h"
 #include "boundary.h"
+#include <unistd.h>
 
 using namespace FMR_NS;
 
@@ -20,6 +21,8 @@ using namespace FMR_NS;
 FMR::FMR(int argc, char **argv, MPI_Comm communicator)
 {
 
+  getcwd(home_dir, sizeof(home_dir));
+
   // Handle MPI stuff
   world = communicator;
   MPI_Comm_size(world, &world_size);
@@ -29,8 +32,10 @@ FMR::FMR(int argc, char **argv, MPI_Comm communicator)
     printf("\n----------------------------------------------\n");
     printf("               FMO-MS-RMD\n");
     printf("          Author: Adrian W. Lange\n"); 
+    printf("           Author: Olaseni Sode\n");
     printf("----------------------------------------------\n");
-    printf("FMO-MS-RMD on %d MPI ranks.\n\n", world_size);
+    printf("FMO-MS-RMD on %d MPI ranks.\n", world_size);
+    printf("Home directory: %s\n\n", home_dir);
   }
 
   // Create some of the basic pointers
