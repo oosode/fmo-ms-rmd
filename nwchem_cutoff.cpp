@@ -230,19 +230,24 @@ Distributed
     
     // ***** Loop through monomers ***** //
     for (int imon=0; imon<run->n_monomers_tmp; imon++) {
-        
-        if (run->monomer_queue[imon] == 0) continue;
+       
+        //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+        //This line works in gas-phase calculations but not with PBC 
+	//if (run->monomer_queue[imon] == 0) continue;
+        if (run->monomer_list[imon] == -1) continue;
         
         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
             
-            run->monomer_proc[index_mono-ifrom_mono]=imon;
-            
+            //run->monomer_proc[index_mono-ifrom_mono]=imon;
+            run->monomer_proc[index_mono-ifrom_mono]=run->monomer_list[imon];
+        
             int istate;
             int x,y,z;
             int ifrag;
             
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
-            
+//	    printf("testing:%2d rank:%d state:%d ifrag:%d x:%d y:%d z:%d\n", imon, fmr->my_rank,istate, ifrag, x, y, z); 
+
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
             for (int i=0; i<natoms; ++i) {
@@ -308,6 +313,14 @@ Distributed
                         
                         for (int iatom=0; iatom<natoms; ++iatom) {
                             if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+
+
+				//BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+				//if statement for distance criteria between ifrag and loop frag
+				//if distance is greater than cutoff skip charges
+				//else do normal execution
+				//BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+
                                 double mmq = atom->getCharge(iatom, istate);
                                 fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
                                         atom->coord[3*iatom] + x0*cellA,
@@ -454,7 +467,7 @@ Distributed
             }
             
             // scratch section
-            fprintf(fs, "scratch_dir %s\n\n", scratch);
+            fprintf(fs, "scratch_dir %s\n", scratch);
             fprintf(fs, "permanent_dir %s\n\n", scratch);
             
             // basis set section
@@ -750,6 +763,8 @@ Distributed
             // scratch section
             fprintf(fs, "scratch_dir %s\n",scratch);
             fprintf(fs, "permanent_dir %s\n\n",scratch);
+
+            fprintf(fs, "memory 1 gb\n\n");
             
             // basis set section
             fprintf(fs, "basis\n");
@@ -1157,6 +1172,14 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                         //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
                         atnum++;
                     }
+
+                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+                    //if statement for distance criteria between ifrag and loop frag
+                    //if distance is greater than cutoff skip charges
+                    //else do normal execution
+                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+
+
                     
                     //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
                     
@@ -1566,10 +1589,11 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
  
                             midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                             //if (monomer_queue[midx] == 1) {
-                            
+//			    printf("monomer_idx:%8d\n",midx);                         
                             men1=0.0;
                             
                             for (int i=0; i<mdiv+1; i++) {
+//				printf("proc:%d\n",monomer_proc[i]);
                                 if (monomer_proc[i] == midx) { men1 = monomer_energies[i]; break; }
                             }
                                     
