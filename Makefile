@@ -12,14 +12,14 @@ CPP = mpicc-openmpi-mp
 #CPP = CC
 
 # Debugging flags
-DEBUG = -g -DFMR_DEBUG
-#DEBUG = -g 
+#DEBUG = -g -DFMR_DEBUG
+DEBUG = -g 
 
 # Compiler flags
 CFLAGS = -O3 $(DEBUG) -DMPICH_IGNORE_CXX_SEEK
 
 # Libraries, if any
-LIBDIR = -L/usr/lib
+#IBDIR = -L/usr/lib
 LIB = -lm -llapack
 
 # ----------------------------------------------- #
