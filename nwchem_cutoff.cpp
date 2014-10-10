@@ -50,8 +50,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     
     bool python    = false;
     
-    double comi[3],comj[3];
-    double massi,massj,tmp,d2,d;
+    double comi[3],comj[3],comk[3];
+    double massi,massj,massk,tmp,d2,d;
     
     int statedimers=0;
     int statemonomers=nfragments*nstates;
@@ -304,30 +304,67 @@ Distributed
                 }
             }
             fprintf(fs, "end\n\n");
-            
+
+
+            comi[0] = comi[1] = comi[2] = massi = 0.0;
+            for (int i=0; i<natoms; ++i) {
+              if (atom->fragment[i] == ifrag) {
+                comi[0] += atom->mass[i] * atom->coord[3*j+0];
+                comi[1] += atom->mass[i] * atom->coord[3*j+1];
+                comi[2] += atom->mass[i] * atom->coord[3*j+2];
+                massi += atom->mass[i];
+              }
+            }
+            comi[0] /= massi;
+            comi[1] /= massi;
+            comi[2] /= massi;
+           
             // bq section
             fprintf(fs, "bq units angstrom\n");
             for (int x0=-afield; x0<=afield; ++x0) {
                 for (int y0=-bfield; y0<=bfield; ++y0) {
                     for (int z0=-cfield; z0<=cfield; ++z0) {
-                        
-                        for (int iatom=0; iatom<natoms; ++iatom) {
-                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+                       
+                        for (int jfrag=0; jfrag<nfragments; ++jfrag) { 
+
+			    if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
+
+				//determine COM of fragment J			    
+                                comj[0] = comj[1] = comj[2] = massj = 0.0;
+                                for (int j=0; j<natoms; ++j) {
+                                  if (atom->fragment[jatom] == jfrag) {
+                                    comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
+                                    comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
+                                    comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
+                                    massj += atom->mass[j];
+                                  }
+                                }
+                                comj[0] /= massj;
+                                comj[1] /= massj;
+                                comj[2] /= massj;
 
 
-				//BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
-				//if statement for distance criteria between ifrag and loop frag
-				//if distance is greater than cutoff skip charges
-				//else do normal execution
-				//BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+				//COM distance from fragment I to J
+                                d2 = 0;
+                                for (int l=0; l<3; ++l) {
+                                  tmp = comj[l]-comi[l];
+                                  d2 += tmp*tmp;
+                                }
+                                d=sqrt(d2);
 
-                                double mmq = atom->getCharge(iatom, istate);
-                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                        atom->coord[3*iatom] + x0*cellA,
-                                        atom->coord[3*iatom+1] + y0*cellB,
-                                        atom->coord[3*iatom+2] + z0*cellC,
-                                        mmq
-                                        );
+			        if (d>25.0) continue;
+
+				for (int jatom=0; jatom<natoms; ++jatom) {
+                                  if (atom->fragment[jatom] == jfrag) {
+                                    double mmq = atom->getCharge(iatom, istate);
+                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                            atom->coord[3*jatom+0] + x0*cellA,
+                                            atom->coord[3*jatom+1] + y0*cellB,
+                                            atom->coord[3*jatom+2] + z0*cellC,
+                                            mmq
+                                           );
+				  }
+				}
                             }
                         }
                         
@@ -426,6 +463,8 @@ Distributed
             fprintf(fs, "end\n\n");
             
             // bq section
+            //
+
             fprintf(fs, "bq units angstrom\n");
             fprintf(fs, "force %s.nw.field\n", jobname);
             for (int x0=-afield; x0<=afield; ++x0) {
