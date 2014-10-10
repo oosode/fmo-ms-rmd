@@ -57,11 +57,11 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     int statemonomers=nfragments*nstates;
     int idx = 0;
     int pos,idxj,idxi;
-   
-/*This is in the new branch
-Distributed
-*/
- 
+    
+    /*This is in the new branch
+     Distributed
+     */
+    
     //run->n_monomers = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers and monomers, for now
     int nmonomers = nfragments * na*nb*nc;
@@ -230,24 +230,24 @@ Distributed
     
     // ***** Loop through monomers ***** //
     for (int imon=0; imon<run->n_monomers_tmp; imon++) {
-       
+        
         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-        //This line works in gas-phase calculations but not with PBC 
-	//if (run->monomer_queue[imon] == 0) continue;
+        //This line works in gas-phase calculations but not with PBC
+        //if (run->monomer_queue[imon] == 0) continue;
         if (run->monomer_list[imon] == -1) continue;
         
         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
             
             //run->monomer_proc[index_mono-ifrom_mono]=imon;
             run->monomer_proc[index_mono-ifrom_mono]=run->monomer_list[imon];
-        
+            
             int istate;
             int x,y,z;
             int ifrag;
             
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
-//	    printf("testing:%2d rank:%d state:%d ifrag:%d x:%d y:%d z:%d\n", imon, fmr->my_rank,istate, ifrag, x, y, z); 
-
+            //	    printf("testing:%2d rank:%d state:%d ifrag:%d x:%d y:%d z:%d\n", imon, fmr->my_rank,istate, ifrag, x, y, z);
+            
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
             for (int i=0; i<natoms; ++i) {
@@ -267,7 +267,7 @@ Distributed
             sprintf(snum, "%02d", istate);
             sprintf(state_directory, "state_%02d", istate);
             // Make the directory...
-//            sprintf(make_directory, "mkdir -p %s", state_directory);
+            //            sprintf(make_directory, "mkdir -p %s", state_directory);
             sprintf(make_directory, "mkdir -p %s/%s", run->scratch_dir,state_directory);
             int ierr = system(make_directory);
             
@@ -304,67 +304,67 @@ Distributed
                 }
             }
             fprintf(fs, "end\n\n");
-
-
+            
+            //determine COM of fragment I
             comi[0] = comi[1] = comi[2] = massi = 0.0;
             for (int i=0; i<natoms; ++i) {
-              if (atom->fragment[i] == ifrag) {
-                comi[0] += atom->mass[i] * atom->coord[3*j+0];
-                comi[1] += atom->mass[i] * atom->coord[3*j+1];
-                comi[2] += atom->mass[i] * atom->coord[3*j+2];
-                massi += atom->mass[i];
-              }
+                if (atom->fragment[i] == ifrag) {
+                    comi[0] += atom->mass[i] * atom->coord[3*i+0];
+                    comi[1] += atom->mass[i] * atom->coord[3*i+1];
+                    comi[2] += atom->mass[i] * atom->coord[3*i+2];
+                    massi += atom->mass[i];
+                }
             }
             comi[0] /= massi;
             comi[1] /= massi;
             comi[2] /= massi;
-           
+            
             // bq section
             fprintf(fs, "bq units angstrom\n");
             for (int x0=-afield; x0<=afield; ++x0) {
                 for (int y0=-bfield; y0<=bfield; ++y0) {
                     for (int z0=-cfield; z0<=cfield; ++z0) {
-                       
-                        for (int jfrag=0; jfrag<nfragments; ++jfrag) { 
-
-			    if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
-
-				//determine COM of fragment J			    
+                        
+                        for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+                            
+                            if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
+                                
+                                //determine COM of fragment J
                                 comj[0] = comj[1] = comj[2] = massj = 0.0;
                                 for (int j=0; j<natoms; ++j) {
-                                  if (atom->fragment[jatom] == jfrag) {
-                                    comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
-                                    comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
-                                    comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
-                                    massj += atom->mass[j];
-                                  }
+                                    if (atom->fragment[j] == jfrag) {
+                                        comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
+                                        comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
+                                        comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
+                                        massj += atom->mass[j];
+                                    }
                                 }
                                 comj[0] /= massj;
                                 comj[1] /= massj;
                                 comj[2] /= massj;
-
-
-				//COM distance from fragment I to J
+                                
+                                
+                                //COM distance from fragment I to J
                                 d2 = 0;
                                 for (int l=0; l<3; ++l) {
-                                  tmp = comj[l]-comi[l];
-                                  d2 += tmp*tmp;
+                                    tmp = comj[l]-comi[l];
+                                    d2 += tmp*tmp;
                                 }
                                 d=sqrt(d2);
-
-			        if (d>25.0) continue;
-
-				for (int jatom=0; jatom<natoms; ++jatom) {
-                                  if (atom->fragment[jatom] == jfrag) {
-                                    double mmq = atom->getCharge(iatom, istate);
-                                    fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                            atom->coord[3*jatom+0] + x0*cellA,
-                                            atom->coord[3*jatom+1] + y0*cellB,
-                                            atom->coord[3*jatom+2] + z0*cellC,
-                                            mmq
-                                           );
-				  }
-				}
+                                
+                                if (d>25.0) continue;
+                                
+                                for (int jatom=0; jatom<natoms; ++jatom) {
+                                    if (atom->fragment[jatom] == jfrag) {
+                                        double mmq = atom->getCharge(jatom, istate);
+                                        fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                                atom->coord[3*jatom+0] + x0*cellA,
+                                                atom->coord[3*jatom+1] + y0*cellB,
+                                                atom->coord[3*jatom+2] + z0*cellC,
+                                                mmq
+                                                );
+                                    }
+                                }
                             }
                         }
                         
@@ -463,23 +463,52 @@ Distributed
             fprintf(fs, "end\n\n");
             
             // bq section
-            //
-
             fprintf(fs, "bq units angstrom\n");
             fprintf(fs, "force %s.nw.field\n", jobname);
             for (int x0=-afield; x0<=afield; ++x0) {
                 for (int y0=-bfield; y0<=bfield; ++y0) {
                     for (int z0=-cfield; z0<=cfield; ++z0) {
                         
-                        for (int iatom=0; iatom<natoms; ++iatom) {
-                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
-                                double mmq = atom->getCharge(iatom, istate);
-                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
-                                        atom->coord[3*iatom] + x0*cellA,
-                                        atom->coord[3*iatom+1] + y0*cellB,
-                                        atom->coord[3*iatom+2] + z0*cellC,
-                                        mmq
-                                        );
+                        for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+                            
+                            if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
+                                
+                                //determine COM of fragment J
+                                comj[0] = comj[1] = comj[2] = massj = 0.0;
+                                for (int j=0; j<natoms; ++j) {
+                                    if (atom->fragment[j] == jfrag) {
+                                        comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
+                                        comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
+                                        comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
+                                        massj += atom->mass[j];
+                                    }
+                                }
+                                comj[0] /= massj;
+                                comj[1] /= massj;
+                                comj[2] /= massj;
+                                
+                                
+                                //COM distance from fragment I to J
+                                d2 = 0;
+                                for (int l=0; l<3; ++l) {
+                                    tmp = comj[l]-comi[l];
+                                    d2 += tmp*tmp;
+                                }
+                                d=sqrt(d2);
+                                
+                                if (d>25.0) continue;
+                                
+                                for (int jatom=0; jatom<natoms; ++jatom) {
+                                    if (atom->fragment[jatom] == jfrag) {
+                                        double mmq = atom->getCharge(jatom, istate);
+                                        fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                                atom->coord[3*jatom+0] + x0*cellA,
+                                                atom->coord[3*jatom+1] + y0*cellB,
+                                                atom->coord[3*jatom+2] + z0*cellC,
+                                                mmq
+                                                );
+                                    }
+                                }
                             }
                         }
                         
@@ -543,8 +572,8 @@ Distributed
             int ifrag,jfrag;
             
             atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
-	    //atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag); 
-
+            //atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
+            
             //printf("testing:%2d rank:%d state:%d ifrag:%d jfrag;%d x:%d y:%d z:%d\n", idim, fmr->my_rank,istate, ifrag, jfrag, x, y, z);
             //
             // Determine the charged reactive fragment for this state
@@ -566,7 +595,7 @@ Distributed
             sprintf(snum, "%02d", istate);
             sprintf(state_directory, "state_%02d", istate);
             // Make the directory...
-//            sprintf(make_directory, "mkdir -p %s", state_directory);
+            //            sprintf(make_directory, "mkdir -p %s", state_directory);
             sprintf(make_directory, "mkdir -p %s/%s", run->scratch_dir,state_directory);
             int ierr = system(make_directory);
             
@@ -802,7 +831,7 @@ Distributed
             // scratch section
             fprintf(fs, "scratch_dir %s\n",scratch);
             fprintf(fs, "permanent_dir %s\n\n",scratch);
-
+            
             fprintf(fs, "memory 1 gb\n\n");
             
             // basis set section
@@ -862,6 +891,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     int xb	 = fmr->atom->nb;
     int xc 	 = fmr->atom->nc;
     
+    int cellA      = fmr->atom->cellA;
+    int cellB      = fmr->atom->cellB;
+    int cellC      = fmr->atom->cellC;
+    
     int nafield	 = 2*fmr->atom->afield + 1;
     int nbfield	 = 2*fmr->atom->bfield + 1;
     int ncfield	 = 2*fmr->atom->cfield + 1;
@@ -869,6 +902,9 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     int afield     = fmr->atom->afield;
     int bfield     = fmr->atom->bfield;
     int cfield     = fmr->atom->cfield;
+    
+    double comi[3],comj[3],comk[3];
+    double massi,massj,massk,tmp,d2,d;
     
     bool python    = false;
     
@@ -1004,7 +1040,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             
             // change directory
             char directory[512];
-//            sprintf(directory, "%s/", state_directory);
+            //            sprintf(directory, "%s/", state_directory);
             sprintf(directory, "%s/%s/", scratch_dir,state_directory);
             chdir(directory);
             
@@ -1203,43 +1239,77 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
                 int atnum;
                 
+                //determine COM of fragment I
+                comi[0] = comi[1] = comi[2] = massi = 0.0;
+                for (int i=0; i<natoms; ++i) {
+                    if (atom->fragment[i] == ifrag) {
+                        comi[0] += atom->mass[i] * (atom->coord[3*i+0] + x*cellA);
+                        comi[1] += atom->mass[i] * (atom->coord[3*i+1] + y*cellB);
+                        comi[2] += atom->mass[i] * (atom->coord[3*i+2] + z*cellC);
+                        massi += atom->mass[i];
+                    }
+                }
+                comi[0] /= massi;
+                comi[1] /= massi;
+                comi[2] /= massi;
+                
                 atnum = 0; // index of non-QM atom for storing gradient
                 fgets(line, MAX_LENGTH, fs); // skip initial comment line
-                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
-                    // Advance atnum until it matches as a non-QM atom index for this monomer fragment
-                    while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
-                        //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
-                        atnum++;
-                    }
-
-                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
-                    //if statement for distance criteria between ifrag and loop frag
-                    //if distance is greater than cutoff skip charges
-                    //else do normal execution
-                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
-
-
-                    
-                    //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
-                    
-                    if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
-                        
-                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
-                            // gx,gy,gz = the electric field
-                            // multiply by charge to get force (i.e. negative gradient) on atom
-                            //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
-                            //gx *= -mmq;
-                            //gy *= -mmq;
-                            //gz *= -mmq;
-                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-                            monomer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
-                            monomer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
-                            monomer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                
+                for (int x0=-afield; x0<=afield; ++x0) {
+                    for (int y0=-bfield; y0<=bfield; ++y0) {
+                        for (int z0=-cfield; z0<=cfield; ++z0) {
+                            
+                            for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+                                
+                                if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
+                                    
+                                    //determine COM of fragment J
+                                    comj[0] = comj[1] = comj[2] = massj = 0.0;
+                                    for (int j=0; j<natoms; ++j) {
+                                        if (atom->fragment[j] == jfrag) {
+                                            comj[0] += atom->mass[j] * (atom->coord[3*j]   + x*cellA);
+                                            comj[1] += atom->mass[j] * (atom->coord[3*j+1] + y*cellB);
+                                            comj[2] += atom->mass[j] * (atom->coord[3*j+2] + z*cellC);
+                                            massj += atom->mass[j];
+                                        }
+                                    }
+                                    comj[0] /= massj;
+                                    comj[1] /= massj;
+                                    comj[2] /= massj;
+                                    
+                                    
+                                    //COM distance from fragment I to J
+                                    d2 = 0;
+                                    for (int l=0; l<3; ++l) {
+                                        tmp = comj[l]-comi[l];
+                                        d2 += tmp*tmp;
+                                    }
+                                    d=sqrt(d2);
+                                    
+                                    if (d>25.0) continue;
+                                    
+                                    for (int jatom=0; jatom<natoms; ++jatom) {
+                                        if (atom->fragment[jatom] == jfrag) {
+                                            
+                                            fgets(line, MAX_LENGTH, fs);
+                                            if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                                                
+                                                // gx,gy,gz = the electric field
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                monomer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                                monomer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                                                monomer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                                                //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                                                
+                                            }
+                                        }
+                                        atnum++;
+                                    }
+                                }
+                            }
                         }
                     }
-                    // Increment atnum for the next round
-                    atnum++;
                 }
                 fclose(fs);
             }
@@ -1250,8 +1320,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     
     // ***** Loop through dimers ***** //
     for (int idim=0; idim<n_dimers_sq; idim++) {
-       
-        if (run->dimer_queue[idim] == 0) continue; 
+        
+        if (run->dimer_queue[idim] == 0) continue;
         //if (run->dimer_list[idim] == -1) continue;
         
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
@@ -1264,8 +1334,8 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             int ifrag,jfrag;
             
             //atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
-	    atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
-
+            atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
+            
             //printf("testing2:%2d rank:%d state:%d ifrag:%d jfrag;%d x:%d y:%d z:%d\n", idim, fmr->my_rank,istate, ifrag, jfrag, x, y, z);
             
             char state_directory[256];
@@ -1282,7 +1352,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             // change directory
             char directory[512];
             sprintf(directory, "%s/", state_directory);
-	    sprintf(directory, "%s/%s/", scratch_dir,state_directory);
+            sprintf(directory, "%s/%s/", scratch_dir,state_directory);
             chdir(directory);
             
             //printf("%s %2d %4d %4d\n",jobname,fmr->my_rank,index_dim,idim);
@@ -1592,15 +1662,15 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         printf("Finished with FMO calculations.\n");
         printf("Time for FMO: %.4f seconds\n\n", FMO_end - FMO_start);
     }
-
+    
     // Clock
     MPI_Barrier(fmr->world);
     double comp_start = MPI_Wtime();
-   
+    
     chdir(fmr->home_dir);
- 
+    
     // *** Compute the FMO energies/forces for each state *** //
-   
+    
     if (fmr->master_rank) {
         printf("Compiling energies and gradients...\n");
     }
@@ -1623,37 +1693,37 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 for (int z=-xc; z<=xc; z++) {
                     
                     if (x==0 && y==0 && z==0) {
-                    
+                        
                         for (int ifrag=0; ifrag<nfragments; ++ifrag) {
- 
+                            
                             midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                             //if (monomer_queue[midx] == 1) {
-//			    printf("monomer_idx:%8d\n",midx);                         
+                            //			    printf("monomer_idx:%8d\n",midx);
                             men1=0.0;
                             
                             for (int i=0; i<mdiv+1; i++) {
-//				printf("proc:%d\n",monomer_proc[i]);
+                                //				printf("proc:%d\n",monomer_proc[i]);
                                 if (monomer_proc[i] == midx) { men1 = monomer_energies[i]; break; }
                             }
-                                    
+                            
                             if (fmr->print_level > 1) {
                                 fprintf(fs,"Rank %3d - FRAG I:%4d | %16.10f\n", fmr->my_rank,
                                         ifrag, men1);
                             }
-                                    
+                            
                             en_fmo1 += men1;
-
+                            
                             //}
                             
                         }
-
+                        
                     }
                     
                 }
             }
         }
-        //printf("state:%d mon_en:%lf\n",istate,en_fmo1); 
-    
+        //printf("state:%d mon_en:%lf\n",istate,en_fmo1);
+        
         if (fmr->print_level > 1) {
             fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
         }
@@ -1668,38 +1738,38 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             
                             if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                             
-                              idx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
-                              idxi=atom->getMonomerIndex(istate,0,0,0,ifrag);
-                              idxj=atom->getMonomerIndex(istate,x,y,z,jfrag);
+                            idx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
+                            idxi=atom->getMonomerIndex(istate,0,0,0,ifrag);
+                            idxj=atom->getMonomerIndex(istate,x,y,z,jfrag);
                             
-                              if (dimer_queue[idx] == 1) {
-                                  
-                                  //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
-                                    
+                            if (dimer_queue[idx] == 1) {
+                                
+                                //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
+                                
                                 //overcount for unit cell
                                 double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
                                 
                                 //zero energies
                                 den = men1 = men2 = 0.0;
-                                  
+                                
                                 for (int i=0; i<ddiv+1; i++) {
-                                    if (dimer_proc[i]==idx) { den = dimer_energies[i]; 
-					//printf("ddiv:%d state:%d rank:%d  didx:%4d  idxi:%4d  idxj:%4d en:%f\n",i,istate,fmr->my_rank,idx,idxi,idxj,den);
-					break; }
+                                    if (dimer_proc[i]==idx) { den = dimer_energies[i];
+                                        //printf("ddiv:%d state:%d rank:%d  didx:%4d  idxi:%4d  idxj:%4d en:%f\n",i,istate,fmr->my_rank,idx,idxi,idxj,den);
+                                        break; }
                                 }
                                 for (int i=0; i<mdiv+1; i++) {
                                     if (monomer_proc[i] == idxi) men1 = monomer_energies[i];
                                     if (monomer_proc[i] == idxj) men2 = monomer_energies[i];
                                 }
-
+                                
                                 
                                 double etmp = den - men1 - men2;
-
+                                
                                 if (fmr->print_level > 1) {
                                     fprintf(fs,"Didx:%2d  idxi:%2d  idxj:%2d  State:%d Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", idx, idxi, idxj,istate, fmr->my_rank, ifrag, jfrag,x,y,z,
                                             den, men1, men2, etmp);
                                 }
-                                  
+                                
                                 en_fmo2 += etmp*oc;
                             }
                             
@@ -1711,7 +1781,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
         }
         fmo_energies[istate] = en_fmo1 + en_fmo2;
         //printf("state: %d FMO ener BUGBUG: %f\n",istate,fmo_energies[istate]);
-
+        
         // ** Do forces for this state ** //
         if (FORCE) {
             double gx, gy, gz;
@@ -1728,25 +1798,25 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                                 //printf("midx:%d\n",midx);
                                 //if (monomer_queue[midx] == 1) {
-                                    
-                                    gx = gy = gz = 0.0;
-                                    
-                                    for (int pi=0; pi<mdiv+1; pi++) {
-                                        if (monomer_proc[pi] == midx) {
-                                            for (int i=0; i<natoms; ++i) {
-                                                gx = monomer_gradients[pi*3*natoms + 3*i];
-                                                gy = monomer_gradients[pi*3*natoms + 3*i+1];
-                                                gz = monomer_gradients[pi*3*natoms + 3*i+2];
-                                                //printf("atomid %d: %f %f %f\n",i,gx,gy,gz);
-                                                fmo_gradients[3*natoms*istate + 3*i]   += gx;
-                                                fmo_gradients[3*natoms*istate + 3*i+1] += gy;
-                                                fmo_gradients[3*natoms*istate + 3*i+2] += gz;
-                                            }
-                                            break;
+                                
+                                gx = gy = gz = 0.0;
+                                
+                                for (int pi=0; pi<mdiv+1; pi++) {
+                                    if (monomer_proc[pi] == midx) {
+                                        for (int i=0; i<natoms; ++i) {
+                                            gx = monomer_gradients[pi*3*natoms + 3*i];
+                                            gy = monomer_gradients[pi*3*natoms + 3*i+1];
+                                            gz = monomer_gradients[pi*3*natoms + 3*i+2];
+                                            //printf("atomid %d: %f %f %f\n",i,gx,gy,gz);
+                                            fmo_gradients[3*natoms*istate + 3*i]   += gx;
+                                            fmo_gradients[3*natoms*istate + 3*i+1] += gy;
+                                            fmo_gradients[3*natoms*istate + 3*i+2] += gz;
                                         }
+                                        break;
                                     }
+                                }
                                 //}
-    
+                                
                             }
                         }
                         
@@ -1767,79 +1837,79 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 idx=atom->getDimerIndex(istate,x,y,z,ifrag,jfrag);
                                 idxi=atom->getMonomerIndex(istate,0,0,0,ifrag);
                                 idxj=atom->getMonomerIndex(istate,x,y,z,jfrag);
-                            
+                                
                                 if (dimer_queue[idx] == 1) {
                                     
-                                        //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
+                                    //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
                                     
-                                        //overcount for unit cell
-                                        double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
-                                        
-                                         gx = gy = gz = 0.0;
-                                        
-                                        for (int pi=0; pi<ddiv+1; pi++) {
-                                            if (dimer_proc[pi] == idx) {
-                                                
-                                                for (int i=0; i<natoms; ++i) {
-                                                    gx = dimer_gradients[pi*3*natoms + 3*i+0];
-                                                    gy = dimer_gradients[pi*3*natoms + 3*i+1];
-                                                    gz = dimer_gradients[pi*3*natoms + 3*i+2];
-                                                    //printf("%lf %lf %lf\n",gx,gy,gz);
-                                                    
-                                                    fmo_gradients[3*natoms*istate + 3*i+0] += gx*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
-                                                }
-                                                //printf("\n");
-                                                break;
-                                            }
-                                        }
-                                        
-                                        for (int pi=0; pi<mdiv+1; pi++) {
-                                            if (monomer_proc[pi] == idxi) {
-                                                for (int i=0; i<natoms; ++i) {
-                                                    gx = monomer_gradients[pi*3*natoms + 3*i+0];
-                                                    gy = monomer_gradients[pi*3*natoms + 3*i+1];
-                                                    gz = monomer_gradients[pi*3*natoms + 3*i+2];
-                                                    
-                                                    fmo_gradients[3*natoms*istate + 3*i+0] -= gx*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+1] -= gy*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+2] -= gz*oc;
-                                                    //printf("%lf %lf %lf\n",monomer_gradients[pi*3*natoms + 3*i+0],monomer_gradients[pi*3*natoms + 3*i+1],monomer_gradients[pi*3*natoms + 3*i+2]);
-                                                }
-                                                //printf("\n");
-                                            }
-                                            if (monomer_proc[pi] == idxj) {
-                                                for (int i=0; i<natoms; ++i) {
-                                                    gx = monomer_gradients[pi*3*natoms + 3*i+0];
-                                                    gy = monomer_gradients[pi*3*natoms + 3*i+1];
-                                                    gz = monomer_gradients[pi*3*natoms + 3*i+2];
-                                                    
-                                                    fmo_gradients[3*natoms*istate + 3*i+0] -= gx*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+1] -= gy*oc;
-                                                    fmo_gradients[3*natoms*istate + 3*i+2] -= gz*oc;
-                                                    //printf("%lf %lf %lf\n",monomer_gradients[pi*3*natoms + 3*i+0],monomer_gradients[pi*3*natoms + 3*i+1],monomer_gradients[pi*3*natoms + 3*i+2]);
-                                                }
-                                                //printf("\n");
-                                            }
-                                        }
-                                        
-                                        for (int i=0; i<natoms; ++i) {
+                                    //overcount for unit cell
+                                    double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
+                                    
+                                    gx = gy = gz = 0.0;
+                                    
+                                    for (int pi=0; pi<ddiv+1; pi++) {
+                                        if (dimer_proc[pi] == idx) {
                                             
-                                            //printf("%lf %lf %lf\n",fmo_gradients[3*natoms*istate + 3*i+0],fmo_gradients[3*natoms*istate + 3*i+1],fmo_gradients[3*natoms*istate + 3*i+2]);
-                                            //fmo_gradients[3*natoms*istate + 3*i+0] += gx*oc;
-                                            //fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
-                                            //fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
-                                            //printf("%lf %lf %lf\n",gx,gy,gz);
-                                          
-                                        
+                                            for (int i=0; i<natoms; ++i) {
+                                                gx = dimer_gradients[pi*3*natoms + 3*i+0];
+                                                gy = dimer_gradients[pi*3*natoms + 3*i+1];
+                                                gz = dimer_gradients[pi*3*natoms + 3*i+2];
+                                                //printf("%lf %lf %lf\n",gx,gy,gz);
+                                                
+                                                fmo_gradients[3*natoms*istate + 3*i+0] += gx*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
+                                            }
+                                            //printf("\n");
+                                            break;
                                         }
+                                    }
+                                    
+                                    for (int pi=0; pi<mdiv+1; pi++) {
+                                        if (monomer_proc[pi] == idxi) {
+                                            for (int i=0; i<natoms; ++i) {
+                                                gx = monomer_gradients[pi*3*natoms + 3*i+0];
+                                                gy = monomer_gradients[pi*3*natoms + 3*i+1];
+                                                gz = monomer_gradients[pi*3*natoms + 3*i+2];
+                                                
+                                                fmo_gradients[3*natoms*istate + 3*i+0] -= gx*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+1] -= gy*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+2] -= gz*oc;
+                                                //printf("%lf %lf %lf\n",monomer_gradients[pi*3*natoms + 3*i+0],monomer_gradients[pi*3*natoms + 3*i+1],monomer_gradients[pi*3*natoms + 3*i+2]);
+                                            }
+                                            //printf("\n");
+                                        }
+                                        if (monomer_proc[pi] == idxj) {
+                                            for (int i=0; i<natoms; ++i) {
+                                                gx = monomer_gradients[pi*3*natoms + 3*i+0];
+                                                gy = monomer_gradients[pi*3*natoms + 3*i+1];
+                                                gz = monomer_gradients[pi*3*natoms + 3*i+2];
+                                                
+                                                fmo_gradients[3*natoms*istate + 3*i+0] -= gx*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+1] -= gy*oc;
+                                                fmo_gradients[3*natoms*istate + 3*i+2] -= gz*oc;
+                                                //printf("%lf %lf %lf\n",monomer_gradients[pi*3*natoms + 3*i+0],monomer_gradients[pi*3*natoms + 3*i+1],monomer_gradients[pi*3*natoms + 3*i+2]);
+                                            }
+                                            //printf("\n");
+                                        }
+                                    }
+                                    
+                                    for (int i=0; i<natoms; ++i) {
                                         
+                                        //printf("%lf %lf %lf\n",fmo_gradients[3*natoms*istate + 3*i+0],fmo_gradients[3*natoms*istate + 3*i+1],fmo_gradients[3*natoms*istate + 3*i+2]);
+                                        //fmo_gradients[3*natoms*istate + 3*i+0] += gx*oc;
+                                        //fmo_gradients[3*natoms*istate + 3*i+1] += gy*oc;
+                                        //fmo_gradients[3*natoms*istate + 3*i+2] += gz*oc;
+                                        //printf("%lf %lf %lf\n",gx,gy,gz);
+                                        
+                                        
+                                    }
+                                    
                                 }
                                 
                             }
                         }
-                       // exit(0);
+                        // exit(0);
                         
                     }
                 }
@@ -1883,90 +1953,90 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     }
     
 #ifdef FMR_DEBUG
-/*
-    if (fmr->master_rank && FORCE) {
-        for (int x=-xa; x<=xa; x++) {
-            for (int y=-xb; y<=xb; y++) {
-                for (int z=-xc; z<=xc; z++) {
-                    printf("Monomer gradients:\n");
-                    for (int istate=0; istate<nstates; ++istate) {
-                        for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                            printf("State %d fragment %d cell %d %d %d:\n", istate, ifrag, x, y, z);
-                            for (int i=0; i<natoms; ++i) {
-                                printf("%3d %12.8f %12.8f %12.8f\n", i,
-                                       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i],
-                                       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+1],
-                                       monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+2]
-                                       
-                                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i],
-                                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+1],
-                                       //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+2]
-                                       );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        printf("Dimer gradients:\n");
-        for (int x=-xa; x<=xa; x++) {
-            for (int y=-xb; y<=xb; y++) {
-                for (int z=-xc; z<=xc; z++) {
-                    
-                    for (int istate=0; istate<nstates; ++istate) {
-                        for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                            for (int jfrag=0; jfrag<nfragments; ++jfrag) {
-                                
-                                if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
-                                
-                                printf("State %d fragments %d--%d cell %d %d %d:\n", istate, ifrag, jfrag, x, y, z);
-                                for (int i=0; i<natoms; ++i) {
-                                    printf("%3d %12.8f %12.8f %12.8f\n", i,
-                                           dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i],
-                                           dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
-                                           dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
-                                           
-                                           //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i],
-                                           //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
-                                           //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
-                                           );
-                                }
-                            }
-                        }
-                    }
-                    
-                }
-            }
-        }
-        printf("FMO gradients:\n");
-        for (int istate=0; istate<nstates; ++istate) {
-            printf("State %d:\n", istate);
-            for (int i=0; i<natoms; ++i) {
-                double gx, gy, gz;
-                gx = fmo_gradients[3*natoms*istate + 3*i];
-                gy = fmo_gradients[3*natoms*istate + 3*i+1];
-                gz = fmo_gradients[3*natoms*istate + 3*i+2];
-                printf("%d : %f %f %f\n", i, gx, gy, gz);
-            }
-        }
-    }
-*/
+    /*
+     if (fmr->master_rank && FORCE) {
+     for (int x=-xa; x<=xa; x++) {
+     for (int y=-xb; y<=xb; y++) {
+     for (int z=-xc; z<=xc; z++) {
+     printf("Monomer gradients:\n");
+     for (int istate=0; istate<nstates; ++istate) {
+     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+     printf("State %d fragment %d cell %d %d %d:\n", istate, ifrag, x, y, z);
+     for (int i=0; i<natoms; ++i) {
+     printf("%3d %12.8f %12.8f %12.8f\n", i,
+     monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i],
+     monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+1],
+     monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*i+2]
+     
+     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i],
+     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+1],
+     //monomer_gradients[(nfragments*istate + ifrag)*3*natoms + 3*i+2]
+     );
+     }
+     }
+     }
+     }
+     }
+     }
+     printf("Dimer gradients:\n");
+     for (int x=-xa; x<=xa; x++) {
+     for (int y=-xb; y<=xb; y++) {
+     for (int z=-xc; z<=xc; z++) {
+     
+     for (int istate=0; istate<nstates; ++istate) {
+     for (int ifrag=0; ifrag<nfragments; ++ifrag) {
+     for (int jfrag=0; jfrag<nfragments; ++jfrag) {
+     
+     if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
+     
+     printf("State %d fragments %d--%d cell %d %d %d:\n", istate, ifrag, jfrag, x, y, z);
+     for (int i=0; i<natoms; ++i) {
+     printf("%3d %12.8f %12.8f %12.8f\n", i,
+     dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i],
+     dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
+     dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
+     
+     //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i],
+     //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+1],
+     //dimer_gradients[(nf2*istate + nfragments*ifrag + jfrag)*3*natoms + 3*i+2]
+     );
+     }
+     }
+     }
+     }
+     
+     }
+     }
+     }
+     printf("FMO gradients:\n");
+     for (int istate=0; istate<nstates; ++istate) {
+     printf("State %d:\n", istate);
+     for (int i=0; i<natoms; ++i) {
+     double gx, gy, gz;
+     gx = fmo_gradients[3*natoms*istate + 3*i];
+     gy = fmo_gradients[3*natoms*istate + 3*i+1];
+     gz = fmo_gradients[3*natoms*istate + 3*i+2];
+     printf("%d : %f %f %f\n", i, gx, gy, gz);
+     }
+     }
+     }
+     */
 #endif
-/*
-    if (fmr->my_rank==1) {
-    printf("FMO gradients:\n");
-    for (int istate=0; istate<nstates; ++istate) {
-        printf("State %d:\n", istate);
-        for (int i=0; i<natoms; ++i) {
-            double gx, gy, gz;
-            gx = fmo_gradients[3*natoms*istate + 3*i];
-            gy = fmo_gradients[3*natoms*istate + 3*i+1];
-            gz = fmo_gradients[3*natoms*istate + 3*i+2];
-            printf("%d : %f %f %f\n", i, gx, gy, gz);
-        }
-    }
-    }
-    */
+    /*
+     if (fmr->my_rank==1) {
+     printf("FMO gradients:\n");
+     for (int istate=0; istate<nstates; ++istate) {
+     printf("State %d:\n", istate);
+     for (int i=0; i<natoms; ++i) {
+     double gx, gy, gz;
+     gx = fmo_gradients[3*natoms*istate + 3*i];
+     gy = fmo_gradients[3*natoms*istate + 3*i+1];
+     gz = fmo_gradients[3*natoms*istate + 3*i+2];
+     printf("%d : %f %f %f\n", i, gx, gy, gz);
+     }
+     }
+     }
+     */
     
     // Clock
     MPI_Barrier(fmr->world);
