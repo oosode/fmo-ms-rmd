@@ -165,6 +165,7 @@ class Atom : protected Pointers {
      int ra = 2*na+1;
      int rb = 2*nb+1;
      int rc = 2*nc+1;
+     //printf("na:%3d\n",na);
 
      istate =     imon / (ra*rb*rc*nfragments);
      icella =    (imon % (ra*rb*rc*nfragments)) / (rb*rc*nfragments) - na;
@@ -172,6 +173,8 @@ class Atom : protected Pointers {
      icellc =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) / (nfragments) - nc;
      ifrag  =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) % (nfragments);
 
+
+     //printf("imon:%d ra:%d rb:%d rc:%d nfrag:%d icella:%d",imon,ra,rb,rc,nfragments,icella);
      return;
    }
    void getDimerIndices(int idim, int &istate, int &icella, int &icellb, int &icellc, int &ifrag, int &jfrag) {

@@ -46,6 +46,9 @@ class FMR {
   // ** Time ** //
   double step_time;
 
+  // ** PWD ** //
+  char home_dir[256];
+
   // ** Functions ** //
   void parse_command_line(int, char **);
   void execute();                              // Executes the calculation
