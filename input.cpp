@@ -450,7 +450,9 @@ void Input::read_atoms_file()
     }
     MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
     MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
-    
+   
+    // Set global box dimensions
+    fmr->atom->setGlobalBox(); 
     // Set the atomic masses
     fmr->atom->setAtomMasses();
   
@@ -618,6 +620,8 @@ void Input::read_restart_file()
   MPI_Bcast(fmr->atom->veloc, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
 
+  // Set global box dimensions
+  fmr->atom->setGlobalBox();
   // Set the atomic masses
   fmr->atom->setAtomMasses();
 

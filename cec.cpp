@@ -113,7 +113,7 @@ void Cec::compute_coc()
                     //printf("current position: %f %f %f\n",rr[0],rr[1],rr[2]);
                     
                     VECTOR_SUB(dr,rr,ref);
-                    //VECTOR_PBC(dr);
+                    VECTOR_PBC(dr);
                     
                     //printf("charge: %f/%f = %f\n",atom->getCharge(iatom,istate),qsum_coc[istate],atom->getCharge(iatom,istate)/qsum_coc[istate]);
                     VECTOR_SCALE(dr,fabs(atom->getCharge(iatom,istate))/qsum_coc[istate]);
@@ -151,7 +151,7 @@ void Cec::compute_cec()
       double C2 = GSCoeffs[istate]*GSCoeffs[istate];
 
       VECTOR_SUB(dr,r_coc[istate],ref);
-      //VECTOR_PBC(dr);
+      VECTOR_PBC(dr);
       VECTOR_SCALE_ADD(r_cec,dr,C2);
 
     }
