@@ -52,6 +52,7 @@ double Matrix::ComputeRepulsionForState(int I) {
           double dx = xx[3*i]   - xx[3*j];
           double dy = xx[3*i+1] - xx[3*j+1];
           double dz = xx[3*i+2] - xx[3*j+2];
+	  fmr->atom->minimum_image(dx,dy,dz);
           double dd = dx*dx + dy*dy + dz*dz;
           if (dd < cut_OH2) {
             double tmp = Sr(dd, 0.0, cut_OH2);
@@ -108,6 +109,7 @@ void Matrix::ComputeRepulsionXForState(int I) {
           double dx = xx[3*i]   - xx[3*j];
           double dy = xx[3*i+1] - xx[3*j+1];
           double dz = xx[3*i+2] - xx[3*j+2];
+          fmr->atom->minimum_image(dx,dy,dz);
           double dd = dx*dx + dy*dy + dz*dz;
           if (dd < cut_OH2) {
             double d = sqrt(dd);
@@ -162,6 +164,7 @@ double Matrix::ComputeInternalPenaltyForState(int I) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+	    fmr->atom->minimum_image(dx,dy,dz); 
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd > r02) {
               double tmp = 1.0 - Sr(dd, r02, cut_OH2); 
@@ -205,6 +208,7 @@ void Matrix::ComputeInternalPenaltyXForState(int I) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            fmr->atom->minimum_image(dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd > r02) {
               double tmp = 2.0 * (1.0 - Sr(dd, r02, cut_OH2)) * (-dSrdr(dd, r02, cut_OH2));

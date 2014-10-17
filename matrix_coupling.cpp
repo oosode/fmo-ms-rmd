@@ -77,6 +77,9 @@ double Matrix::ComputeCoupling(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+            printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double tmp = Sr(dd, 0.0, cut_OH2);
@@ -95,6 +98,9 @@ double Matrix::ComputeCoupling(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+            printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double tmp = Sr(dd, 0.0, cut_OH2); 
@@ -178,6 +184,9 @@ void Matrix::ComputeCouplingX(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+            printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double tmp = Sr(dd, 0.0, cut_OH2); 
@@ -196,6 +205,9 @@ void Matrix::ComputeCouplingX(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+	    printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+            printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double tmp = Sr(dd, 0.0, cut_OH2); 
@@ -216,6 +228,9 @@ void Matrix::ComputeCouplingX(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+	    printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double d = sqrt(dd);
@@ -245,6 +260,9 @@ void Matrix::ComputeCouplingX(int I, int J) {
             double dx = xx[3*i]   - xx[3*j];
             double dy = xx[3*i+1] - xx[3*j+1];
             double dz = xx[3*i+2] - xx[3*j+2];
+            printf("%lf %lf %lf\n",dx,dy,dz);
+            fmr->atom->minimum_image(dx,dy,dz);
+            printf("%lf %lf %lf\n\n",dx,dy,dz);
             double dd = dx*dx + dy*dy + dz*dz;
             if (dd < cut_OH2) {
               double d = sqrt(dd);

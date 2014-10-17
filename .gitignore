@@ -12,3 +12,4 @@
 .project
 .nfs*
 test
+Makefile

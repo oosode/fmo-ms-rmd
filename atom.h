@@ -37,6 +37,12 @@ class Atom : protected Pointers {
    double cellA;
    double cellB;
    double cellC; 
+   double xprd;
+   double yprd;
+   double zprd;
+   double xprd_half;
+   double yprd_half;
+   double zprd_half;
    int na;
    int nb;
    int nc;
@@ -224,6 +230,8 @@ class Atom : protected Pointers {
      return number;
    }
 
+   void setGlobalBox();
+   void minimum_image(double &, double &, double &);
    void setAtomMasses(); // in atom.cpp
 
 };

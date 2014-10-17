@@ -42,7 +42,7 @@ class Cec : protected Pointers {
 }
 
 #define VECTOR_ZERO(a) a[0]=a[1]=a[2]=0.0
-#define VECTOR_PBC(a) domain->minimum_image(a[0],a[1],a[2])
+#define VECTOR_PBC(a) fmr->atom->minimum_image(a[0],a[1],a[2])
 #define VECTOR_R2(b,a) b=a[0]*a[0]+a[1]*a[1]+a[2]*a[2]
 #define VECTOR_R(b,a) b=sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2])
 #define VECTOR_SELF_ADD(b,a) b[0]+=a[0];b[1]+=a[1];b[2]+=a[2]

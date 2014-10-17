@@ -537,7 +537,10 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // scratch section
             fprintf(fs, "scratch_dir %s\n", scratch);
             fprintf(fs, "permanent_dir %s\n\n", scratch);
-            
+
+            fprintf(fs, "memory 2 gb\n");
+            //fprintf(fs, "memory hardfail\n");
+            fprintf(fs, "memory noverify\n\n");
             // basis set section
             fprintf(fs, "basis\n");
             fprintf(fs, "* library %s\n", run->basis);
@@ -831,8 +834,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // scratch section
             fprintf(fs, "scratch_dir %s\n",scratch);
             fprintf(fs, "permanent_dir %s\n\n",scratch);
-            
-            fprintf(fs, "memory 1 gb\n\n");
+
+            fprintf(fs, "memory 2 gb\n");
+	    fprintf(fs, "memory noverify\n\n");
             
             // basis set section
             fprintf(fs, "basis\n");
@@ -1055,6 +1059,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             ierr = system(command);
             
             // ** Check for error ** //
+            //printf("ierr:%d\n",ierr);
             if (ierr) {
                 printf("NWChem run error on rank %d:\n", fmr->my_rank);
                 fmr->error(FLERR, command);
@@ -1366,6 +1371,7 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
             ierr = system(command);
             
             // ** Check for error ** //
+            //printf("ierr:%d\n",ierr);
             if (ierr) {
                 printf("NWChem run error on rank %d:\n", fmr->my_rank);
                 fmr->error(FLERR, command);
