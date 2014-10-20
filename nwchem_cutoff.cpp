@@ -315,6 +315,36 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                 for (int y0=-bfield; y0<=bfield; ++y0) {
                     for (int z0=-cfield; z0<=cfield; ++z0) {
                         
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+
+
+			        //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+			        //if statement for distance criteria between ifrag and loop frag
+			        //if distance is greater than cutoff skip charges
+			        //else do normal execution
+			        //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+
+                                double mmq = atom->getCharge(iatom, istate);
+                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                        atom->coord[3*iatom] + x0*cellA,
+                                        atom->coord[3*iatom+1] + y0*cellB,
+                                        atom->coord[3*iatom+2] + z0*cellC,
+                                        mmq
+                                        );
+                            }
+                        }
+                        
+                    }
+                }
+            }
+
+/*
+            fprintf(fs, "bq units angstrom\n");
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
                         for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                             
                             if (jfrag != ifrag || x0 != x || y0 != y || z0 != z) {
@@ -361,6 +391,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     }
                 }
             }
+*/
             fprintf(fs, "end\n\n");
             
             // scf section
@@ -454,6 +485,35 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             
             // bq section
             fprintf(fs, "bq units angstrom\n");
+            for (int x0=-afield; x0<=afield; ++x0) {
+                for (int y0=-bfield; y0<=bfield; ++y0) {
+                    for (int z0=-cfield; z0<=cfield; ++z0) {
+                        
+                        for (int iatom=0; iatom<natoms; ++iatom) {
+                            if (atom->fragment[istate*natoms + iatom] != ifrag || x0 != x || y0 != y || z0 != z) {
+
+
+                                //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+                                //if statement for distance criteria between ifrag and loop frag
+                                //if distance is greater than cutoff skip charges
+                                //else do normal execution
+                                //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+
+                                double mmq = atom->getCharge(iatom, istate);
+                                fprintf(fs, "%20.10lf %20.10lf %20.10lf %16.4lf\n",
+                                        atom->coord[3*iatom] + x0*cellA,
+                                        atom->coord[3*iatom+1] + y0*cellB,
+                                        atom->coord[3*iatom+2] + z0*cellC,
+                                        mmq
+                                        );
+                            }
+                        }
+                        
+                    }
+                }
+            }
+/*
+            fprintf(fs, "bq units angstrom\n");
             fprintf(fs, "force %s.nw.field\n", jobname);
             for (int x0=-afield; x0<=afield; ++x0) {
                 for (int y0=-bfield; y0<=bfield; ++y0) {
@@ -505,6 +565,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     }
                 }
             }
+*/
             fprintf(fs, "end\n\n");
             
             // scf section
@@ -1233,7 +1294,46 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                 double gw, gx, gy, gz;
                 char tmp0[16],tmp1[16],tmp2[16],tmp3[16],tmp4[16];
                 int atnum;
-                
+
+                atnum = 0; // index of non-QM atom for storing gradient
+                fgets(line, MAX_LENGTH, fs); // skip initial comment line
+                while ( fgets(line, MAX_LENGTH, fs) != NULL ) {
+                    // Advance atnum until it matches as a non-QM atom index for this monomer fragment
+                    while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z, afield, bfield, cfield) ) {
+                        //while ( fmr->atom->AtomInFragment(atnum, ifrag, istate, x, y, z) ) {
+                        atnum++;
+                    }
+
+                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+                    //if statement for distance criteria between ifrag and loop frag
+                    //if distance is greater than cutoff skip charges
+                    //else do normal execution
+                    //BUGBUGBUGBUGBUGUBUGUBUGBUGBUGUBUGUBUGUBUG
+
+                    //printf("atnum:%d ifrag:%d istate:%d istate:%d x:%d y:%d z:%d iatom:%d gx:%d gy:%d gz:%d \n",atnum,ifrag,istate,x,y,z,iatom,gx,gy,gz);
+
+                    if ( sscanf(line, "%lf %lf %lf", &gx, &gy, &gz) == 3 ) {
+                        
+                        if (fmr->atom->AtomInCell(atnum,istate,0,0,0, afield, bfield, cfield)) {
+                            // gx,gy,gz = the electric field
+                            // multiply by charge to get force (i.e. negative gradient) on atom
+                            //double mmq = fmr->atom->getCharge(atnum%natoms, istate);
+                            //gx *= -mmq;
+                            //gy *= -mmq;
+                            //gz *= -mmq;
+                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                            monomer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+			    monomer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
+                            monomer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
+                            //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+                        }
+		    }
+                    // Increment atnum for the next round
+                    atnum++;
+		}
+                fclose(fs);
+                         
+/*                
                 //determine COM of fragment I
                 comi[0] = comi[1] = comi[2] = massi = 0.0;
                 for (int i=0; i<natoms; ++i) {
@@ -1305,8 +1405,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                             }
                         }
                     }
+
                 }
                 fclose(fs);
+*/
             }
             chdir("../");
         }
