@@ -206,7 +206,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     //printf("number of monomers:%d\n",statemonomers);
     //printf("END\n");
     //exit(0);
-    }
+    //}
     
     // Assuming all states have equal number of dimers and monomers, for now
     run->n_monomers = statemonomers;//nstates * statemonomers;
