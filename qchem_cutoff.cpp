@@ -57,7 +57,8 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     int statemonomers=nfragments*nstates;
     int idx = 0;
     int pos,idxj,idxi;
-    
+    int skip;
+ 
     /*This is in the new branch
      Distributed
      */
@@ -76,12 +77,18 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     for (int i=0; i<run->n_monomers_tmp; ++i) run->monomer_list[i] = -1;
 
     // include zeroth cell monomers in list
+    //if (fmr->my_rank == 0) {
     for (int istate=0; istate<nstates; ++istate) {
         for (int ifrag=0; ifrag<nfragments; ++ifrag) {
             pos=atom->getMonomerIndex(istate,0,0,0,ifrag);
-            run->monomer_list[istate*nmonomers + ifrag] = pos;
+            //printf("POS:%d\n",pos);
+            //run->monomer_list[istate*nmonomers + ifrag] = pos;
+            run->monomer_list[istate*nfragments + ifrag] = pos;
         }
+        //exit(0);
     }
+    //}
+    //exit(0);
 
     // initialize dimer list
     run->dimer_list = new int [run->n_dimers_sq];
@@ -100,7 +107,6 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     // initialize dimer queue list
     run->dimer_queue = new int [run->n_dimers_sq];
     for (int i=0; i<run->n_dimers_sq; ++i) run->dimer_queue[i] = 0;
-
 
 
     // search for nearest dimers
@@ -167,13 +173,25 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                             
                             // include j monomer in queue list
                             if (x != 0 || y != 0 || z != 0) {
+
+				printf("found....\n");
                                 for (int state=0; state<nstates; ++state) {
                                     
+                                    skip=0;
                                     idxj=atom->getMonomerIndex(state,x,y,z,jfrag);
-                                    run->monomer_list[statemonomers] = idxj;
-                                    run->monomer_queue[idxj] = 1;
-                                    statemonomers++;
-                                    
+                                    for (int l=0; l<statemonomers; ++l) {
+                                        if (run->monomer_list[l] == idxj) {
+                                            skip=1;
+                                            break;
+                                        } 
+				    }
+                                    if (skip == 0) {
+                                      run->monomer_list[statemonomers] = idxj;
+                                      run->monomer_queue[idxj] = 1;
+                                      statemonomers++;
+ 				      //printf("added\n");
+                                    } else {// printf("HELLO:%d\n",idxj); }
+                                    }
                                 }
                             }
                         }
@@ -181,6 +199,13 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                 }
             }
         }
+    }
+    //if (fmr->my_rank == 0) {
+    //printf("START\n");
+    //for (int l=0; l<run->n_monomers_tmp; ++l) printf("%5d %d\n",l,run->monomer_list[l]);
+    //printf("number of monomers:%d\n",statemonomers);
+    //printf("END\n");
+    //exit(0);
     }
     
     // Assuming all states have equal number of dimers and monomers, for now
@@ -221,14 +246,17 @@ void State::write_qchem_inputs_cutoff(int jobtype)
 
     int index_mono = 0;
     int index_dim  = 0;
-    
+   
+    //printf("ifrom:%4d index_mono:%4d ito:%4d myrank:%d\n",ifrom_mono,index_mono,ito_mono,fmr->my_rank); 
     // ***** Loop through monomers ***** //
     for (int imon=0; imon<run->n_monomers_tmp; imon++) {
-
+        //printf("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...rank:%d\n",fmr->my_rank);
+        //printf("imon:%d monomer:%d\n",imon,run->monomer_list[imon]);
         if (run->monomer_list[imon] == -1) continue;
-        
+        //if (run->monomer_queue[imon] == 0) continue;
+        //printf("ifrom:%4d index_mono:%4d ito:%4d myrank:%d\n",ifrom_mono,index_mono,ito_mono,fmr->my_rank);
         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-        
+
             run->monomer_proc[index_mono-ifrom_mono]=run->monomer_list[imon];
 
             int istate;
@@ -236,7 +264,9 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             int ifrag;
             
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
-
+            //atom->getMonomerIndices(imon,istate,x,y,z,ifrag);
+            //printf("testing:%5d rank:%2d\n", imon, fmr->my_rank);
+            //printf("state:%d ifrag:%d x:%d y:%d z:%d\n", istate, ifrag, x, y, z);
             
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
@@ -259,6 +289,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             // Make the directory...
             //            
             sprintf(make_directory, "mkdir -p %s/%s", run->scratch_dir,state_directory);
+            //printf("%s\n",make_directory);
             int ierr = system(make_directory);
             
             // Get name of file to open
@@ -268,6 +299,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             // Get name of job
             sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
             sprintf(filename, "/%s/%s/fmo_st%s_m%03d_cell.%d.%d.%d.in", run->scratch_dir,state_directory, snum, ifrag, x+xa, y+xb, z+xc);
+            //printf("%s\n",filename);
 
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
@@ -305,6 +337,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             fprintf(fs, "sym_ignore true\n");
             fprintf(fs, "no_reorient true\n");
             fprintf(fs, "skip_charge_self_interact 1\n");
+	    fprintf(fs, "mem_static 1000\n");
             //fprintf(fs, "gaussian_blur true\n");
             // Read previous step MO coeffs?
             //if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
@@ -363,20 +396,20 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     // ***** Loop through dimers ***** //
     for (int idim=0; idim<run->n_dimers_sq; idim++) {
         
-        if (run->dimer_queue[idim] == 0) continue;
+        //if (run->dimer_queue[idim] == 0) continue;
+        if (run->dimer_list[idim] == -1) continue;
         
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
             
-            run->dimer_proc[index_dim-ifrom_dim]=idim;
+            run->dimer_proc[index_dim-ifrom_dim]=run->dimer_list[idim];
 
 
             int istate;
             int x,y,z;
             int ifrag,jfrag;
             
-            atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
-
-
+            //atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
+	    atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
 
             //
             // Determine the charged reactive fragment for this state
@@ -449,6 +482,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             fprintf(fs, "sym_ignore true\n");
             fprintf(fs, "no_reorient true\n");
             fprintf(fs, "skip_charge_self_interact 1\n");
+            fprintf(fs, "mem_static 160\n");
             //fprintf(fs, "gaussian_blur true\n");
             // Read previous step MO coeffs?
             //if (flag_read_MOs) fprintf(fs, "scf_guess read\n");
@@ -529,7 +563,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
         ++index_dim;
     }
 
-    if (fmr->master_rank) printf("Done writing NWChem inputs.\n");
+    if (fmr->master_rank) printf("Done writing Q-Chem inputs.\n");
 
     // Hold up
     MPI_Barrier(fmr->world);
@@ -550,7 +584,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     }
     
     // Divide the list up across MPI ranks
-    // Then, run the FMO calculations with call to serial NWChem in parallel
+    // Then, run the FMO calculations with call to serial Q-Chem in parallel
     
     
     int natoms     = fmr->atom->natoms;
@@ -686,6 +720,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     for (int imon=0; imon<n_monomers_tmp; imon++) {
         
         if (run->monomer_list[imon] == -1) continue;
+	//if (run->monomer_queue[imon] == 0) continue;
         
         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
 
@@ -697,6 +732,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             int ifrag,jfrag;
             
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
+            //atom->getMonomerIndices(imon,istate,x,y,z,ifrag);
 
             char state_directory[256];
             char snum[16];
@@ -713,6 +749,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             
             sprintf(jobname, "fmo_st%s_m%03d_%s", snum, ifrag, cname);
             sprintf(filename, "fmo_st%s_m%03d_%s",  snum, ifrag, cname);
+            //printf("%s\n",filename);
             
             // change directory
             char directory[512];
@@ -730,20 +767,23 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     scratch_dir,
                     state_directory,
                     filename
-                    );
+                   );
             
             // ** The system call ** //
             ierr = system(command);
-            
+            //printf("error:%d\n",ierr);
             // ** Check for error ** //
             if (ierr) {
-                printf("Q-Chem run error on rank %d:\n", fmr->my_rank);
-                fmr->error(FLERR, command);
+           //     if (ierr!=256 && ierr!=34304) {
+                    printf("error:%d\n",ierr);
+                    printf("Q-Chem run error on rank %d:\n", fmr->my_rank);
+                    fmr->error(FLERR, command);
+	    //	}
             }
             
             // ** Open output file and get the energy ** //
             char output_file[MAX_LENGTH];
-            sprintf(output_file, "%s/%s.in.energy", state_directory, filename);
+            sprintf(output_file, "%s/%s/%s.in.energy", scratch_dir,state_directory, filename);
             FILE *fs = fopen(output_file, "r");
             if (fs == NULL) {
                 char tmpstr[MAX_LENGTH];
@@ -767,7 +807,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             
             if (FORCE) {
                 // ** Get gradient from file ** //
-                sprintf(output_file, "%s/%s.in.gradient", state_directory, filename);
+                sprintf(output_file, "%s/%s/%s.in.gradient", scratch_dir,state_directory, filename);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -786,7 +826,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     if ( sscanf(line, "%d %lf %lf %lf", &iatom, &gx, &gy, &gz) == 4 ) {
                         //BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
                         monomer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
-                        monomer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gx;
+                        monomer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
                         monomer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
                         //monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
                         //monomer_gradients[(nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
@@ -801,7 +841,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                 
                 
                 // ** Get field from file ** //
-                sprintf(output_file, "%s/%s.in.field", state_directory, filename);
+                sprintf(output_file, "%s/%s/%s.in.field", scratch_dir,state_directory, filename);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -852,8 +892,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     // ***** Loop through dimers ***** //
     for (int idim=0; idim<n_dimers_sq; idim++) {
        
-        if (run->dimer_queue[idim] == 0) continue;
-        //if (run->dimer_list[idim] == -1) continue;
+        //if (run->dimer_queue[idim] == 0) continue;
+        if (run->dimer_list[idim] == -1) continue;
         
         if (ifrom_dim <= index_dim && index_dim < ito_dim) {
         
@@ -865,7 +905,9 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             int ifrag,jfrag;
             
             //
-            atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
+            //atom->getDimerIndices(idim,istate,x,y,z,ifrag,jfrag);
+            atom->getDimerIndices(run->dimer_list[idim],istate,x,y,z,ifrag,jfrag);
+            
             
             char state_directory[256];
             char snum[16];
@@ -884,12 +926,14 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             //chdir(directory);
             
             //sprintf(filename, "fmo_st%s_d%03d-%03d_cell.%d.%d.%d", snum, ifrag, jfrag, x+xa, y+xb, z+xc);
-            sprintf(command, "%s %s/%s.in %s/%s/ > %s/%s.out",
+            sprintf(command, "%s %s/%s/%s.in %s/%s/ > %s/%s/%s.out",
                     exec,
+                    scratch_dir,
                     state_directory,
                     filename,
                     scratch_dir,
                     filename,
+                    scratch_dir,
                     state_directory,
                     filename
                     );
@@ -907,7 +951,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
 	        // ** Open output file and get the energy ** //
             char output_file[MAX_LENGTH];
             //sprintf(output_file, "%s/%s.out", state_directory, filename);
-            sprintf(output_file, "%s/%s.in.energy", state_directory, filename);
+            sprintf(output_file, "%s/%s/%s.in.energy", scratch_dir,state_directory, filename);
 	        FILE *fs = fopen(output_file, "r");
 	        if (fs == NULL) {
                 char tmpstr[MAX_LENGTH];
@@ -939,7 +983,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             
             if (FORCE) {
                 // ** Get gradient from file ** //
-                sprintf(output_file, "%s/%s.in.gradient", state_directory, filename);
+                sprintf(output_file, "%s/%s/%s.in.gradient", scratch_dir, state_directory, filename);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -993,7 +1037,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                 fclose(fs);
                 
                 // ** Get field from file ** //
-                sprintf(output_file, "%s/%s.in.field", state_directory, filename);
+                sprintf(output_file, "%s/%s/%s.in.field", scratch_dir, state_directory, filename);
                 fs = fopen(output_file, "r");
                 if (fs == NULL) {
                     char tmpstr[MAX_LENGTH];
@@ -1095,7 +1139,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
 
                             midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
 
-
                             men1=0.0;
 
                             for (int i=0; i<mdiv+1; i++) {
@@ -1147,11 +1190,10 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 
                                 //overcount for unit cell
                                 double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
-                            
+
                                 //zero energies
-                                den = men1 = men2 =0.0;
-   
-                                
+                                den = men1 = men2 = 0.0;
+
                                 for (int i=0; i<ddiv+1; i++) {
                                     if (dimer_proc[i]==idx) { den = dimer_energies[i];
                                         
@@ -1162,7 +1204,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                     if (monomer_proc[i] == idxj) men2 = monomer_energies[i];
                                 }
 
- 
+
                                 double etmp = den - men1 - men2;
                                 //double etmp = dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag] -
                                 //monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
@@ -1329,6 +1371,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                     }
                 }
             }
+
         }
     }
     fprintf(fs,"\n");

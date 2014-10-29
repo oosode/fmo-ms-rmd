@@ -224,11 +224,11 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
     
     // ***** Loop through monomers ***** //
     for (int imon=0; imon<run->n_monomers_tmp; imon++) {
-        
+
         if (run->monomer_list[imon] == -1) continue;
         
         if (ifrom_mono <= index_mono && index_mono < ito_mono) {
-            
+
             run->monomer_proc[index_mono-ifrom_mono]=run->monomer_list[imon];
 
             int istate;
@@ -236,7 +236,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             int ifrag;
             
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
-            //	    printf("testing:%2d rank:%d state:%d ifrag:%d x:%d y:%d z:%d\n", imon, fmr->my_rank,istate, ifrag, x, y, z);
+            printf("testing:%5d rank:%2d\n", imon, fmr->my_rank);
+            printf("state:%d ifrag:%d x:%d y:%d z:%d\n", istate, ifrag, x, y, z);
             
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
@@ -268,7 +269,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // Get name of job
             sprintf(jobname, "fmo_st%s_m%03d_cell.%d.%d.%d", snum, ifrag, x+xa, y+xb, z+xc);
             sprintf(filename, "%s/%s/fmo_st%s_m%03d_cell.%d.%d.%d.nw", run->scratch_dir,state_directory, snum, ifrag, x+xa, y+xb, z+xc);
-            
+
             FILE *fs = fopen(filename, "w");
             if (fs == NULL) {
                 char tmpstr[256];
@@ -1844,10 +1845,10 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 
                                 //overcount for unit cell
                                 double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
-                                
+
                                 //zero energies
                                 den = men1 = men2 = 0.0;
-                                
+
                                 for (int i=0; i<ddiv+1; i++) {
                                     if (dimer_proc[i]==idx) { den = dimer_energies[i];
                                         //printf("ddiv:%d state:%d rank:%d  didx:%4d  idxi:%4d  idxj:%4d en:%f\n",i,istate,fmr->my_rank,idx,idxi,idxj,den);
@@ -1857,18 +1858,18 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                     if (monomer_proc[i] == idxi) men1 = monomer_energies[i];
                                     if (monomer_proc[i] == idxj) men2 = monomer_energies[i];
                                 }
-                                
-                                
+
+
                                 double etmp = den - men1 - men2;
                                 
                                 if (fmr->print_level > 1) {
                                     fprintf(fs,"Didx:%2d  idxi:%2d  idxj:%2d  State:%d Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", idx, idxi, idxj,istate, fmr->my_rank, ifrag, jfrag,x,y,z,
                                             den, men1, men2, etmp);
                                 }
-                                
+
                                 en_fmo2 += etmp*oc;
                             }
-                            
+
                         }
                     }
                     
@@ -1888,15 +1889,15 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                     for (int z=-xc; z<=xc; z++) {
                         
                         if (x==0 && y==0 && z==0) {
-                            
+
                             for (int ifrag=0; ifrag<nfragments; ++ifrag) {
-                                
+
                                 midx=atom->getMonomerIndex(istate,x,y,z,ifrag);
                                 //printf("midx:%d\n",midx);
                                 //if (monomer_queue[midx] == 1) {
                                 
                                 gx = gy = gz = 0.0;
-                                
+
                                 for (int pi=0; pi<mdiv+1; pi++) {
                                     if (monomer_proc[pi] == midx) {
                                         for (int i=0; i<natoms; ++i) {
@@ -2002,12 +2003,11 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
                                 
                             }
                         }
-                        // exit(0);
                         
                     }
                 }
             }
-            
+
         }
     }
     fprintf(fs,"\n");
@@ -2026,7 +2026,6 @@ void Run::do_nwchem_calculations_cutoff(int FORCE)
     for (int i=0; i<nstates; ++i) rbuffer[i] = 0.0;
     MPI_Allreduce(fmo_energies, rbuffer, nstates, MPI_DOUBLE, MPI_SUM, fmr->world);
     for (int i=0; i<nstates; ++i) fmo_energies[i] = rbuffer[i];
-    
     
     // FMO gradients
     if (FORCE) {

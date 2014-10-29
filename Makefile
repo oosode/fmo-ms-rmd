@@ -19,7 +19,7 @@ DEBUG = -g -DFMR_DEBUG
 CFLAGS = -O3 $(DEBUG) -DMPICH_IGNORE_CXX_SEEK
 
 # Libraries, if any
-#IBDIR = -L/usr/lib
+LIBDIR = -L/usr/lib
 LIB = -lm -llapack
 
 # ----------------------------------------------- #
