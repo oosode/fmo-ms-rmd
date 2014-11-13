@@ -7,8 +7,8 @@
 # ** User defined variables **
 # ----------------------------------------------- #
 # MPI C++ compiler
-CPP = mpicxx
-#CPP = mpicc-openmpi-mp 
+#CPP = mpicxx
+CPP = mpicc-openmpi-mp 
 #CPP = CC
 
 # Debugging flags
@@ -19,7 +19,7 @@ DEBUG = -g -DFMR_DEBUG
 CFLAGS = -O3 $(DEBUG) -DMPICH_IGNORE_CXX_SEEK
 
 # Libraries, if any
-LIBDIR = -L/usr/lib
+#IBDIR = -L/usr/lib
 LIB = -lm -llapack
 
 # ----------------------------------------------- #
