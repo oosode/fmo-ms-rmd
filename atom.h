@@ -181,7 +181,7 @@ class Atom : protected Pointers {
      icellc =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) / (nfragments) - nc;
      ifrag  =  (((imon % (ra*rb*rc*nfragments)) % (rb*rc*nfragments)) % (rc*nfragments)) % (nfragments);
 
-     printf("imon:%5d a:%2d b:%2d c:%2d nfrag:%d\n",imon,icella,icellb,icellc,ifrag); 
+     //printf("imon:%5d a:%2d b:%2d c:%2d nfrag:%d\n",imon,icella,icellb,icellc,ifrag); 
      return;
    }
    void getDimerIndices(int idim, int &istate, int &icella, int &icellb, int &icellc, int &ifrag, int &jfrag) {
@@ -198,7 +198,7 @@ class Atom : protected Pointers {
      ifrag  =  ((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) / nfragments;
      jfrag  = (((((idim % (ra*rb*rc*nf2)) % (rb*rc*nf2)) % (rc*nf2)) % (nf2)) % nfragments);
 
-     printf("dimer indices\n");
+     //printf("dimer indices\n");
      return;
    }
 

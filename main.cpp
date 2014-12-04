@@ -7,7 +7,8 @@ using namespace FMR_NS;
   The main program
 ---------------------------------------------------------------------------- */
 
-int main(int argc, char **argv) 
+//int main(int argc, char **argv) 
+int main(int argc, char *argv[])
 {
 
   MPI_Init(&argc, &argv);

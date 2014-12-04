@@ -106,7 +106,7 @@ void Matrix::buildH() {
   // ** Compute the off-diagonal coupling ** //
   ComputeCouplings();
 
-  if (fmr->print_level > 0) {
+  if (fmr->print_level > 1) {
     if (fmr->master_rank) {
       printf("Hamiltonian matrix:\n");
       for (int i=0; i<nstates; ++i) {
@@ -260,7 +260,7 @@ void Matrix::buildHX() {
 
 #ifdef FMR_DEBUG
   // ** Printing ** //
-  if (fmr->print_level > 0) {
+  if (fmr->print_level > 1) {
     if (fmr->master_rank) {
       printf("HX:\n");
       for (int I=0; I<nstates; ++I) {

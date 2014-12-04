@@ -174,7 +174,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                             // include j monomer in queue list
                             if (x != 0 || y != 0 || z != 0) {
 
-				printf("found....\n");
+				//printf("found....\n");
                                 for (int state=0; state<nstates; ++state) {
                                     
                                     skip=0;
@@ -190,7 +190,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                                       run->monomer_queue[idxj] = 1;
                                       statemonomers++;
  				      //printf("added\n");
-                                    } else {// printf("HELLO:%d\n",idxj); }
+                                    } else { //printf("HELLO:%d\n",idxj); }
                                     }
                                 }
                             }
@@ -200,6 +200,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             }
         }
     }
+    MPI_Barrier(fmr->world);
     //if (fmr->my_rank == 0) {
     //printf("START\n");
     //for (int l=0; l<run->n_monomers_tmp; ++l) printf("%5d %d\n",l,run->monomer_list[l]);
@@ -215,7 +216,12 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     // ** Determine load balance ** //
     int div = run->n_monomers / fmr->world_size;
     int rem = run->n_monomers % fmr->world_size;
+    //printf("n_monomers:%d\nworld_Size:%d\n",run->n_monomers,fmr->world_size);
+    //printf("DIV:%d\nREM:%d\n",div,rem);
 
+    //delete [] run->monomer_proc;
+    //delete [] run->dimer_proc;
+    run->monomer_proc = run->dimer_proc = NULL;
     int ifrom_mono, ito_mono;
     if (my_rank < rem) {
         ifrom_mono = my_rank*div + my_rank;
@@ -224,11 +230,11 @@ void State::write_qchem_inputs_cutoff(int jobtype)
         ifrom_mono = my_rank*div + rem;
         ito_mono   = ifrom_mono + div;
     }
-
+    //printf("monomer initialize\n");
     //** Distributed Processors **//
-    if (run->monomer_proc == NULL) run->monomer_proc = new int [div+1];
+    if (run->monomer_proc == NULL) { run->monomer_proc = new int [div+1]; }
     for (int i=0; i<div+1; ++i) run->monomer_proc[i] = -1;
-
+    //printf("monomer_div\n");
     div = run->n_dimers / fmr->world_size;
     rem = run->n_dimers % fmr->world_size;
     int ifrom_dim, ito_dim;
@@ -242,8 +248,8 @@ void State::write_qchem_inputs_cutoff(int jobtype)
 
     //** Distributed Processors **//
     if (run->dimer_proc == NULL) run->dimer_proc = new int [div+1];
-    for (int i=0; i<div+1; ++i) run->dimer_proc[i] = -1;
-
+    //for (int i=0; i<div+1; ++i) run->dimer_proc[i] = -1;
+    //printf("dimer_div\n");
     int index_mono = 0;
     int index_dim  = 0;
    
@@ -266,7 +272,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
             //atom->getMonomerIndices(imon,istate,x,y,z,ifrag);
             //printf("testing:%5d rank:%2d\n", imon, fmr->my_rank);
-            //printf("state:%d ifrag:%d x:%d y:%d z:%d\n", istate, ifrag, x, y, z);
+            //printf("state:%d ifrag:%d x:%d y:%d z:%d rank:%d\n", istate, ifrag, x, y, z, my_rank);
             
             // Determine the charged reactive fragment for this state
             int chgfrag = 0;
@@ -1195,8 +1201,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 den = men1 = men2 = 0.0;
 
                                 for (int i=0; i<ddiv+1; i++) {
-                                    if (dimer_proc[i]==idx) { den = dimer_energies[i];
-                                        
+                                    if (dimer_proc[i]==idx) { 
+                                        den = dimer_energies[i];
                                         break; }
                                 }
                                 for (int i=0; i<mdiv+1; i++) {

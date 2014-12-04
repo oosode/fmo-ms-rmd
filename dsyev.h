@@ -76,7 +76,7 @@ void dsyev(double **H, int n, double *E)
 //			eigenvalue in increasing order. */
 //
   delete a;
-  delete work;
+  delete [] work;
   delete Evecs;
 }
 
@@ -101,8 +101,8 @@ void dsyev(double **H, int n, double *E, double **Evecs)
   dsyev_ftoc2(a, Evecs, n, lda);
   dsyev_sort(E, Evecs, n);
 
-  delete a;
-  delete work;
+  delete [] a;
+  delete [] work;
 }
 
 
