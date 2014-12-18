@@ -636,7 +636,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     }
     
     // ** If number of states changed, need to deallocate memory and reallocate below ** //
-    if (fmr->state->flag_state_number_change) {
+//TODO:  add flag that tracks if the ndimers or nmonomers has changed too...
+//    if (fmr->state->flag_state_number_change) {
         delete [] fmo_energies;
         delete [] monomer_energies;
         delete [] dimer_energies;
@@ -647,7 +648,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             delete [] dimer_gradients;
             fmo_gradients = monomer_gradients = dimer_gradients = NULL;
         }
-    }
+//    }
     
     // ** Allocate energies and zero ** //
     if (fmo_energies == NULL)     fmo_energies     = new double [nstates];
@@ -656,7 +657,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     for (int i=0; i<nstates; ++i)     fmo_energies[i]     = 0.0;
     //for (int i=0; i<n_monomers; ++i)  monomer_energies[i] = 0.0;
     //for (int i=0; i<n_dimers_sq; ++i) dimer_energies[i]   = 0.0;
-    
+   
     if (FORCE) {
         // ** Allocate gradients and zero ** //
         if (fmo_gradients == NULL)     fmo_gradients     = new double[nstates*3*natoms];
@@ -687,7 +688,6 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         if (monomer_gradients == NULL) monomer_gradients = new double[(mdiv+1)*3*natoms];
         for (int i=0; i<(mdiv+1)*3*natoms; ++i)  monomer_gradients[i] = 0.0;
     }
-
     int ddiv = n_dimers / fmr->world_size;
     rem = n_dimers % fmr->world_size;
     int ifrom_dim, ito_dim;
@@ -698,17 +698,16 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         ifrom_dim = my_rank*ddiv + rem;
         ito_dim   = ifrom_dim + ddiv;
     }
-
     //
     //Only allocate dimer energies and gradients as needed
     if (dimer_energies == NULL)   dimer_energies   = new double [ddiv+1];
     for (int i=0; i<ddiv+1; ++i) dimer_energies[i]   = 0.0;
     if (FORCE) {
         if (dimer_gradients == NULL) dimer_gradients = new double[(ddiv+1)*3*natoms];
-        for (int i=0; i<(ddiv+1)*3*natoms; ++i)  dimer_gradients[i] = 0.0;
+        for (int i=0; i<(ddiv+1)*3*natoms; ++i) dimer_gradients[i] = 0.0;
     }
     //
-    
+
     // Clock
     MPI_Barrier(fmr->world);
     double FMO_start = MPI_Wtime();

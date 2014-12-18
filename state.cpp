@@ -4,6 +4,7 @@
 #include "atom.h"
 #include "state.h"
 #include "run.h"
+#include "math.h"
 #include "matrix.h"
 #include <vector>
 #include <string>
@@ -628,9 +629,9 @@ void State::updateCoordinates()
     int    pbc[3];
     double cel[3];
     
-    double com,mass;
-    int shift;
-    
+    double com,mass,distance;
+    int shift,index,set;
+        
     pbc[0] = fmr->atom->na;
     pbc[1] = fmr->atom->nb;
     pbc[2] = fmr->atom->nc;
@@ -644,7 +645,22 @@ void State::updateCoordinates()
         for (int l=0; l<3; ++l) {
             
             if (pbc[l] >= 0) {
-                
+
+                for (int frag=0; frag<nfragments; ++frag) {
+                     set=0;
+                     for (int i=0; i<natoms; ++i) {
+
+                        if (atom->fragment[i] == frag) {
+                            if (set == 0) { set = 1; index = i; continue; }
+                           
+                            distance = coord[3*i+l]-coord[3*index+l];
+			    shift = distance/(cel[l]/2.0);
+                            //printf("shift: %lf %d\n",distance,shift);
+			    coord[3*i+l] -= cel[l]*shift; 
+                        }
+
+                    }                
+                }
                 for (int frag=0; frag<nfragments; ++frag) {
                     // center of mass of fragment
                     com = mass = 0.0;
@@ -658,8 +674,8 @@ void State::updateCoordinates()
                     }
                     
                     com /= mass;
-                    shift = com/cel[l];
-                    
+                    shift = floor( (com + cel[l]/2.0) / cel[l] );
+
                     for (int i=0; i<natoms; ++i) {
                         if (atom->fragment[i] == frag)
                             // shift coordinate to minimum cell

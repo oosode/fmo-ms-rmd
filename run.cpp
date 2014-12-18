@@ -241,6 +241,7 @@ void Run::calculate_force()
   if (fmr->master_rank) {
     printf("\nEVB post-process run time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size); 
   }
+  MPI_Barrier(fmr->world);
 }
 
 /*-----------------------------------------------------------------
