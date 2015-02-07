@@ -212,9 +212,11 @@ void Run::calculate_force()
     fmr->matrix->buildHX();
     // Step 7. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
-    // Step 8. Compute COCs and CEC
+    // Step 8. Compute long-range electrostatics 
+//    fmr->electrostatics->ewald();
+    // Step 9. Compute COCs and CEC
     fmr->cec->compute_coc(); fmr->cec->compute_cec();
-    // Step 9. Post force computations
+    // Step 10. Post force computations
     post_force();
 
     if (fmr->master_rank) {

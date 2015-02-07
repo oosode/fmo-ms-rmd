@@ -8,6 +8,7 @@
 #include "matrix.h"
 #include "dynamics.h"
 #include "cec.h"
+#include "electrostatics.h"
 #include "umbrella.h"
 #include "boundary.h"
 #include <unistd.h>
@@ -39,16 +40,17 @@ FMR::FMR(int argc, char **argv, MPI_Comm communicator)
   }
 
   // Create some of the basic pointers
-  math     = new Math(this);
-  atom     = new Atom(this);
-  input    = new Input(this);
-  run      = new Run(this);
-  matrix   = new Matrix(this);
-  state    = new State(this);
-  dynamics = new Dynamics(this);
-  cec      = new Cec(this);
-  umbrella = new Umbrella(this);
-  boundary = new Boundary(this);
+  math           = new Math(this);
+  atom           = new Atom(this);
+  input          = new Input(this);
+  run            = new Run(this);
+  matrix         = new Matrix(this);
+  state          = new State(this);
+  dynamics       = new Dynamics(this);
+  cec            = new Cec(this);
+  electrostatics = new Electrostatics(this);
+  umbrella       = new Umbrella(this);
+  boundary       = new Boundary(this);
 
   print_level = 0;
   
@@ -63,17 +65,18 @@ FMR::FMR(int argc, char **argv, MPI_Comm communicator)
 
 FMR::~FMR()
 {
-  if (matrix   != NULL) delete matrix;
-  if (input    != NULL) delete input; 
-  if (run      != NULL) delete run; 
-  if (state    != NULL) delete state; 
-  if (dynamics != NULL) delete dynamics;
-  if (cec      != NULL) delete cec;
-  if (umbrella != NULL) delete umbrella;
-  if (boundary != NULL) delete boundary;
+  if (matrix         != NULL) delete matrix;
+  if (input          != NULL) delete input; 
+  if (run            != NULL) delete run; 
+  if (state          != NULL) delete state; 
+  if (dynamics       != NULL) delete dynamics;
+  if (cec            != NULL) delete cec;
+  if (electrostatics != NULL) delete electrostatics;
+  if (umbrella       != NULL) delete umbrella;
+  if (boundary       != NULL) delete boundary;
 
   // NOTE: atom destrcutor must come last b/c other destructors need to know it's info in their destructors 
-  if (atom     != NULL) delete atom; 
+  if (atom           != NULL) delete atom; 
 }
 
 

@@ -28,16 +28,17 @@ class FMR {
   int my_rank;                  // My rank in world
 
   // ** Class pointers ** //
-  class Math *math;             // Handles math stuff, etc. 
-  class Atom *atom;             // Handles atom information 
-  class Input *input;           // Handles input file and atoms file
-  class Run *run;               // Handles run specs and manages calculations
-  class Matrix *matrix;         // Handles Hamiltonian matrix, etc.
-  class State *state;           // Handles state search algorithm and QChem input generation
-  class Dynamics *dynamics;     // Handles molecular dynamics
-  class Cec *cec;               // handles center of excess charge information
-  class Umbrella *umbrella;     // Handles umbrella sampling of center of excess charge
-  class Boundary *boundary;     // Handles boundary conditions spherical and cylindrical
+  class Math *math;                     // Handles math stuff, etc. 
+  class Atom *atom;                     // Handles atom information 
+  class Input *input;                   // Handles input file and atoms file
+  class Run *run;                       // Handles run specs and manages calculations
+  class Matrix *matrix;                 // Handles Hamiltonian matrix, etc.
+  class State *state;                   // Handles state search algorithm and QChem input generation
+  class Dynamics *dynamics;             // Handles molecular dynamics
+  class Cec *cec;                       // handles center of excess charge information
+  class Electrostatics *electrostatics; //handles long-range electrostatics
+  class Umbrella *umbrella;             // Handles umbrella sampling of center of excess charge
+  class Boundary *boundary;             // Handles boundary conditions spherical and cylindrical
 
   // ** Variables ** //
   int master_rank;
