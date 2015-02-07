@@ -36,9 +36,9 @@ Atom::Atom(FMR *fmr) : Pointers(fmr)
   totalMass    		= 1.0;
 
   // periodic boundary conditions	
-  cellA 		= 0.0;  
-  cellB			= 0.0;
-  cellC			= 0.0;
+  cellA 		= 1000.0;  
+  cellB			= 1000.0;
+  cellC			= 1000.0;
   na			= 0;
   nb			= 0;
   nc 			= 0;

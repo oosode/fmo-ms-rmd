@@ -132,14 +132,17 @@ void Matrix::diagonalizeH() {
   int prev_nstates = fmr->atom->prev_nstates;
 
   // ** Allocate Evecs and Evals as needed ** //
-  if (Evals != NULL) delete [] Evals;
+//  if (Evals != NULL) delete [] Evals;
+  delete [] Evals;
   Evals = new double[nstates];   
-  if (Evecs != NULL) {
+
+//  if (Evecs != NULL) {  
     for (int i=0; i<prev_nstates; ++i) {
       delete [] Evecs[i];
     }
     delete [] Evecs;
-  }
+//  }
+
   Evecs = new double*[nstates];
   for (int i=0; i<nstates; ++i) {
     Evecs[i] = new double[nstates];
@@ -156,7 +159,8 @@ void Matrix::diagonalizeH() {
   // Evals is sorted above such that minimum is element 0, Evecs corresponds
   
   GSEnergy = Evals[0];
-  if (GSCoeffs != NULL) delete [] GSCoeffs; 
+//  if (GSCoeffs != NULL) delete [] GSCoeffs; 
+  delete [] GSCoeffs;
   GSCoeffs = new double[nstates];
   for (int i=0; i<nstates; ++i) GSCoeffs[i] = Evecs[i][0]; 
 

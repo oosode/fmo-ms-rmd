@@ -1412,9 +1412,24 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     if (FORCE) {
         MPI_Bcast(fmo_gradients, nstates*3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
     }
-    
+
 #ifdef FMR_DEBUG
-    /*
+    if (fmr->master_rank) {
+        printf("FMO gradients:\n");
+        for (int istate=0; istate<nstates; ++istate) {
+            printf("State %d:\n", istate);
+            for (int i=0; i<natoms; ++i) {
+                double gx, gy, gz;
+                gx = fmo_gradients[3*natoms*istate + 3*i];
+                gy = fmo_gradients[3*natoms*istate + 3*i+1];
+                gz = fmo_gradients[3*natoms*istate + 3*i+2];
+                printf("%d : %f %f %f\n", i, gx, gy, gz);
+	    }
+        }
+    }
+#endif
+/* 
+#ifdef FMR_DEBUG
     if (fmr->master_rank && FORCE) {
         for (int x=-xa; x<=xa; x++) {
             for (int y=-xb; y<=xb; y++) {
@@ -1481,9 +1496,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             }
         }
     }
-    */
 #endif
-    
+*/    
     // Clock
     MPI_Barrier(fmr->world);
     double comp_end = MPI_Wtime();
