@@ -22,6 +22,7 @@ class Electrostatics : protected Pointers {
 
 
    // ** Functions ** //
+   void coulomb();
    void ewald();
 
 };

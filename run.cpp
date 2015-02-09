@@ -8,6 +8,7 @@
 #include "matrix.h"
 #include "dynamics.h"
 #include "cec.h"
+#include "electrostatics.h"
 #include "umbrella.h"
 #include "boundary.h"
 
@@ -187,7 +188,7 @@ void Run::calculate_force()
     printf("\nWriting inputs run time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size);
   }
   // Step 3. Divide up FMO calculation and run in parallel
-  //do_qchem_calculations(RUN_FORCE);
+//  do_qchem_calculations(RUN_FORCE);
   if ( run->cut_dimer <= 0.0 ) {
     if      ( strstr(run->exec, "qcprog.exe") != NULL) do_qchem_calculations(RUN_FORCE);
     else if ( strstr(run->exec, "nwchem") != NULL) do_nwchem_calculations(RUN_FORCE);
@@ -199,24 +200,26 @@ void Run::calculate_force()
     else if ( strstr(run->exec, "rungms") != NULL) do_gamess_calculations(RUN_FORCE);
   }
 
-  // Step 4. Construct model Hamiltonian
+  //  Step 4. Compute long-range electrostatics
+  fmr->electrostatics->coulomb();
+  std::cout << "asdfasdfasdf" << std::endl;
+
+  // Step 5. Construct model Hamiltonian
   MPI_Barrier(fmr->world);
   clock_start = MPI_Wtime();
 
   if (!fmr->run->FMO_only) {
-    // Step 4. Construct model Hamiltonian
+    // Step 6. Construct model Hamiltonian
     fmr->matrix->buildH();
-    // Step 5. Diagonalize Hamiltonian
+    // Step 7. Diagonalize Hamiltonian
     fmr->matrix->diagonalizeH();
-    // Step 6. Build HX for Hellman-Feynman 
+    // Step 8. Build HX for Hellman-Feynman 
     fmr->matrix->buildHX();
-    // Step 7. Compute ground state force via Hellman-Feynman
+    // Step 9. Compute ground state force via Hellman-Feynman
     fmr->matrix->ComputeHellmanFeynmanGradient();
-    // Step 8. Compute long-range electrostatics 
-//    fmr->electrostatics->ewald();
-    // Step 9. Compute COCs and CEC
+    // Step 10. Compute COCs and CEC
     fmr->cec->compute_coc(); fmr->cec->compute_cec();
-    // Step 10. Post force computations
+    // Step 11. Post force computations
     post_force();
 
     if (fmr->master_rank) {

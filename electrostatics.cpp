@@ -44,93 +44,83 @@ Electrostatics::~Electrostatics()
 /*-----------------------------------------------------------------
   State search algorithm 
 -----------------------------------------------------------------*/
+void Electrostatics::coulomb()
+{
+
+    Run *run       = fmr->run;
+    Atom *atom     = fmr->atom;
+    int natoms     = atom->natoms;
+    int nstates    = fmr->atom->nstates;
+
+    int cellA      = fmr->atom->cellA;
+    int cellB      = fmr->atom->cellB;
+    int cellC      = fmr->atom->cellC;
+
+    int xa         = fmr->atom->na;
+    int xb         = fmr->atom->nb;
+    int xc         = fmr->atom->nc;
+
+    int afield     = fmr->atom->afield;
+    int bfield     = fmr->atom->bfield;
+    int cfield     = fmr->atom->cfield;
+
+    double fxi,fyi,fzi,duij,uij,xij,yij,zij,rij,rinv,qi,qj;
+
+    if (fmr->master_rank) {
+
+        for (int istate=0; istate<nstates; ++istate) {
+  
+            for (int x=-15; x<=15; ++x) {
+                for (int y=-15; y<=15; ++y) {
+                    for (int z=-15; z<=15; ++z) {
+
+	    	        if ( xa <= afield && xb <= bfield && xc <= cfield ) continue;
+ 
+                        for (int i=0; i<natoms; ++i) {
+                            for (int j=0; j<natoms; ++j) {
+                           
+                                qi = atom->getCharge(i, istate);
+                                qj = atom->getCharge(j, istate);
+			
+  	    	    	        xij = atom->coord[3*i+0] - atom->coord[3*j+0] + x*cellA;
+			        yij = atom->coord[3*i+1] - atom->coord[3*j+1] + y*cellB;
+			        zij = atom->coord[3*i+2] - atom->coord[3*j+2] + z*cellC;
+
+                                rij = sqrt( xij*xij + yij*yij + zij*zij );
+                                rinv = 1.0/rij;
+
+                                uij = qi*qj*rinv;
+				std::cout << uij << std::endl;
+		
+			        run->fmo_energies[istate] += uij;
+			
+			        duij = -uij*rinv;
+
+                                fxi = - duij*xij*rinv;
+                                fyi = - duij*yij*rinv;
+                                fzi = - duij*zij*rinv;
+
+			        run->fmo_gradients[3*natoms*istate + 3*i+0] += fxi;
+			        run->fmo_gradients[3*natoms*istate + 3*i+1] += fyi;
+			        run->fmo_gradients[3*natoms*istate + 3*i+2] += fzi;
+
+                                run->fmo_gradients[3*natoms*istate + 3*j+0] -= fxi;
+                                run->fmo_gradients[3*natoms*istate + 3*j+1] -= fyi;
+                                run->fmo_gradients[3*natoms*istate + 3*j+2] -= fzi;
+			    
+			    }
+		        }
+		    }
+	        }
+	    }
+        }
+    }
+}
+
 void Electrostatics::ewald()
 {
-/*
-    Atom *atom	 = fmr->atom;
-    int natoms       = atom->natoms;
-    int nstates      = atom->nstates;
-    int prev_nstates = atom->prev_nstates;
-    
-    // ** Allocate qsum_coc array ** //
-    // If qsum_coc is already allocated from previous step, de-allocate
-    if (qsum_coc != NULL) delete [] qsum_coc;
-    
-	// Allocate qsum_coc array based on number of states
-    qsum_coc = new double [nstates];
-    for (int i=0; i<nstates; ++i) qsum_coc[i] = 0.0;
-    
-    // ** Allocate r_coc array ** //
-    // If r_coc is already allocated from previous step, de-allocate
-	if (r_coc != NULL) {
-	    for (int i=0; i<prev_nstates; ++i) {
-            delete [] r_coc[i];
-        }
-        delete [] r_coc;
-    }
-    
-    // Allocate r_coc array based on number of states for this step
-    r_coc = new double*[nstates];
-    for (int i=0; i<nstates; ++i) {
-        r_coc[i] = new double[3];
-        r_coc[i][0] = 0.0;
-        r_coc[i][1] = 0.0;
-        r_coc[i][2] = 0.0;
-    }
-    
-    if (fmr->master_rank) {
-        
-        double ref[3];
-*/
-        /********************************************/
-        /*** Assign COC information  ****************/
-        /********************************************/
-/*
-        for (int istate=0; istate<nstates; ++istate) {
-            int atoms_per_ireactive = 0;
-            for (int iatom=0; iatom<natoms; ++iatom) {
-                if (atom->reactive[istate*natoms + iatom]) {
-                    
-                    if (atom->symbol[iatom] == 'O') {
-                        ref[0] = atom->coord[3*iatom];
-                        ref[1] = atom->coord[3*iatom + 1];
-                        ref[2] = atom->coord[3*iatom + 2];
-                    }
-                    atoms_per_ireactive++;
-                    qsum_coc[istate] += fabs(atom->getCharge(iatom,istate));
-                    
-                }
-            }
-            
-            //printf("reference state %d: %f %f %f\n",istate,ref[0],ref[1],ref[2]);
-            //natom_coc[istate] = atoms_per_ireactive;
-            for (int iatom=0; iatom<natoms; ++iatom) {
-                if (atom->reactive[istate*natoms + iatom]) {
-                    
-                    double rr[3];
-                    double dr[3];
-                    
-                    rr[0] = atom->coord[3*iatom];
-                    rr[1] = atom->coord[3*iatom + 1];
-                    rr[2] = atom->coord[3*iatom + 2];
-                    
-                    //printf("current position: %f %f %f\n",rr[0],rr[1],rr[2]);
-                    
-                    VECTOR_SUB(dr,rr,ref);
-                    VECTOR_PBC(dr);
-                    
-                    //printf("charge: %f/%f = %f\n",atom->getCharge(iatom,istate),qsum_coc[istate],atom->getCharge(iatom,istate)/qsum_coc[istate]);
-                    VECTOR_SCALE(dr,fabs(atom->getCharge(iatom,istate))/qsum_coc[istate]);
-                    VECTOR_ADD(r_coc[istate],r_coc[istate],dr);
-                    //printf("coc: %f %f %f\n",r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
-                    
-                }
-            }
-            VECTOR_ADD(r_coc[istate],r_coc[istate],ref);
-	    printf("COC position for state %2d: %15.10f %15.10f %15.10f\n",istate,r_coc[istate][0],r_coc[istate][1],r_coc[istate][2]);
-            
-        }
-    }
-*/
+
+
+
 }
 
