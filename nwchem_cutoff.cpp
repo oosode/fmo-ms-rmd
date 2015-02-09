@@ -248,6 +248,14 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                 }
             }
             
+	    int ionfrag = 0;
+            for (int i=0; i<natoms; ++i) {
+	        if (atom->symbol[i] == 'L') {
+		    ionfrag = atom->fragment[istate*natoms + i];
+                    break;
+		}
+	    }
+
             // Put files in directory for organization
             char state_directory[256];
             char snum[16];
@@ -417,6 +425,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // charge section
             if (ifrag == chgfrag) {
                 fprintf(fs, "charge 1\n\n");
+            } else if (ifrag == ionfrag) {
+		fprintf(fs, "charge -1\n\n");
             } else {
                 fprintf(fs, "charge 0\n\n");
             }
@@ -582,6 +592,8 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // charge section
             if (ifrag == chgfrag) {
                 fprintf(fs, "charge 1\n\n");
+            } else if (ifrag == ionfrag) {
+                fprintf(fs, "charge -1\n\n");
             } else {
                 fprintf(fs, "charge 0\n\n");
             }
@@ -590,9 +602,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             fprintf(fs, "scratch_dir %s\n", scratch);
             fprintf(fs, "permanent_dir %s\n\n", scratch);
 
-            fprintf(fs, "memory 2 gb\n");
+            //fprintf(fs, "memory 2 gb\n");
             //fprintf(fs, "memory hardfail\n");
-            fprintf(fs, "memory noverify\n\n");
+            //fprintf(fs, "memory noverify\n\n");
             // basis set section
             fprintf(fs, "basis\n");
             fprintf(fs, "* library %s\n", run->basis);
@@ -639,7 +651,14 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     break;
                 }
             }
-            
+           
+            int ionfrag = 0;
+            for (int i=0; i<natoms; ++i) {
+                if (atom->symbol[i] == 'L') {
+                    ionfrag = atom->fragment[istate*natoms + i];
+                    break;
+                }
+            } 
             // Put files in directory for organization
             char state_directory[256];
             char snum[16];
@@ -752,9 +771,17 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             // charge section
             if (ifrag == chgfrag && jfrag == chgfrag) {
                 fprintf(fs, "charge 2\n\n");
-            } else if (ifrag == chgfrag || jfrag == chgfrag) {
-                fprintf(fs, "charge 1\n\n");
-            } else {
+            } else if (ifrag == ionfrag && jfrag == ionfrag) {
+                fprintf(fs, "charge -2\n\n");
+            } else if (ifrag == chgfrag && jfrag == ionfrag) {
+		fprintf(fs, "charge 0\n\n");
+	    } else if (ifrag == ionfrag && jfrag == chgfrag) {
+		fprintf(fs, "charge 0\n\n");
+	    } else if (ifrag == ionfrag || jfrag == ionfrag) {
+		fprintf(fs, "charge -1\n\n");
+	    } else if (ifrag == chgfrag || jfrag == chgfrag) {
+		fprintf(fs, "charge 1\n\n");
+	    } else {	
                 fprintf(fs, "charge 0\n\n");
             }
             
@@ -875,20 +902,27 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             fprintf(fs, "end\n\n");
             
             // charge section
+            // charge section
             if (ifrag == chgfrag && jfrag == chgfrag) {
                 fprintf(fs, "charge 2\n\n");
+            } else if (ifrag == chgfrag && jfrag == ionfrag) {
+                fprintf(fs, "charge 0\n\n");
+            } else if (ifrag == ionfrag && jfrag == chgfrag) {
+                fprintf(fs, "charge 0\n\n");
+            } else if (ifrag == ionfrag || jfrag == ionfrag) {
+                fprintf(fs, "charge -1\n\n");
             } else if (ifrag == chgfrag || jfrag == chgfrag) {
-                fprintf(fs, "charge 1\n\n");
-            } else {
+                fprintf(fs, "charge 1\n\n");    
+            } else {        
                 fprintf(fs, "charge 0\n\n");
             }
-            
+
             // scratch section
             fprintf(fs, "scratch_dir %s\n",scratch);
             fprintf(fs, "permanent_dir %s\n\n",scratch);
 
-            fprintf(fs, "memory 2 gb\n");
-	    fprintf(fs, "memory noverify\n\n");
+//            fprintf(fs, "memory 2 gb\n");
+//	    fprintf(fs, "memory noverify\n\n");
             
             // basis set section
             fprintf(fs, "basis\n");

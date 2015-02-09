@@ -51,6 +51,7 @@ Atom::Atom(FMR *fmr) : Pointers(fmr)
   qH_SPCE = -(qO_SPCE) * 0.5;
   qO_hydronium = -0.5;
   qH_hydronium = (1.0 - qO_hydronium) / 3.0;
+  qCl = -1;
 
   
 

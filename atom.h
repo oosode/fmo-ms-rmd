@@ -55,7 +55,7 @@ class Atom : protected Pointers {
    double qH_SPCE;        // SPC/E charge hydrogen
    double qO_hydronium;   // Hydronium charge oxygen
    double qH_hydronium;   // Hydronium charge hydrogen
-
+   double qCl;            // Chloiride charge
 
    // ** Functions ** //
    bool AtomInFragment(int iatom, int ifrag, int istate){ 
@@ -210,6 +210,8 @@ class Atom : protected Pointers {
      } else if (symbol[iatom] == 'O') {
        if (reactive[istate*natoms + iatom]) mmq = qO_hydronium; 
        else                                 mmq = qO_SPCE;
+     } else if (symbol[iatom] == 'L') {
+       mmq = qCl; 
      } else {
        printf("Charge not found for atom %d of state %d\n", iatom, istate);
      }
@@ -222,6 +224,7 @@ class Atom : protected Pointers {
      double mass = 0.0;
      if      (symbol[iatom] == 'H') mass = 1.00783;
      else if (symbol[iatom] == 'O') mass = 15.99491;
+     else if (symbol[iatom] == 'L') mass = 35.4527;
      return mass;     
    }
 
@@ -230,6 +233,7 @@ class Atom : protected Pointers {
      double number = 0.0;
      if      (symbol[iatom] == 'H') number = 1.0;
      else if (symbol[iatom] == 'O') number = 8.0;
+     else if (symbol[iatom] == 'L') number = 17.0;
      return number;
    }
 
