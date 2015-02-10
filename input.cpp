@@ -352,9 +352,9 @@ void Input::read_atoms_file()
     // Only the master rank reads the atoms file
     // Info is broadcast subsequently
 //    if (fmr->master_rank) {
-        
+        if (fmr->master_rank) { 
         printf("Reading atoms file %s\n", atoms_file);
-        
+        }
         FILE *fs = fopen(atoms_file, "r");
         if (fs == NULL) {
             fmr->error(FLERR, "Failure to read atoms file.\n");

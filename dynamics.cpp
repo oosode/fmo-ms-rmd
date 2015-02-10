@@ -131,8 +131,9 @@ void Dynamics::writeTrajCoords(int mode)
     fprintf(fs, "%d %d %d\n", natoms, fmr->atom->nfragments, fmr->atom->ireactive);
     fprintf(fs, "%d\n", fmr->dynamics->iCurrentStep);
     for (int i=0; i<natoms; ++i) {
-      fprintf(fs, "%c %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n",
-                  fmr->atom->symbol[i],
+      fprintf(fs, "%-2s %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n",
+		  fmr->atom->name[i].c_str(),
+//                  fmr->atom->symbol[i],
                   coord[3*i], coord[3*i+1], coord[3*i+2],
                   fmr->atom->fragment[i], // assuming next pivot state is state index 0, as in updatePivotState
                   veloc[3*i], veloc[3*i+1], veloc[3*i+2]
@@ -183,8 +184,9 @@ void Dynamics::writePBCTrajCoords(int mode)
         for (int z=-xc; z<=xc; ++z) {
 
           for (int i=0; i<natoms; ++i) {
-            fprintf(fs, "%c %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n",
-                        fmr->atom->symbol[i],
+            fprintf(fs, "%-2s %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n",
+		        fmr->atom->name[i].c_str(),
+//                        fmr->atom->symbol[i],
                         coord[3*i] + x*cellA, coord[3*i+1] + y*cellB, coord[3*i+2] + z*cellC,
                         fmr->atom->fragment[i], // assuming next pivot state is state index 0, as in updatePivotState
                         veloc[3*i], veloc[3*i+1], veloc[3*i+2]
