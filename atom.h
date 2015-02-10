@@ -27,6 +27,7 @@ class Atom : protected Pointers {
    double *mass;         // Mass of atoms
    double totalMass;     // Sum of all atom masses
    char *symbol;         // Atomic symbol of atoms
+   std::string *name;
    int *fragment;        // Fragment index of atom for each fragmentation state
    int *reactive;        // Index specifying if atom belongs to a reactive fragment in each state
    int *available;       // Availability of atom in state search
@@ -204,13 +205,14 @@ class Atom : protected Pointers {
 
    double getCharge(int iatom, int istate) {
      double mmq = 0.0;
+//     printf("%s\n",name[iatom].c_str());
      if (symbol[iatom] == 'H') {
        if (reactive[istate*natoms + iatom]) mmq = qH_hydronium; 
        else                                 mmq = qH_SPCE;
      } else if (symbol[iatom] == 'O') {
        if (reactive[istate*natoms + iatom]) mmq = qO_hydronium; 
        else                                 mmq = qO_SPCE;
-     } else if (symbol[iatom] == 'L') {
+     } else if (strcmp(name[iatom].c_str(),"Cl")==0) {
        mmq = qCl; 
      } else {
        printf("Charge not found for atom %d of state %d\n", iatom, istate);
@@ -224,7 +226,7 @@ class Atom : protected Pointers {
      double mass = 0.0;
      if      (symbol[iatom] == 'H') mass = 1.00783;
      else if (symbol[iatom] == 'O') mass = 15.99491;
-     else if (symbol[iatom] == 'L') mass = 35.4527;
+     else if (strcmp(name[iatom].c_str(),"Cl")==0) mass = 35.4527;
      return mass;     
    }
 
@@ -233,7 +235,7 @@ class Atom : protected Pointers {
      double number = 0.0;
      if      (symbol[iatom] == 'H') number = 1.0;
      else if (symbol[iatom] == 'O') number = 8.0;
-     else if (symbol[iatom] == 'L') number = 17.0;
+     else if (strcmp(name[iatom].c_str(),"Cl")==0) number = 17.0;
      return number;
    }
 

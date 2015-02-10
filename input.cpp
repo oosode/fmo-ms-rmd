@@ -350,7 +350,7 @@ void Input::read_atoms_file()
 {
     // Only the master rank reads the atoms file
     // Info is broadcast subsequently
-    if (fmr->master_rank) {
+//    if (fmr->master_rank) {
         
         printf("Reading atoms file %s\n", atoms_file);
         
@@ -383,6 +383,7 @@ void Input::read_atoms_file()
                 fmr->atom->available = new int [natoms];
                 fmr->atom->hop       = new int [natoms*MAX_STATES];
                 fmr->atom->environment  = new int [natoms];
+                fmr->atom->name = new std::string [natoms]; 
                 // Initialize fragment array
                 for (int k=0; k<natoms*MAX_STATES; ++k) {
                     fmr->atom->fragment[k] = -1;
@@ -407,6 +408,7 @@ void Input::read_atoms_file()
                        &(fmr->atom->fragment[atom_index])
                        );
                 // remove whitespace from tmpstr to get the atom symbol character
+                fmr->atom->name[atom_index] = tmpstr;
                 for (int i=0; i<MAX_LENGTH; ++i) {
                     if (tmpstr[i] != ' ') {
                         fmr->atom->symbol[atom_index] = tmpstr[i];
@@ -419,22 +421,24 @@ void Input::read_atoms_file()
         }
         
         fclose(fs);
-    }
+//    }
     MPI_Barrier(fmr->world);
     
     
     // ** Communicate data to other ranks ** //
-    MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
-    MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
-    MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
+//    MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
+//    MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
+//    MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
     int natoms = fmr->atom->natoms;
-    if (!fmr->master_rank) {
+    if (1==2){
+//    if (!fmr->master_rank) {
         // Based on broadcast data, allocate atom arrays
         fmr->atom->coord = new double [3*natoms];
         fmr->atom->force = new double [3*natoms];
         fmr->atom->veloc = new double [3*natoms];
         fmr->atom->mass  = new double [natoms];
         fmr->atom->symbol    = new char [natoms];
+	fmr->atom->name      = new std::string [natoms];
         fmr->atom->fragment  = new int [natoms*MAX_STATES];
         fmr->atom->reactive  = new int [natoms*MAX_STATES];
         fmr->atom->environment  = new int [natoms];
@@ -448,8 +452,9 @@ void Input::read_atoms_file()
             fmr->atom->fragment[k] = -1;
         }
     }
-    MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
-    MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
+//    MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
+//    MPI_Bcast(fmr->atom->name, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
+//    MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);
    
     // Set global box dimensions
     fmr->atom->setGlobalBox(); 
@@ -508,8 +513,9 @@ void Input::write_restart_file()
     fprintf(fs, "%d %d %d\n", natoms, fmr->atom->nfragments, fmr->atom->ireactive);
     fprintf(fs, "%d\n", fmr->dynamics->iCurrentStep);
     for (int i=0; i<natoms; ++i) {
-      fprintf(fs, "%c %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n", 
-                  fmr->atom->symbol[i],
+      fprintf(fs, "%-2s %16.12f %16.12f %16.12f %3d %16.12f %16.12f %16.12f\n", 
+		  fmr->atom->name[i].c_str(),
+//                  fmr->atom->symbol[i],
                   coord[3*i], coord[3*i+1], coord[3*i+2],
                   fmr->atom->fragment[i], // assuming next pivot state is state index 0, as in updatePivotState
                   veloc[3*i], veloc[3*i+1], veloc[3*i+2]
@@ -531,7 +537,7 @@ void Input::write_restart_file()
 -----------------------------------------------------------------*/
 void Input::read_restart_file()
 {
-  if (fmr->master_rank) {
+//  if (fmr->master_rank) {
     printf("Reading restart data from file %s\n", restart_file);    
 
     FILE *fs = fopen(restart_file, "r");
@@ -556,6 +562,7 @@ void Input::read_restart_file()
         fmr->atom->veloc = new double [3*natoms];
         fmr->atom->mass  = new double [natoms];
 	fmr->atom->symbol    = new char [natoms];
+        fmr->atom->name      = new std::string [natoms];
 	fmr->atom->fragment  = new int [natoms*MAX_STATES];
 	fmr->atom->reactive  = new int [natoms*MAX_STATES];
 	fmr->atom->available = new int [natoms];
@@ -574,8 +581,9 @@ void Input::read_restart_file()
         int i = atom_index;
         double *coord = fmr->atom->coord;
         double *veloc = fmr->atom->veloc;
-        sscanf(line, "%c %lf %lf %lf %d %lf %lf %lf\n", 
-                  &fmr->atom->symbol[i],
+        sscanf(line, "%-2s %lf %lf %lf %d %lf %lf %lf\n", 
+		  &fmr->atom->name[i],
+//                  &fmr->atom->symbol[i],
                   &coord[3*i], &coord[3*i+1], &coord[3*i+2],
                   &fmr->atom->fragment[i], // assuming next pivot state is state index 0, as in updatePivotState
                   &veloc[3*i], &veloc[3*i+1], &veloc[3*i+2]
@@ -586,22 +594,25 @@ void Input::read_restart_file()
     }
     fclose(fs);
 
-  }
+//  }
   MPI_Barrier(fmr->world);
 
   // ** Communicate data to other ranks ** //
-  MPI_Bcast(&fmr->dynamics->iCurrentStep, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
-  MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
+//  MPI_Bcast(&fmr->dynamics->iCurrentStep, 1, MPI_INT, MASTER_RANK, fmr->world);
+//  MPI_Bcast(&fmr->atom->natoms, 1, MPI_INT, MASTER_RANK, fmr->world);
+//  MPI_Bcast(&fmr->atom->nfragments, 1, MPI_INT, MASTER_RANK, fmr->world);
+//  MPI_Bcast(&fmr->atom->ireactive, 1, MPI_INT, MASTER_RANK, fmr->world);
   int natoms = fmr->atom->natoms;
-  if (!fmr->master_rank) {
+
+  if (1==2) {
+//  if (!fmr->master_rank) {
     // Based on broadcast data, allocate atom arrays
     fmr->atom->coord = new double [3*natoms];
     fmr->atom->force = new double [3*natoms];
     fmr->atom->veloc = new double [3*natoms];
     fmr->atom->mass  = new double [natoms];
     fmr->atom->symbol    = new char [natoms];
+    fmr->atom->name      = new std::string [natoms];
     fmr->atom->fragment  = new int [natoms*MAX_STATES];
     fmr->atom->reactive  = new int [natoms*MAX_STATES];
     fmr->atom->environment  = new int [natoms];
@@ -616,6 +627,7 @@ void Input::read_restart_file()
     }
   }
   MPI_Bcast(fmr->atom->symbol, natoms, MPI_CHAR, MASTER_RANK, fmr->world);
+  MPI_Bcast(fmr->atom->name, natoms, MPI_CHAR, MASTER_RANK,fmr->world);
   MPI_Bcast(fmr->atom->coord, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(fmr->atom->veloc, 3*natoms, MPI_DOUBLE, MASTER_RANK, fmr->world);
   MPI_Bcast(fmr->atom->fragment, natoms, MPI_INT, MASTER_RANK, fmr->world);

@@ -28,6 +28,7 @@ Atom::Atom(FMR *fmr) : Pointers(fmr)
   veloc        		= NULL;
   mass         		= NULL;
   symbol       		= NULL;
+  name			= NULL;
   fragment     		= NULL;
   reactive     		= NULL;
   available    		= NULL;
@@ -67,7 +68,8 @@ Atom::~Atom()
   if (force     != NULL) delete [] force; 
   if (veloc     != NULL) delete [] veloc; 
   if (mass      != NULL) delete [] mass; 
-  if (symbol    != NULL) delete [] symbol; 
+  if (symbol    != NULL) delete [] symbol;
+  if (name      != NULL) delete [] name; 
   if (fragment  != NULL) delete [] fragment; 
   if (reactive  != NULL) delete [] reactive; 
   if (available != NULL) delete [] available; 

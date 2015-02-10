@@ -250,7 +250,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             
 	    int ionfrag = 0;
             for (int i=0; i<natoms; ++i) {
-	        if (atom->symbol[i] == 'L') {
+	        if (strcmp(atom->name[i].c_str(),"Cl") == 0) {
 		    ionfrag = atom->fragment[istate*natoms + i];
                     break;
 		}
@@ -294,8 +294,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             fprintf(fs, "symmetry c1\n");
             for (int iatom=0; iatom<natoms; ++iatom) {
                 if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom],
+                    fprintf(fs, "%-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom].c_str(),
+//                            atom->symbol[iatom],
                             atom->coord[3*iatom] + x*cellA,
                             atom->coord[3*iatom+1] + y*cellB,
                             atom->coord[3*iatom+2] + z*cellC
@@ -484,8 +485,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             fprintf(fs, "symmetry c1\n");
             for (int iatom=0; iatom<natoms; ++iatom) {
                 if (atom->fragment[istate*natoms + iatom] == ifrag) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom],
+                    fprintf(fs, "%-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom].c_str(),
+//                            atom->symbol[iatom],
                             atom->coord[3*iatom] + x*cellA,
                             atom->coord[3*iatom+1] + y*cellB,
                             atom->coord[3*iatom+2] + z*cellC
@@ -654,7 +656,7 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
            
             int ionfrag = 0;
             for (int i=0; i<natoms; ++i) {
-                if (atom->symbol[i] == 'L') {
+                if (strcmp(atom->name[i].c_str(),"Cl") == 0) {
                     ionfrag = atom->fragment[istate*natoms + i];
                     break;
                 }
@@ -705,8 +707,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             
             for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
                 if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
+                    fprintf(fs, "%-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom%natoms].c_str(),
+//                            atom->symbol[iatom%natoms],
                             atom->coord[3*(iatom%natoms)]   + x*cellA,
                             atom->coord[3*(iatom%natoms)+1] + y*cellB,
                             atom->coord[3*(iatom%natoms)+2] + z*cellC
@@ -714,8 +717,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     
                 }
                 else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                    fprintf(fs, "%c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
+                    fprintf(fs, "%-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom%natoms].c_str(),
+//                            atom->symbol[iatom%natoms],
                             atom->coord[3*(iatom%natoms)],
                             atom->coord[3*(iatom%natoms)+1],
                             atom->coord[3*(iatom%natoms)+2]
@@ -846,8 +850,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
             
             for (int iatom=state_start; iatom<state_start+totalatoms; ++iatom) {
                 if (atom->AtomInFragment(iatom,jfrag,istate,x,y,z)) {
-                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
+                    fprintf(fs, "  %-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom%natoms].c_str(),
+//                            atom->symbol[iatom%natoms],
                             atom->coord[3*(iatom%natoms)]   + x*cellA,
                             atom->coord[3*(iatom%natoms)+1] + y*cellB,
                             atom->coord[3*(iatom%natoms)+2] + z*cellC
@@ -855,8 +860,9 @@ void State::write_nwchem_inputs_cutoff(int jobtype)
                     
                 }
                 else if (atom->AtomInFragment(iatom,ifrag,istate,0,0,0)) {
-                    fprintf(fs, "  %c %20.10lf %20.10lf %20.10lf\n",
-                            atom->symbol[iatom%natoms],
+                    fprintf(fs, "  %-2s %20.10lf %20.10lf %20.10lf\n",
+			    atom->name[iatom%natoms].c_str(),
+//                            atom->symbol[iatom%natoms],
                             atom->coord[3*(iatom%natoms)],
                             atom->coord[3*(iatom%natoms)+1],
                             atom->coord[3*(iatom%natoms)+2]

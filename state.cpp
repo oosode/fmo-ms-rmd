@@ -196,7 +196,7 @@ void State::state_search()
     if (fmr->print_level > 0) {
       // Debug printing
       for (int i=0; i<natoms; ++i) {
-        printf("%c %12f %12f %12f", atom->symbol[i], atom->coord[3*i], atom->coord[3*i+1], atom->coord[3*i+2]); 
+        printf("%-2s %12f %12f %12f", atom->name[i].c_str(), atom->coord[3*i], atom->coord[3*i+1], atom->coord[3*i+2]); 
         for (int s=0; s<nstates; ++s) {
           printf(" %d", atom->fragment[s*natoms + i]);
         }
