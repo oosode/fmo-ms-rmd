@@ -747,7 +747,15 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     int ierr;
     int index_mono = 0;
     int index_dim  = 0;
-    
+   
+    int ionfrag = 0;
+    for (int i=0; i<natoms; ++i) {
+        if (strcmp(atom->name[i].c_str(),"Cl") == 0) {
+            ionfrag = atom->fragment[i];
+            break;
+        }
+    }
+ 
     // ***** Loop through monomers ***** //
     for (int imon=0; imon<n_monomers_tmp; imon++) {
         
@@ -766,6 +774,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
             atom->getMonomerIndices(run->monomer_list[imon],istate,x,y,z,ifrag);
             //atom->getMonomerIndices(imon,istate,x,y,z,ifrag);
 
+            if (ifrag!=ionfrag) {
+         
             char state_directory[256];
             char snum[16];
             char jobname[256];
@@ -914,6 +924,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                 }
                 fclose(fs);
                 //printf("Rank %d: efield\n", my_rank);
+	
+		}
 
             }
             
