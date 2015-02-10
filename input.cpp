@@ -293,6 +293,7 @@ void Input::read_input_file()
     MPI_Bcast(&fmr->run->exchange, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->run->algorithm, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
     MPI_Bcast(&atoms_file, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&restart_file, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->state->max_hops, 1, MPI_INT, MASTER_RANK, fmr->world);
