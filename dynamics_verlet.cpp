@@ -140,7 +140,7 @@ void Dynamics::stepReport(int istep)
   
   /*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/
   writeTrajCoords(iCurrentStep);
-  writePBCTrajCoords(iCurrentStep);
+  //writePBCTrajCoords(iCurrentStep);
   //writeTrajCoords(istep);
   WriteStepEner(iCurrentStep);
   /*BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG*/

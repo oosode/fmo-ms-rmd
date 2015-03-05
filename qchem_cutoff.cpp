@@ -1126,11 +1126,12 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
     //** Distributed Compilation **//
     double den, men1, men2;
 
-    FILE *fs = fopen("fmr_calc.log", "a");
+//    FILE *fs;
+//    if (fmr->print_level > 1) fs = fopen("fmr_calc.log", "a");
     for (int istate=0; istate<nstates; ++istate) {
         //printf("----- State %4d -----\n", istate);
         if (fmr->print_level > 1) {
-            fprintf(fs,"Rank %3d - Monomer | EI\n", fmr->my_rank);
+//            fprintf(fs,"Rank %3d - Monomer | EI\n", fmr->my_rank);
         }
         
         double en_fmo1 = 0.0;
@@ -1153,8 +1154,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
 
 
                             if (fmr->print_level > 1) {
-                                fprintf(fs,"Rank %3d - FRAG I:%4d | %16.10f\n", fmr->my_rank,
-                                        ifrag, men1);
+//                                fprintf(fs,"Rank %3d - FRAG I:%4d | %16.10f\n", fmr->my_rank,
+//                                        ifrag, men1);
                                         //ifrag, monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + ifrag]);
                             }
                             
@@ -1172,7 +1173,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
         //printf("state:%d mon_en:%lf\n",istate,en_fmo1);
 
         if (fmr->print_level > 1) {
-            fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
+//            fprintf(fs,"Rank %3d - Dimer | EIJ EI EJ (EIJ - EI - EJ)\n",fmr->my_rank);
         }
         double en_fmo2 = 0.0;
         
@@ -1215,15 +1216,9 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 //monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag] -
                                 //monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag];
                                 if (fmr->print_level > 1) {
-                                    fprintf(fs,"Didx:%2d  idxi:%2d  idxj:%2d  State:%d Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", idx, idxi, idxj,istate, fmr->my_rank, ifrag, jfrag,x,y,z,
-                                            den, men1, men2, etmp);
+//                                    fprintf(fs,"Didx:%2d  idxi:%2d  idxj:%2d  State:%d Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", idx, idxi, idxj,istate, fmr->my_rank, ifrag, jfrag,x,y,z,
+//                                            den, men1, men2, etmp);
 
-
-                                    //fprintf(fs,"Rank %3d - FRAG I:%02d--J:%02d  CELL x:%2d y:%2d z:%2d | %16.10f %16.10f %16.10f %16.10f\n", fmr->my_rank, ifrag, jfrag,x,y,z,
-                                    //        dimer_energies[nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag],
-                                   //         monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(xa) +   nc*nfragments*(xb) +   nfragments*(xc) +   ifrag],
-                                   //         monomer_energies[nfragments*na*nb*nc*istate + nb*nc*nfragments*(x+xa) + nc*nfragments*(y+xb) + nfragments*(z+xc) + jfrag], etmp
-                                   //         );
                                 }
                                 en_fmo2 += etmp*oc;
                             }
@@ -1379,8 +1374,8 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
 
         }
     }
-    fprintf(fs,"\n");
-    fclose(fs);
+//    fprintf(fs,"\n");
+//    fclose(fs);
     
     // *** Reduce the energies from the parallel Q-Chem calls *** //
     double *rbuffer;
