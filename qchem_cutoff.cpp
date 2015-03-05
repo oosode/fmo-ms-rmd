@@ -275,7 +275,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
             //printf("state:%d ifrag:%d x:%d y:%d z:%d rank:%d\n", istate, ifrag, x, y, z, my_rank);
             
             // Determine the charged reactive fragment for this state
-            int chgfrag = 0;
+            int chgfrag = -1;
             for (int i=0; i<natoms; ++i) {
                 if (atom->reactive[istate*natoms + i]) {
                     chgfrag = atom->fragment[istate*natoms + i];
@@ -419,7 +419,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
 
             //
             // Determine the charged reactive fragment for this state
-            int chgfrag = 0;
+            int chgfrag = -1;
             for (int i=0; i<natoms; ++i) {
                 if (atom->reactive[istate*natoms + i]) {
                     chgfrag = atom->fragment[istate*natoms + i];
