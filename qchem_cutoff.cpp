@@ -1017,22 +1017,10 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                             } else {
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                             }
                         }
                     }
@@ -1070,25 +1058,13 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                             gz *= -mmq;
                             // store symmetrically for zeroth unit cell
                             if (x==0 && y==0 && z==0) {
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*jfrag + ifrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                             } else {
-                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)]   = gx;
+                                dimer_gradients[index*3*natoms + 3*(atnum%natoms)+0] = gx;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+1] = gy;
                                 dimer_gradients[index*3*natoms + 3*(atnum%natoms)+2] = gz;
-                                //dimer_gradient_[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)]   = gx;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+1] = gy;
-                                //dimer_gradients[(nf2*na*nb*nc*istate + nb*nc*nf2*(x+xa) + nc*nf2*(y+xb) + nf2*(z+xc) + nfragments*ifrag + jfrag)*3*natoms + 3*(atnum%natoms)+2] = gz;
                             }
                         }
                     }
@@ -1294,7 +1270,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 if (dimer_queue[idx] == 1) {
                                     
                                     //overcount for unit cell
-                                    double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
+                                    double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
                                     
                                     gx = gy = gz = 0.0;
                                     
