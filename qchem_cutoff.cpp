@@ -141,7 +141,7 @@ void State::write_qchem_inputs_cutoff(int jobtype)
 			//
 
 			//symmetry
-		        if (x<0 || y<0 || z<0) continue
+		        if (x<0 || y<0 || z<0) continue;
                         if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                         
                         // center of mass of j fragment
