@@ -59,10 +59,6 @@ void State::write_qchem_inputs_cutoff(int jobtype)
     int pos,idxj,idxi;
     int skip;
  
-    /*This is in the new branch
-     Distributed
-     */
-    
     //run->n_monomers = nstates * nfragments * na*nb*nc;
     // Assuming all states have equal number of dimers and monomers, for now
     int nmonomers = nfragments * na*nb*nc;
@@ -132,7 +128,20 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                     
                     //printf("for dimers\n");
                     for (int jfrag=0; jfrag<nfragments; ++jfrag) {
-                        
+                       
+		        //symmetric testing
+//			for () { // loop over all of the dimers
+
+			    
+//			    if (symmetric) break;
+//			}
+			
+// 			if (symmetric) continue;
+
+			//
+
+			//symmetry
+		        if (x<0 || y<0 || z<0) continue
                         if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                         
                         // center of mass of j fragment
@@ -159,7 +168,6 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                         d=sqrt(d2);
                         
                         if (d <= run->cut_dimer) {
-                            
                             
                             //statedimers++;
                             //idx =atom->getDimerIndex(0,x,y,z,ifrag,jfrag);
@@ -1171,7 +1179,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
                                 
                                 //overcount for unit cell
-                                double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
+                                double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
 
                                 //zero energies
                                 den = men1 = men2 = 0.0;
@@ -1270,7 +1278,7 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 if (dimer_queue[idx] == 1) {
                                     
                                     //overcount for unit cell
-                                    double oc=0.5; if (x==0 && y==0 && z==0) oc=1.0;
+                                    double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
                                     
                                     gx = gy = gz = 0.0;
                                     
