@@ -130,18 +130,12 @@ void State::write_qchem_inputs_cutoff(int jobtype)
                     for (int jfrag=0; jfrag<nfragments; ++jfrag) {
                        
 		        //symmetric testing
-//			for () { // loop over all of the dimers
+			if (run->symmetry) {
+		            if (z<0) continue;
+			    else if (z<1 && y<0) continue;
+                            else if (z<1 && y<1 && x<0) continue;
+			}
 
-			    
-//			    if (symmetric) break;
-//			}
-			
-// 			if (symmetric) continue;
-
-			//
-
-			//symmetry
-		        if (x<0 || y<0 || z<0) continue;
                         if (x==0 && y==0 && z==0 && jfrag<=ifrag) continue;
                         
                         // center of mass of j fragment
@@ -1179,7 +1173,10 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 //printf("rank:%d  didx:%4d  idxi:%4d  idxj:%4d\n",fmr->my_rank,idx,idxi,idxj);
                                 
                                 //overcount for unit cell
-                                double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
+                                double oc;
+                                if (symmetry) oc=1.0;
+                                else          oc=0.5;
+                                if (x==0 && y==0 && z==0) oc=1.0;
 
                                 //zero energies
                                 den = men1 = men2 = 0.0;
@@ -1278,7 +1275,10 @@ void Run::do_qchem_calculations_cutoff(int FORCE)
                                 if (dimer_queue[idx] == 1) {
                                     
                                     //overcount for unit cell
-                                    double oc=1.0; if (x==0 && y==0 && z==0) oc=1.0;
+                                    double oc;
+                                    if (symmetry) oc=1.0;
+                                    else          oc=0.5;
+                                    if (x==0 && y==0 && z==0) oc=1.0;
                                     
                                     gx = gy = gz = 0.0;
                                     

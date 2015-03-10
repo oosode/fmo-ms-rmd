@@ -23,6 +23,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
 {
    // Set defaults
    run_type   = RUN_ENERGY;
+   symmetry   = 0;
    FMO_only   = 0; 
    EnvApprox  = 0;
    sprintf(scratch_dir, "%s", "null");

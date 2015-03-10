@@ -25,6 +25,7 @@ class Run : protected Pointers {
    int run_type;              // Run type index
    int FMO_only;              // Run with only FMO, no Multi-state FMO
    int EnvApprox;             // Environment approximation on/off
+   int symmetry;	      // Symmetry option
 
    double cut_dimer;          // radius of dimer cut
 

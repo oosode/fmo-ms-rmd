@@ -273,7 +273,10 @@ void Input::read_input_file()
                     // Set the appropriate velocity option
                     fmr->dynamics->vOption = DYNAMICS_READ;
                 }
-                
+		else if ( strcmp(arg0, "Symmetry") == 0) {
+		    printf("Use symmetry.\n");
+		    fmr->run->symmetry = 1;
+                }
             }
         }
         
@@ -296,6 +299,7 @@ void Input::read_input_file()
     MPI_Bcast(&fmr->run->FMO_only, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->run->EnvApprox, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->state->max_hops, 1, MPI_INT, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->symmetry, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->run->cut_dimer, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->print_level, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->dynamics->nTimeSteps, 1, MPI_INT, MASTER_RANK, fmr->world);
