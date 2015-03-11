@@ -11,6 +11,10 @@
 #define RUN_TYPE_MIN 0
 #define RUN_TYPE_MAX 2
 
+// Thermostat options
+#define DELETE_SCRATCH_OFF   0
+#define DELETE_SCRATCH_ON    1
+
 namespace FMR_NS {
 
 
@@ -26,7 +30,8 @@ class Run : protected Pointers {
    int FMO_only;              // Run with only FMO, no Multi-state FMO
    int EnvApprox;             // Environment approximation on/off
    int symmetry;	      // Symmetry option
-
+   int iScratch;              // Scratch directory delete option
+ 
    double cut_dimer;          // radius of dimer cut
 
    char scratch_dir[256];     // Full path of Q-Chem scratch directory 
@@ -76,7 +81,8 @@ class Run : protected Pointers {
    void do_gamess_calculations(int);  // Performs all the Gamess calculations in parallel
    void do_gamess_calculations_env(); // Performs the FMO calculations in parallel, using env approximation
    void perturb_coords();      // Just to perturb the coordinates slightly randomly
-
+   void deleteScratch();      
+ 
 };
 
 }

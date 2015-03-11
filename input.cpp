@@ -255,6 +255,11 @@ void Input::read_input_file()
                     printf("Boundary radius: %f\n",atof(arg1));
                     fmr->boundary->radius[0] = atof(arg1);
                 }
+                else if ( strcmp(arg0, "Scratch_delete") == 0) {
+                    if      ( strcmp(arg1, "off") == 0) fmr->run->iScratch = DELETE_SCRATCH_OFF;
+                    else if ( strcmp(arg1, "on")  == 0) fmr->run->iScratch = DELETE_SCRATCH_ON;
+                    else    fmr->error(FLERR, "Scratch delete option unrecognized.");
+                }
             }
             else if ( sscanf(line, "%s", arg0) == 1 ) {
                 // One argument line
@@ -308,6 +313,7 @@ void Input::read_input_file()
     MPI_Bcast(&fmr->dynamics->targetTemperature, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->dynamics->vseed, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->dynamics->trajFile, MAX_LENGTH, MPI_CHAR, MASTER_RANK, fmr->world);
+    MPI_Bcast(&fmr->run->iScratch, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->dynamics->iThermostat, 1, MPI_INT, MASTER_RANK, fmr->world);
     MPI_Bcast(&fmr->dynamics->tau, 1, MPI_DOUBLE, MASTER_RANK, fmr->world);
     MPI_Bcast(&read_restart, 1, MPI_INT, MASTER_RANK, fmr->world);

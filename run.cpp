@@ -23,6 +23,7 @@ Run::Run(FMR *fmr) : Pointers(fmr)
 {
    // Set defaults
    run_type   = RUN_ENERGY;
+   iScratch   = DELETE_SCRATCH_OFF;
    symmetry   = 0;
    FMO_only   = 0; 
    EnvApprox  = 0;
@@ -243,6 +244,22 @@ void Run::calculate_force()
     printf("\nEVB post-process run time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size); 
   }
   MPI_Barrier(fmr->world);
+  clock_start = MPI_Wtime();
+
+  // ** Delete scratch files ** //
+  if (iScratch == DELETE_SCRATCH_ON)  deleteScratch();
+
+  MPI_Barrier(fmr->world);
+  clock_end = MPI_Wtime();
+  run_time = clock_end - clock_start;
+  if (fmr->master_rank) {
+    printf("\nDelete scratch directory time: %20.6f seconds on %d ranks\n", run_time, fmr->world_size);
+  }
+  MPI_Barrier(fmr->world);
+
+
+    // ** Delete scratch files ** //
+    //     fmr->run->deleteScratch();
 }
 
 /*-----------------------------------------------------------------
@@ -276,3 +293,16 @@ void Run::perturb_coords()
      atom->coord[3*i+2] += max_dist * (2.0*fmr->math->rng() - 1.0);
   }
 }
+
+/*-----------------------------------------------------------------
+  Delete scratch files 
+-----------------------------------------------------------------*/
+void Run::deleteScratch()
+{
+
+    char directory[256];
+    sprintf(directory, "rm -r %s/", scratch_dir);
+    int ierr = system(directory);
+
+}
+
